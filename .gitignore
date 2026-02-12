@@ -3,4 +3,3 @@ web/node_modules/
 .env
 build/
 dist/
-commit.sh
