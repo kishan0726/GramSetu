@@ -7,6 +7,7 @@ import '../stylesheets/Login.css';
 const Login = () => {
   const [adminId, setAdminId] = useState('');
   const [password, setPassword] = useState('');
+  const [adminType, setAdminType] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [adminIdError, setAdminIdError] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -88,6 +89,19 @@ const Login = () => {
             admin_pass : password
           })
         });
+
+        const data = await res.json();
+        setAdminType(data);
+
+        if(data.adminType == null){
+          setIsLoading(false);
+          alert("Wrong credentials");
+        }
+        else{
+          navigate('/dashboard');
+          setIsLoading(false);
+          alert("Login successful");
+        }
       }
       catch {
         alert("Request Not send to Backend");
