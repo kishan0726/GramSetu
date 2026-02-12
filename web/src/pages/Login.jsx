@@ -16,7 +16,6 @@ const Login = () => {
 
   // Validate admin ID (you can customize this)
   const validateAdminId = (id) => {
-    // Example: Should be at least 3 characters and alphanumeric
     const adminIdRegex = /^[a-zA-Z0-9]{3,}$/;
     return adminIdRegex.test(id);
   };
@@ -54,28 +53,44 @@ const Login = () => {
     if (isValid) {
       setIsLoading(true);
       
-      try {
-        // Simulate API call - Replace with your actual API
-        const response = await simulateLogin(adminId, password);
+      // try {
+      //   // Simulate API call - Replace with your actual API
+      //   const response = await simulateLogin(adminId, password);
         
-        if (response.success) {
-          setSuccessMessage('Login successful! Redirecting to dashboard...');
+      //   if (response.success) {
+      //     setSuccessMessage('Login successful! Redirecting to dashboard...');
           
-          // Store authentication data (customize as needed)
-          localStorage.setItem('gramAdminToken', response.token);
-          localStorage.setItem('gramAdminData', JSON.stringify(response.admin));
+      //     // Store authentication data (customize as needed)
+      //     localStorage.setItem('gramAdminToken', response.token);
+      //     localStorage.setItem('gramAdminData', JSON.stringify(response.admin));
           
-          // Redirect after delay
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 1500);
-        } else {
-          setAdminIdError(response.message || 'Invalid credentials');
-        }
-      } catch (error) {
-        setAdminIdError('Login failed. Please try again.');
-      } finally {
-        setIsLoading(false);
+      //     // Redirect after delay
+      //     setTimeout(() => {
+      //       navigate('/dashboard');
+      //     }, 1500);
+      //   } else {
+      //     setAdminIdError(response.message || 'Invalid credentials');
+      //   }
+      // } catch (error) {
+      //   setAdminIdError('Login failed. Please try again.');
+      // } finally {
+      //   setIsLoading(false);
+      // }
+
+      try {
+        const res = await fetch ("http://localhost:5000/adminLogin", {
+          method: "POST",
+          headers: {
+            "Content-Type" : "application/json"
+          },
+          body: JSON.stringify({
+            admin_id: adminId,
+            admin_pass : password
+          })
+        });
+      }
+      catch {
+        alert("Request Not send to Backend");
       }
     }
   };

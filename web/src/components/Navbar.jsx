@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../stylesheets/Navbar.css';
+import { useEffect } from 'react';
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -13,6 +14,17 @@ const Navbar = () => {
     { id: 'complaint', name: 'Complaint', path: '/complaint' },
     { id: 'profile', name: 'Profile', path: '/profile' },
   ];
+
+  const handleLogout = async() => {
+    const res = await fetch("http://localhost:5000/send", {
+      method: "POST",
+      headers: {
+        "content-type" : "text/plain"
+      },
+      body: "hello"
+    })
+
+  }
 
   return (
     <nav className="navbar">
@@ -49,7 +61,7 @@ const Navbar = () => {
               <span className="navbar-admin-role">Super Admin</span>
             </div>
           </div>
-          <button className="navbar-logout-btn">
+          <button className="navbar-logout-btn" onClick={handleLogout}>
             Logout
           </button>
         </div>
