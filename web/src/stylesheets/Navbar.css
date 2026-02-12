@@ -1,0 +1,251 @@
+.navbar {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  padding: 0 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Logo Section */
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.navbar-logo-icon {
+  width: 50px;
+  height: 50px;
+  background-image: url('../assets/logo.png');
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  vertical-align: middle;
+}
+
+.navbar-logo-text h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.navbar-logo-text p {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 2px 0 0 0;
+}
+
+/* Desktop Navigation */
+.navbar-desktop {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.navbar-menu {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2px;
+}
+
+.navbar-item {
+  position: relative;
+}
+
+.navbar-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 15px;
+  color: #cbd5e1;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  min-width: 80px;
+}
+
+.navbar-link:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+}
+
+.navbar-icon {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.nav-text {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Right Section */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.navbar-admin-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar-admin-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 16px;
+}
+
+.navbar-admin-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar-admin-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.navbar-admin-role {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.navbar-logout-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.navbar-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Mobile Menu Button */
+.navbar-mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+/* Mobile Navigation */
+.navbar-mobile {
+  display: none;
+  background: #1e293b;
+  padding: 20px;
+  border-top: 1px solid #334155;
+}
+
+.navbar-mobile-nav-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.navbar-mobile-nav-item {
+  width: 100%;
+}
+
+.navbar-mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  color: #cbd5e1;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.navbar-mobile-nav-link:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+}
+
+.navbar-mobile-nav-icon {
+  font-size: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .navbar-menu {
+    gap: 1px;
+  }
+
+  .navbar-link {
+    padding: 12px 15px;
+    min-width: 70px;
+  }
+
+  .navbar-text {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 20px;
+  }
+
+  .navbar-desktop,
+  .navbar-right {
+    display: none;
+  }
+
+  .navbar-mobile-menu-btn {
+    display: block;
+  }
+
+  .navbar-mobile {
+    display: block;
+  }
+
+  .navbar-logo-text h2 {
+    font-size: 20px;
+  }
+}
