@@ -4,3 +4,4 @@ web/node_modules/
 build/
 dist/
 commit.sh
+backend/serviceAccountKey.json
