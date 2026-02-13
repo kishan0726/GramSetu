@@ -53,30 +53,6 @@ const Login = () => {
 
     if (isValid) {
       setIsLoading(true);
-      
-      // try {
-      //   // Simulate API call - Replace with your actual API
-      //   const response = await simulateLogin(adminId, password);
-        
-      //   if (response.success) {
-      //     setSuccessMessage('Login successful! Redirecting to dashboard...');
-          
-      //     // Store authentication data (customize as needed)
-      //     localStorage.setItem('gramAdminToken', response.token);
-      //     localStorage.setItem('gramAdminData', JSON.stringify(response.admin));
-          
-      //     // Redirect after delay
-      //     setTimeout(() => {
-      //       navigate('/dashboard');
-      //     }, 1500);
-      //   } else {
-      //     setAdminIdError(response.message || 'Invalid credentials');
-      //   }
-      // } catch (error) {
-      //   setAdminIdError('Login failed. Please try again.');
-      // } finally {
-      //   setIsLoading(false);
-      // }
 
       try {
         const res = await fetch ("http://localhost:5000/adminLogin", {
@@ -109,42 +85,14 @@ const Login = () => {
     }
   };
 
-  // Simulated login function - Replace with actual API call
-  const simulateLogin = async (adminId, password) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Demo credentials - Replace with your actual authentication
-        const validLogins = {
-          'admin': 'admin123',
-          'gramadmin': 'gram@2024',
-          'supervisor': 'super@123'
-        };
-        
-        if (validLogins[adminId] === password) {
-          resolve({
-            success: true,
-            token: 'demo-jwt-token-for-' + adminId,
-            admin: {
-              id: adminId,
-              name: 'Gram Administrator',
-              role: 'admin',
-              permissions: ['all']
-            },
-            message: 'Login successful'
-          });
-        } else {
-          resolve({
-            success: false,
-            message: 'Invalid Admin ID or Password'
-          });
-        }
-      }, 800);
-    });
-  };
-
-  const handleForgotPassword = (e) => {
+  const handleForgotPassword = async(e) => {
     e.preventDefault();
-    alert('Please contact system administrator for password reset.');
+    const email = "kishanshingrakhiya3805@gmail.com"
+    await fetch("http://localhost:5000/send-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({email})
+    })
   };
 
   return (
@@ -181,7 +129,7 @@ const Login = () => {
                   value={adminId}
                   onChange={(e) => setAdminId(e.target.value)}
                   placeholder="Enter your admin ID"
-                  required
+                  // required
                   disabled={isLoading}
                 />
                 {adminIdError && <span className="error-message show">{adminIdError}</span>}
@@ -199,7 +147,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  required
+                  // required
                   disabled={isLoading}
                 />
                 <button 
