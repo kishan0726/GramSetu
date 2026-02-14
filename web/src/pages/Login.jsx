@@ -27,7 +27,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     let isValid = true;
     setAdminIdError('');
     setPasswordError('');
@@ -55,27 +55,29 @@ const Login = () => {
       setIsLoading(true);
 
       try {
-        const res = await fetch ("http://localhost:5000/adminLogin", {
+        const res = await fetch("http://localhost:5000/adminLogin", {
           method: "POST",
           headers: {
-            "Content-Type" : "application/json"
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
             admin_id: adminId,
-            admin_pass : password
+            admin_pass: password
           })
         });
 
         const data = await res.json();
         setAdminType(data);
 
-        if(data.adminType == null){
+        if (data.adminType == null) {
           setIsLoading(false);
           alert("Wrong credentials");
         }
-        else{
+        else {
           navigate('/dashboard');
           setIsLoading(false);
+          sessionStorage.setItem("isLoggedIn", "true");
+          sessionStorage.setItem("adminType", data.adminType);
           alert("Login successful");
         }
       }
@@ -85,20 +87,15 @@ const Login = () => {
     }
   };
 
-  const handleForgotPassword = async(e) => {
+  const handleForgotPassword = async (e) => {
     e.preventDefault();
-    const email = "kishanshingrakhiya3805@gmail.com"
-    await fetch("http://localhost:5000/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({email})
-    })
+    navigate('/forgot-password');
   };
 
   return (
     <div className="login-page">
       <div className="container">
-        
+
         <div className="content">
           {/* Logo Section */}
           <div className="logo-section">
@@ -122,10 +119,10 @@ const Login = () => {
             <div className="form-group">
               <label className="label">Admin ID</label>
               <div className="input-wrapper">
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  id="adminId" 
+                <input
+                  type="text"
+                  className="form-control"
+                  id="adminId"
                   value={adminId}
                   onChange={(e) => setAdminId(e.target.value)}
                   placeholder="Enter your admin ID"
@@ -140,19 +137,19 @@ const Login = () => {
             <div className="form-group">
               <label className="label">Password</label>
               <div className="input-wrapper">
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  className="form-control" 
-                  id="password" 
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="form-control"
+                  id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   // required
                   disabled={isLoading}
                 />
-                <button 
-                  type="button" 
-                  className="toggle-password" 
+                <button
+                  type="button"
+                  className="toggle-password"
                   onClick={() => setShowPassword(!showPassword)}
                   title="Toggle password visibility"
                   disabled={isLoading}
@@ -169,9 +166,9 @@ const Login = () => {
             </div>
 
             {/* Login Button */}
-            <button 
-              type="submit" 
-              className="sign-in-btn" 
+            <button
+              type="submit"
+              className="sign-in-btn"
               id="signInBtn"
               disabled={isLoading}
             >

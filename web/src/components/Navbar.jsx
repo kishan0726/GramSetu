@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
 import '../stylesheets/Navbar.css';
-import { useEffect } from 'react';
 
 const Navbar = () => {
+
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -15,18 +17,13 @@ const Navbar = () => {
     { id: 'profile', name: 'Profile', path: '/profile' },
   ];
 
-  const handleLogout = async() => {
-    const res = await fetch("http://localhost:5000/send", {
-      method: "POST",
-      headers: {
-        "content-type" : "text/plain"
-      },
-      body: "hello"
-    })
-
-  }
+  const handleLogout = () => {
+    sessionStorage.clear();
+    navigate("/login");
+  };
 
   return (
+
     <nav className="navbar">
       <div className="navbar-container">
         {/* Logo Section */}
@@ -67,7 +64,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <button 
+        <button
           className="navbar-mobile-menu-btn"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
@@ -81,8 +78,8 @@ const Navbar = () => {
           <ul className="navbar-mobile-nav-menu">
             {navItems.map((item) => (
               <li key={item.id} className="navbar-mobile-nav-item">
-                <a 
-                  href={item.path} 
+                <a
+                  href={item.path}
                   className="navbar-mobile-nav-link"
                   onClick={() => setMobileMenuOpen(false)}
                 >
