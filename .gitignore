@@ -1,7 +1,14 @@
+# Node
 node_modules/
 web/node_modules/
+
+# Environment
 .env
+backend/serviceAccountKey.json
+
+# Build
 build/
 dist/
-commit.sh
-backend/serviceAccountKey.json
+
+# Logs
+*.log
