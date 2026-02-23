@@ -1,0 +1,100 @@
+# =====================================================
+# GramSetu Monorepo - Root .gitignore
+# =====================================================
+
+#######################################################
+# NODE MODULES (ALL PROJECTS)
+#######################################################
+node_modules/
+**/node_modules/
+
+#######################################################
+# ENVIRONMENT FILES
+#######################################################
+.env
+.env.*
+backend/.env
+web/.env
+app/.env
+
+#######################################################
+# FIREBASE / GOOGLE SECRETS (VERY IMPORTANT)
+#######################################################
+backend/serviceAccountKey.json
+backend/credentials.json
+*.pem
+*.p12
+*.key
+*.json.key
+
+#######################################################
+# LOG FILES
+#######################################################
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+#######################################################
+# WEB (React JS)
+#######################################################
+web/build/
+web/dist/
+web/.cache/
+web/coverage/
+
+#######################################################
+# BACKEND (Node.js)
+#######################################################
+backend/dist/
+backend/build/
+backend/uploads/
+backend/tmp/
+backend/coverage/
+
+#######################################################
+# REACT NATIVE - ANDROID
+#######################################################
+app/GramSetu/android/build/
+app/GramSetu/android/app/build/
+app/GramSetu/android/.gradle/
+app/GramSetu/android/local.properties
+app/GramSetu/android/captures/
+app/GramSetu/android/app/debug.keystore
+*.keystore
+*.jks
+
+#######################################################
+# REACT NATIVE - iOS
+#######################################################
+app/GramSetu/ios/build/
+app/GramSetu/ios/Pods/
+app/GramSetu/ios/DerivedData/
+*.xcworkspace
+*.xcuserdata
+
+#######################################################
+# GRADLE
+#######################################################
+.gradle/
+
+#######################################################
+# IDE FILES
+#######################################################
+.vscode/
+.idea/
+*.iml
+
+#######################################################
+# OS FILES
+#######################################################
+.DS_Store
+Thumbs.db
+
+#######################################################
+# MISC
+#######################################################
+coverage/
+tmp/
+.cache/
