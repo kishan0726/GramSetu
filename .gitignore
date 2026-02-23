@@ -21,7 +21,6 @@ app/.env
 # FIREBASE / GOOGLE SECRETS (VERY IMPORTANT)
 #######################################################
 backend/serviceAccountKey.json
-backend/credentials.json
 *.pem
 *.p12
 *.key

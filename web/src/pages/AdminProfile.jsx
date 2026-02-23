@@ -33,6 +33,8 @@ const AdminProfilePage = () => {
     confirmPassword: ''
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [profileURL, setProfileURL] = useState(null);
+  const [isProfileChange, setIsProfileChange] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
   const [formData, setFormData] = useState({});
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -73,6 +75,21 @@ const AdminProfilePage = () => {
     fetchAdmin();
   }, []);
 
+  const uploadProfileImage = async (file) => {
+    setIsProfileChange(true);
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const res = await fetch("http://localhost:5000/profile/upload", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+    setProfileURL(data.photoURL);
+    console.log(data.photoURL);
+  };
+
   // Handle input changes
   const handleInputChange = (section, field, value) => {
     setFormData(prev => ({
@@ -90,6 +107,7 @@ const AdminProfilePage = () => {
       const updateData = {
         admin_id: formData.admin_id,
         admin_type: formData.admin_type,
+        admin_profile_image: profileURL,
         personal_information: formData.personal_information,
         professional_information: formData.professional_information
       };
@@ -103,6 +121,7 @@ const AdminProfilePage = () => {
       setAdminData(formData);
       setIsEditing(false);
       console.log('Profile saved:', formData);
+      window.location.reload();
     } catch (error) {
       console.error("Error saving profile:", error);
     }
@@ -127,9 +146,9 @@ const AdminProfilePage = () => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        id : adminID,
-        currentPassword : passwordData.currentPassword,
-        newPassword : passwordData.newPassword
+        id: adminID,
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
       })
     });
     const data = await response.json();
@@ -198,10 +217,17 @@ const AdminProfilePage = () => {
                 <X size={18} />
                 Cancel
               </button>
-              <button className="admin-profile-btn-save" onClick={handleSaveProfile}>
-                <Save size={18} />
-                Save Changes
-              </button>
+              {isProfileChange ?
+                <button className="admin-profile-btn-save" onClick={handleSaveProfile} disabled={profileURL === null ? true : false}>
+                  <Save size={18} />
+                  {profileURL === null ? "Loading..." : "Save Changes"} 
+                </button> :
+                <button className="admin-profile-btn-save" onClick={handleSaveProfile}>
+                  <Save size={18} />
+                  Save Changes
+                </button>
+              }
+
             </div>
           )}
         </div>
@@ -218,23 +244,6 @@ const AdminProfilePage = () => {
                 alt="Cover"
                 className="admin-profile-cover-photo"
               />
-              <div className="admin-profile-cover-overlay">
-                <button
-                  className="admin-profile-btn-change-cover"
-                  onClick={() => document.getElementById('coverUpload').click()}
-                  disabled={!isEditing}
-                >
-                  <Camera size={16} />
-                  Change Cover
-                </button>
-                <input
-                  type="file"
-                  id="coverUpload"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={() => handleFileUpload('cover')}
-                />
-              </div>
               {isUploading && (
                 <div className="admin-profile-upload-progress">
                   <div className="admin-profile-progress-bar" style={{ width: `${uploadProgress}%` }}></div>
@@ -245,7 +254,7 @@ const AdminProfilePage = () => {
             <div className="admin-profile-avatar-section">
               <div className="admin-profile-avatar-container">
                 <img
-                  src={isEditing ? formData.avatar : adminData.avatar}
+                  src={adminData.admin_profile_image}
                   alt="Admin Avatar"
                   className="admin-profile-avatar"
                 />
@@ -262,7 +271,7 @@ const AdminProfilePage = () => {
                   id="avatarUpload"
                   accept="image/*"
                   style={{ display: 'none' }}
-                  onChange={() => handleFileUpload('avatar')}
+                  onChange={(e) => uploadProfileImage(e.target.files[0])}
                 />
               </div>
 

@@ -1,6 +1,9 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const multer = require("multer");
+const streamifier = require("streamifier");
+const cloudinary = require("./cloudinary");
 const db = require("./firebase");
 const otpGenerator = require("otp-generator");
 const transporter = require("./emailService");
@@ -146,7 +149,7 @@ app.get('/get-admin/:id', async (req, res) => {
         const adminData = snapshot.val();
         const recentActivity = snapshot2.val();
         const { admin_pass, ...safeData } = adminData;
-        const Data = {...safeData, recentActivity};
+        const Data = { ...safeData, recentActivity };
         res.json(Data);
     }
     catch (error) {
@@ -167,13 +170,13 @@ app.put('/update-admin/:id', async (req, res) => {
 })
 
 // Dashboard components
-app.get('/get-village-data', async(req, res) => {
+app.get('/get-village-data', async (req, res) => {
     try {
         const snapshot = await db.ref("village_data").once("value");
         const villageData = snapshot.val();
 
         const snapshot2 = await db.ref("admin/admin1/personal_information").once("value");
-        const { name, phone1, ...otherData} = snapshot2.val();
+        const { name, phone1, ...otherData } = snapshot2.val();
 
         const snapshot3 = await db.ref("quick_links").once("value");
         const quickLinks = snapshot3.val();
@@ -186,138 +189,138 @@ app.get('/get-village-data', async(req, res) => {
 
         const snapshot6 = await db.ref("recent_updates").once("value");
         const recentUpdates = snapshot6.val();
-        
-        const data = {...villageData, name, phone1, quickLinks, recentActivity, liveData, recentUpdates};
+
+        const data = { ...villageData, name, phone1, quickLinks, recentActivity, liveData, recentUpdates };
         res.json(data);
     }
-    catch(error){
+    catch (error) {
         console.error(error)
-        res.json({success: false})
+        res.json({ success: false })
     }
 })
 
 // Announcement components
 app.put('/update-published-announcement/:id', async (req, res) => {
-    try{
+    try {
         const { id } = req.params;
         const updateData = req.body;
         await db.ref(`published_announcement/${id}`).update(updateData);
         res.json({ success: true });
     }
-    catch(error){
+    catch (error) {
         res.json({ success: false });
     }
 })
 
-app.get('/get-published-announcement', async(req,res) => {
-    try{
+app.get('/get-published-announcement', async (req, res) => {
+    try {
         const snapshot = await db.ref("published_announcement").once("value");
         const data = snapshot.val() || {};
         const announcement = Object.values(data);
-        res.json({data: announcement, success: true});
-    } 
-    catch(error){
-        res.json({data: [], success: false});
+        res.json({ data: announcement, success: true });
+    }
+    catch (error) {
+        res.json({ data: [], success: false });
     }
 })
 
-app.delete('/delete-published-announcement/:id', async (req,res) => {
-    try{
-        const {id} = req.params;
+app.delete('/delete-published-announcement/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
         await db.ref(`published_announcement/${id}`).remove();
-        res.json({success: true});
+        res.json({ success: true });
     }
-    catch(error){
-        res.json({success: false});
+    catch (error) {
+        res.json({ success: false });
     }
 })
 
 // Shop components
-app.get('/get-shops', async(req,res) => {
-    try{
+app.get('/get-shops', async (req, res) => {
+    try {
         const snapshot = await db.ref("shops_list").once("value");
         const data = snapshot.val() || {};
         const shops = Object.values(data);
-        res.json({data: shops, success: true});
+        res.json({ data: shops, success: true });
     }
-    catch(error){
-        res.json({data: [], success: false});
+    catch (error) {
+        res.json({ data: [], success: false });
     }
 })
 
-app.put('/update-shop-status/:id', async (req,res) => {
-    try{
-        const {id} = req.params;
-        const {status} = req.body;
+app.put('/update-shop-status/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
 
         await db.ref(`shops_list/${id.toLowerCase()}`).update({
             status,
             lastUpdated: new Date().toISOString().split("T")[0]
         });
-        res.json({success: true});
+        res.json({ success: true });
     }
-    catch(error){
-        res.json({success: false});
+    catch (error) {
+        res.json({ success: false });
     }
 })
 
-app.delete('/delete-shop/:id', async(req,res) => {
-    try{
-        const {id} = req.params;
+app.delete('/delete-shop/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
         await db.ref(`shops_list/${id.toLowerCase()}`).remove();
-        res.json({success: true});
+        res.json({ success: true });
     }
-    catch(error){
-        res.json({success: false});
+    catch (error) {
+        res.json({ success: false });
     }
 })
 
 // Complaint components
-app.get('/get-complaint', async(req,res) => {
-    try{
+app.get('/get-complaint', async (req, res) => {
+    try {
         const snapshot = await db.ref("complaints_list").once("value");
         const data = snapshot.val() || {};
         const complaint = Object.values(data);
-        res.json({data: complaint, success: true});
+        res.json({ data: complaint, success: true });
     }
-    catch(error){
-        res.json({data: [], success: false});
+    catch (error) {
+        res.json({ data: [], success: false });
     }
 })
 
-app.put('/update-complaint-status/:id', async(req,res) => {
-    try{
-        const {id} = req.params;
+app.put('/update-complaint-status/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
         const updateData = req.body;
-        
+
         await db.ref(`complaints_list/${id.toLowerCase()}`).update(updateData);
-        res.json({success: true});
+        res.json({ success: true });
     }
-    catch(error){
-        res.json({success: false});
+    catch (error) {
+        res.json({ success: false });
     }
 })
 
-app.delete('/delete-complaint/:id', async(req,res) => {
-    try{
-        const {id} = req.params;
+app.delete('/delete-complaint/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
         await db.ref(`complaints_list/${id.toLowerCase()}`).remove();
-        res.json({success: true});
+        res.json({ success: true });
     }
-    catch(error){
-        res.json({success: false});
+    catch (error) {
+        res.json({ success: false });
     }
 })
 
 // User components
 app.put('/update-user/:id', async (req, res) => {
-    try{
+    try {
         const { id } = req.params;
         const updateData = req.body;
         await db.ref(`user_data/${id}`).update(updateData);
         res.json({ success: true });
     }
-    catch(error){
+    catch (error) {
         res.json({ success: false });
     }
 })
@@ -336,17 +339,72 @@ app.get("/get-users", async (req, res) => {
 });
 
 // User Detail Components
-app.get("/get-user-detail/:id", async (req,res) => {
-    try{
+app.get("/get-user-detail/:id", async (req, res) => {
+    try {
         const { id } = req.params;
         const snapshot = await db.ref(`user_data/${id}`).once("value");
         const user = snapshot.val();
-        res.json({ success: true, data: user});
+        res.json({ success: true, data: user });
     }
-    catch(error){
-        res.json({ success: false, data: []})
+    catch (error) {
+        res.json({ success: false, data: [] })
     }
 })
+
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+app.post("/profile/upload", upload.single("image"), async (req, res) => {
+  try {
+    const uid = "admin";
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+
+    if (!file.mimetype.startsWith("image/")) {
+      return res.status(400).json({ error: "Only images allowed" });
+    }
+
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "profileImages",
+        public_id: uid,
+        overwrite: true,
+        transformation: [
+          { width: 300, height: 300, crop: "fill" }
+        ]
+      },
+      async (error, result) => {
+        if (error) {
+          console.log(error);
+          return res.status(500).json({ error: "Cloudinary upload failed" });
+        }
+
+        // Save URL in Firebase
+        await db.ref(`users/${uid}`).update({
+          photoURL: result.secure_url
+        });
+
+        res.json({
+          success: true,
+          photoURL: result.secure_url
+        });
+      }
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(uploadStream);
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 app.listen(5000, () => {
     console.log("Server Start on http://localhost:5000");
