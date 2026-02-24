@@ -38,7 +38,7 @@ const User = () => {
         'West Area', 'Near Temple', 'Near School', 'Near River', 'Other'
     ];
 
-    const [activeTab, setActiveTab] = useState('alive'); // 'alive', 'expired', 'add'
+    const [activeTab, setActiveTab] = useState('alive');
     const [users, setUsers] = useState([]);
     const [expiredUsers, setExpiredUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -107,12 +107,17 @@ const User = () => {
     };
 
     const saveUsers = async (user) => {
+        const firstName = user.firstName;
+        const birthYear = new Date(user.dateOfBirth).getFullYear();
+        const password = firstName + birthYear;
+        const updatedData = {...user, password}
+
         const response = await fetch(`http://localhost:5000/update-user/${user.id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(user)
+            body: JSON.stringify(updatedData)
         })
         const result = await response.json();
         if (result.success)
@@ -1229,28 +1234,6 @@ const User = () => {
                                     {errors.disabilityDetails && <span className="user-error-message">{errors.disabilityDetails}</span>}
                                 </div>
                             )}
-
-                            {/* Profile Photo Upload */}
-                            <div className="user-form-group">
-                                <label className="user-form-label">Profile Photo (Optional)</label>
-                                <div className="user-file-upload">
-                                    <input
-                                        type="file"
-                                        id="profilePhoto"
-                                        name="profilePhoto"
-                                        onChange={handleInputChange}
-                                        className="user-file-input"
-                                        accept=".jpg,.jpeg,.png"
-                                    />
-                                    <label htmlFor="profilePhoto" className="user-file-label">
-                                        <span className="user-file-text">
-                                            {formData.profilePhotoName || 'Choose photo (JPG, PNG)'}
-                                        </span>
-                                        <span className="user-file-button">Browse</span>
-                                    </label>
-                                </div>
-                                <div className="user-file-info">Max file size: 2MB • Supported: JPG, PNG</div>
-                            </div>
                         </div>
 
                         {/* Form Actions */}

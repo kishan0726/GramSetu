@@ -287,6 +287,120 @@ export const translations = {
     en: 'Back to Login',
     gu: 'લોગિન પર પાછા જાઓ',
   },
+
+  // Dashboard Screen
+  dashboard: {
+    en: 'Dashboard',
+    gu: 'ડેશબોર્ડ',
+  },
+  welcomeBack: {
+    en: 'Welcome back,',
+    gu: 'પાછા સ્વાગત છે,',
+  },
+  quickActions: {
+    en: 'Quick Actions',
+    gu: 'ઝડપી ક્રિયાઓ',
+  },
+  map: {
+    en: 'Map',
+    gu: 'નકશો',
+  },
+  complaints: {
+    en: 'Complaints',
+    gu: 'ફરિયાદો',
+  },
+  shops: {
+    en: 'Shops',
+    gu: 'દુકાનો',
+  },
+  publicServices: {
+    en: 'Services',
+    gu: 'સેવાઓ',
+  },
+  announcements: {
+    en: 'Announcements',
+    gu: 'જાહેરાતો',
+  },
+  myAnimals: {
+    en: 'My Animals',
+    gu: 'મારા પ્રાણીઓ',
+  },
+  schemes: {
+    en: 'Schemes',
+    gu: 'યોજનાઓ',
+  },
+  profile: {
+    en: 'Profile',
+    gu: 'પ્રોફાઇલ',
+  },
+  recentAnnouncements: {
+    en: 'Recent Announcements',
+    gu: 'તાજેતરની જાહેરાતો',
+  },
+  seeAll: {
+    en: 'See All',
+    gu: 'બધા જુઓ',
+  },
+  gramSabhaMeeting: {
+    en: 'Gram Sabha Meeting',
+    gu: 'ગ્રામ સભા બેઠક',
+  },
+  gramSabhaDesc: {
+    en: 'Monthly gram sabha meeting at community hall',
+    gu: 'સામુદાયિક હોલમાં માસિક ગ્રામ સભા બેઠક',
+  },
+  waterSupply: {
+    en: 'Water Supply',
+    gu: 'પાણી પુરવઠો',
+  },
+  waterSupplyDesc: {
+    en: 'Water supply schedule for tomorrow',
+    gu: 'કાલે પાણી પુરવઠાનું શેડ્યૂલ',
+  },
+  servicesStatus: {
+    en: 'Services Status',
+    gu: 'સેવાઓની સ્થિતિ',
+  },
+  electricity: {
+    en: 'Electricity',
+    gu: 'વીજળી',
+  },
+  roadMaintenance: {
+    en: 'Road Maintenance',
+    gu: 'રોડ જાળવણી',
+  },
+  active: {
+    en: 'Active',
+    gu: 'સક્રિય',
+  },
+  maintenance: {
+    en: 'Maintenance',
+    gu: 'જાળવણી',
+  },
+  inactive: {
+    en: 'Inactive',
+    gu: 'નિષ્ક્રિય',
+  },
+  viewDetails: {
+    en: 'View Details',
+    gu: 'વિગતો જુઓ',
+  },
+  emergencyContacts: {
+    en: 'Emergency Contacts',
+    gu: 'આપાતકાલ સંપર્કો',
+  },
+  police: {
+    en: 'Police',
+    gu: 'પોલીસ',
+  },
+  ambulance: {
+    en: 'Ambulance',
+    gu: 'એમ્બ્યુલન્સ',
+  },
+  fire: {
+    en: 'Fire',
+    gu: 'ફાયર',
+  },
 };
 
 export const LanguageProvider = ({ children }) => {
@@ -313,10 +427,10 @@ export const LanguageProvider = ({ children }) => {
 
   const toggleLanguage = async () => {
     const newLanguage = language === languages.ENGLISH ? languages.GUJARATI : languages.ENGLISH;
-    
+
     // Update state
     setLanguage(newLanguage);
-    
+
     // Save to AsyncStorage
     try {
       await AsyncStorage.setItem('userLanguage', newLanguage);
@@ -327,10 +441,10 @@ export const LanguageProvider = ({ children }) => {
 
   const setLanguageDirect = async (newLanguage) => {
     if (newLanguage === language) return;
-    
+
     // Update state
     setLanguage(newLanguage);
-    
+
     // Save to AsyncStorage
     try {
       await AsyncStorage.setItem('userLanguage', newLanguage);
@@ -348,12 +462,12 @@ export const LanguageProvider = ({ children }) => {
   }
 
   return (
-    <LanguageContext.Provider value={{ 
-      language, 
-      toggleLanguage, 
+    <LanguageContext.Provider value={{
+      language,
+      toggleLanguage,
       setLanguage: setLanguageDirect,
       t,
-      isLoading 
+      isLoading
     }}>
       {children}
     </LanguageContext.Provider>

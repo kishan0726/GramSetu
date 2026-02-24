@@ -47,6 +47,7 @@ const UserLogin = ({ navigation }) => {
     setTimeout(() => {
       setLoading(false);
       Alert.alert('Success', 'Login successful!');
+      navigation.navigate('Dashboard')
     }, 1500);
   };
 

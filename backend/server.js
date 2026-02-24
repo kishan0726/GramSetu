@@ -385,11 +385,6 @@ app.post("/profile/upload", upload.single("image"), async (req, res) => {
           return res.status(500).json({ error: "Cloudinary upload failed" });
         }
 
-        // Save URL in Firebase
-        await db.ref(`users/${uid}`).update({
-          photoURL: result.secure_url
-        });
-
         res.json({
           success: true,
           photoURL: result.secure_url

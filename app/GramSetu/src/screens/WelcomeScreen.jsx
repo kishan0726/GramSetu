@@ -6,10 +6,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
+  Image
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+
+import Logo from '../assets/logo.png';
 
 const WelcomeScreen = ({ navigation }) => {
   const { t } = useLanguage();
@@ -17,11 +19,14 @@ const WelcomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
-      
+
       {/* Header with Background */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logo}>🏡</Text>
+          <Image
+            source={require("../assets/logo.png")}
+            style={styles.logo}
+          />
         </View>
         <Text style={styles.title}>{t('appName')}</Text>
         <Text style={styles.subtitle}>{t('appSubtitle')}</Text>
@@ -34,7 +39,7 @@ const WelcomeScreen = ({ navigation }) => {
 
         {/* Login Options */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.button, styles.userButton]}
             onPress={() => navigation.navigate('UserLogin')}
           >
@@ -42,7 +47,7 @@ const WelcomeScreen = ({ navigation }) => {
             <Text style={styles.buttonText}>{t('loginAsCitizen')}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.button, styles.shopButton]}
             onPress={() => navigation.navigate('ShopkeeperLogin')}
           >
@@ -56,11 +61,11 @@ const WelcomeScreen = ({ navigation }) => {
           <Text style={styles.infoText}>{t('newCitizenInfo')}</Text>
           <Text style={styles.infoText}>{t('newShopkeeperInfo')}</Text>
         </View>
-      
-      {/* Language Switcher */}
-      <View>
-        <LanguageSwitcher />
-      </View>
+
+        {/* Language Switcher */}
+        <View>
+          <LanguageSwitcher />
+        </View>
       </View>
 
       {/* Footer */}
@@ -85,9 +90,12 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    alignItems: "center",
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
@@ -97,9 +105,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 5,
-  },
-  logo: {
-    fontSize: 40,
   },
   title: {
     fontSize: 32,
