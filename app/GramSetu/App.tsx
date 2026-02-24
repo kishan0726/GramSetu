@@ -8,6 +8,9 @@ import UserLogin from './src/screens/UserLogin';
 import ShopkeeperLogin from './src/screens/ShopkeeperLogin';
 import ShopkeeperSignup from './src/screens/ShopkeeperSignup';
 import DashboardScreen from './src/screens/DashboardScreen';
+import AnnouncementsScreen from './src/screens/AnnouncementsScreen';
+import ComplaintsScreen from './src/screens/ComplaintsScreen';
+import PublicServicesScreen from './src/screens/PublicServicesScreen'
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +24,9 @@ const App = () => {
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
           <Stack.Screen name="ShopkeeperLogin" component={ShopkeeperLogin} />
           <Stack.Screen name="ShopkeeperSignup" component={ShopkeeperSignup} />
+          <Stack.Screen name="AnnouncementsScreen" component={AnnouncementsScreen} />
+          <Stack.Screen name="ComplaintsScreen" component={ComplaintsScreen} />
+          <Stack.Screen name="PublicServicesScreen" component={PublicServicesScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </LanguageProvider>

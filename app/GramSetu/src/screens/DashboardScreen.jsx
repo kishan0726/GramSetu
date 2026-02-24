@@ -6,7 +6,6 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
-    Image,
     Dimensions,
     Alert,
 } from 'react-native';
@@ -16,17 +15,83 @@ import { useLanguage } from '../context/LanguageContext';
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
 
+// Sample announcement data matching your DB structure
+const SAMPLE_ANNOUNCEMENTS = [
+    {
+        id: "180226191309",
+        title: "Gram Sabha Meeting on 25th March",
+        titleGuj: "૨૫ માર્ચે ગ્રામ સભાની બેઠક",
+        description: "Monthly gram sabha meeting will be held at community hall. All villagers are requested to attend.",
+        descriptionGuj: "માસિક ગ્રામ સભાની બેઠક સામુદાયિક હોલમાં યોજાશે. તમામ ગ્રામજનોને હાજર રહેવા વિનંતી.",
+        category: "general",
+        publishDate: "2026-02-21T19:13",
+        priority: "high",
+        attachmentName: "",
+    },
+    {
+        id: "180226191310",
+        title: "Water Supply Schedule Change",
+        titleGuj: "પાણી પુરવઠાના સમયમાં ફેરફાર",
+        description: "Due to maintenance work, water supply timing will be changed. New schedule will be from 7 AM to 9 AM.",
+        descriptionGuj: "જાળવણી કાર્યને કારણે, પાણી પુરવઠાના સમયમાં ફેરફાર કરવામાં આવ્યો છે. નવો સમય સવારે ૭ થી ૯ વાગ્યા સુધીનો રહેશે.",
+        category: "utility",
+        publishDate: "2026-02-20T10:30",
+        priority: "normal",
+        attachmentName: "",
+    },
+    {
+        id: "180226191311",
+        title: "Vaccination Camp for Cattle",
+        titleGuj: "પશુઓ માટે રસીકરણ શિબિર",
+        description: "Free vaccination camp for cattle will be organized at veterinary hospital on Sunday.",
+        descriptionGuj: "રવિવારે પશુ દવાખાને પશુઓ માટે મફત રસીકરણ શિબિરનું આયોજન કરવામાં આવ્યું છે.",
+        category: "health",
+        publishDate: "2026-02-19T09:15",
+        priority: "high",
+        attachmentName: "camp_details.pdf",
+    },
+    {
+        id: "180226191312",
+        title: "Electricity Maintenance Alert",
+        titleGuj: "વીજળી જાળવણી એલર્ટ",
+        description: "Power supply will be interrupted for 4 hours tomorrow for maintenance work.",
+        descriptionGuj: "કાલે જાળવણી કાર્ય માટે ૪ કલાક વીજ પુરવઠો બંધ રહેશે.",
+        category: "utility",
+        publishDate: "2026-02-18T14:20",
+        priority: "urgent",
+        attachmentName: "",
+    },
+    {
+        id: "180226191313",
+        title: "Free Health Checkup Camp",
+        titleGuj: "મફત આરોગ્ય તપાસ શિબિર",
+        description: "Free health checkup camp for senior citizens at primary health center.",
+        descriptionGuj: "પ્રાથમિક આરોગ્ય કેન્દ્ર ખાતે વરિષ્ઠ નાગરિકો માટે મફત આરોગ્ય તપાસ શિબિર.",
+        category: "health",
+        publishDate: "2026-02-17T11:45",
+        priority: "normal",
+        attachmentName: "",
+    },
+];
+
 const DashboardScreen = ({ navigation }) => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [userName, setUserName] = useState('Kishan Shingrakhiya');
-    const [announcementCount, setAnnouncementCount] = useState(3);
+    const [announcementCount, setAnnouncementCount] = useState(5);
     const [weather, setWeather] = useState({
         temp: '32°C',
         condition: 'Sunny',
         icon: '☀️',
     });
 
-    // Quick actions menu items (announcements and profile removed)
+    // Categories for announcements (reusing from AnnouncementsScreen)
+    const categories = [
+        { id: 'general', name: t('general'), icon: 'info', color: '#3b82f6' },
+        { id: 'health', name: t('health'), icon: 'local-hospital', color: '#ef4444' },
+        { id: 'utility', name: t('utility'), icon: 'power', color: '#f59e0b' },
+    ];
+
+    // Quick actions menu items
     const quickActions = [
         {
             id: 1,
@@ -40,7 +105,7 @@ const DashboardScreen = ({ navigation }) => {
             id: 2,
             title: t('complaints'),
             icon: 'report-problem',
-            screen: 'Complaints',
+            screen: 'ComplaintsScreen',
             color: '#ef4444',
             bgColor: '#fef2f2',
         },
@@ -56,77 +121,75 @@ const DashboardScreen = ({ navigation }) => {
             id: 4,
             title: t('publicServices'),
             icon: 'build',
-            screen: 'Services',
+            screen: 'PublicServicesScreen',
             color: '#f59e0b',
             bgColor: '#fffbeb',
         },
-        {
-            id: 5,
-            title: t('myAnimals'),
-            icon: 'pets',
-            screen: 'AnimalTracking',
-            color: '#ec4899',
-            bgColor: '#fdf2f8',
-        },
-        {
-            id: 6,
-            title: t('schemes'),
-            icon: 'card-giftcard',
-            screen: 'Schemes',
-            color: '#8b5cf6',
-            bgColor: '#f5f3ff',
-        },
     ];
 
-    // Recent announcements
-    const recentAnnouncements = [
-        {
-            id: 1,
-            title: t('gramSabhaMeeting'),
-            description: t('gramSabhaDesc'),
-            date: '2024-03-20',
-            time: '11:00 AM',
-        },
-        {
-            id: 2,
-            title: t('waterSupply'),
-            description: t('waterSupplyDesc'),
-            date: '2024-03-19',
-            time: '7:00 AM',
-        },
-    ];
+    const getPriorityColor = (priority) => {
+        switch (priority) {
+            case 'urgent':
+                return '#ef4444';
+            case 'high':
+                return '#f59e0b';
+            case 'normal':
+                return '#3b82f6';
+            default:
+                return '#64748b';
+        }
+    };
 
-    // Services status
-    const servicesStatus = [
-        {
-            id: 1,
-            name: t('waterSupply'),
-            status: 'active',
-            icon: '💧',
-            color: '#3b82f6',
-        },
-        {
-            id: 2,
-            name: t('electricity'),
-            status: 'active',
-            icon: '⚡',
-            color: '#f59e0b',
-        },
-        {
-            id: 3,
-            name: t('roadMaintenance'),
-            status: 'maintenance',
-            icon: '🛣️',
-            color: '#10b981',
-        },
-    ];
+    const getPriorityIcon = (priority) => {
+        switch (priority) {
+            case 'urgent':
+                return 'warning';
+            case 'high':
+                return 'priority-high';
+            case 'normal':
+                return 'info';
+            default:
+                return 'info';
+        }
+    };
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) {
+            return t('today');
+        } else if (diffDays === 1) {
+            return t('yesterday');
+        } else if (diffDays < 7) {
+            return `${diffDays} ${t('daysAgo')}`;
+        } else {
+            return date.toLocaleDateString(language === 'gu' ? 'gu-IN' : 'en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+    };
+
+    const getCategoryColor = (categoryId) => {
+        const category = categories.find(c => c.id === categoryId);
+        return category?.color || '#64748b';
+    };
+
+    const getCategoryIcon = (categoryId) => {
+        const category = categories.find(c => c.id === categoryId);
+        return category?.icon || 'info';
+    };
 
     const handleChatPress = () => {
         navigation.navigate('Chat');
     };
 
     const handleNotificationPress = () => {
-        navigation.navigate('Announcements');
+        navigation.navigate('AnnouncementsScreen');
     };
 
     const handleProfilePress = () => {
@@ -137,30 +200,12 @@ const DashboardScreen = ({ navigation }) => {
         navigation.navigate(screen);
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'active':
-                return '#10b981';
-            case 'maintenance':
-                return '#f59e0b';
-            case 'inactive':
-                return '#ef4444';
-            default:
-                return '#64748b';
-        }
+    const handleViewAllAnnouncements = () => {
+        navigation.navigate('AnnouncementsScreen');
     };
 
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'active':
-                return t('active');
-            case 'maintenance':
-                return t('maintenance');
-            case 'inactive':
-                return t('inactive');
-            default:
-                return status;
-        }
+    const handleAnnouncementPress = (announcement) => {
+        navigation.navigate('AnnouncementsScreen', { announcementId: announcement.id });
     };
 
     return (
@@ -215,7 +260,7 @@ const DashboardScreen = ({ navigation }) => {
                 style={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Quick Actions Grid - Now with 4 items */}
+                {/* Quick Actions Grid */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('quickActions')}</Text>
                     <View style={styles.gridContainer}>
@@ -234,67 +279,88 @@ const DashboardScreen = ({ navigation }) => {
                     </View>
                 </View>
 
-                {/* Recent Announcements */}
+                {/* Recent Announcements - Matching AnnouncementsScreen design */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>{t('recentAnnouncements')}</Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('Announcements')}>
-                            <Text style={styles.seeAllText}>{t('seeAll')}</Text>
+                        <TouchableOpacity 
+                            style={styles.moreButton}
+                            onPress={handleViewAllAnnouncements}
+                        >
+                            <Text style={styles.moreButtonText}>{t('more')}</Text>
+                            <Icon name="chevron-right" size={16} color="#38bdf8" />
                         </TouchableOpacity>
                     </View>
 
-                    {recentAnnouncements.map((item) => (
-                        <TouchableOpacity
-                            key={item.id}
-                            style={styles.announcementCard}
-                            onPress={() => navigation.navigate('Announcements')}
-                        >
-                            <View style={styles.announcementIcon}>
-                                <Icon name="campaign" size={20} color="#38bdf8" />
-                            </View>
-                            <View style={styles.announcementContent}>
-                                <Text style={styles.announcementTitle}>{item.title}</Text>
-                                <Text style={styles.announcementDesc} numberOfLines={1}>
-                                    {item.description}
-                                </Text>
-                                <View style={styles.announcementMeta}>
-                                    <Icon name="calendar-today" size={12} color="#94a3b8" />
-                                    <Text style={styles.announcementDate}>{item.date}</Text>
-                                    <Icon name="access-time" size={12} color="#94a3b8" />
-                                    <Text style={styles.announcementTime}>{item.time}</Text>
-                                </View>
-                            </View>
-                            <Icon name="chevron-right" size={20} color="#94a3b8" />
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                    {SAMPLE_ANNOUNCEMENTS.map((item, index) => {
+                        const categoryColor = getCategoryColor(item.category);
+                        
+                        return (
+                            <TouchableOpacity
+                                key={item.id}
+                                style={[
+                                    styles.announcementCard,
+                                    index === 0 && styles.firstCard
+                                ]}
+                                onPress={() => handleAnnouncementPress(item)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={[styles.priorityStrip, { backgroundColor: getPriorityColor(item.priority) }]} />
+                                
+                                <View style={styles.cardContent}>
+                                    <View style={styles.cardHeader}>
+                                        <View style={[styles.categoryBadge, { backgroundColor: categoryColor + '15' }]}>
+                                            <Icon 
+                                                name={getCategoryIcon(item.category)} 
+                                                size={12} 
+                                                color={categoryColor} 
+                                            />
+                                            <Text style={[styles.categoryText, { color: categoryColor }]}>
+                                                {language === 'gu' ? t(item.category) : item.category}
+                                            </Text>
+                                        </View>
+                                        
+                                        <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(item.priority) + '15' }]}>
+                                            <Icon 
+                                                name={getPriorityIcon(item.priority)} 
+                                                size={12} 
+                                                color={getPriorityColor(item.priority)} 
+                                            />
+                                            <Text style={[styles.priorityText, { color: getPriorityColor(item.priority) }]}>
+                                                {language === 'gu' ? t(item.priority) : item.priority}
+                                            </Text>
+                                        </View>
+                                    </View>
 
-                {/* Services Status */}
-                <View style={[styles.section, styles.lastSection]}>
-                    <Text style={styles.sectionTitle}>{t('servicesStatus')}</Text>
-                    {servicesStatus.map((service) => (
-                        <View key={service.id} style={styles.serviceCard}>
-                            <View style={styles.serviceInfo}>
-                                <Text style={styles.serviceIcon}>{service.icon}</Text>
-                                <View>
-                                    <Text style={styles.serviceName}>{service.name}</Text>
-                                    <View style={styles.serviceStatus}>
-                                        <View style={[styles.statusDot, { backgroundColor: getStatusColor(service.status) }]} />
-                                        <Text style={[styles.statusText, { color: getStatusColor(service.status) }]}>
-                                            {getStatusText(service.status)}
-                                        </Text>
+                                    <Text style={styles.announcementTitle} numberOfLines={1}>
+                                        {language === 'gu' ? item.titleGuj || item.title : item.title}
+                                    </Text>
+                                    
+                                    <Text style={styles.announcementDescription} numberOfLines={1}>
+                                        {language === 'gu' ? item.descriptionGuj || item.description : item.description}
+                                    </Text>
+
+                                    <View style={styles.cardFooter}>
+                                        <View style={styles.dateInfo}>
+                                            <Icon name="calendar-today" size={12} color="#94a3b8" />
+                                            <Text style={styles.dateText}>{formatDate(item.publishDate)}</Text>
+                                        </View>
+                                        
+                                        {item.attachmentName && (
+                                            <View style={styles.attachmentBadge}>
+                                                <Icon name="attachment" size={12} color="#38bdf8" />
+                                                <Text style={styles.attachmentText} numberOfLines={1}>
+                                                    {item.attachmentName.length > 8 
+                                                        ? item.attachmentName.substring(0, 8) + '...' 
+                                                        : item.attachmentName}
+                                                </Text>
+                                            </View>
+                                        )}
                                     </View>
                                 </View>
-                            </View>
-                            <TouchableOpacity
-                                style={styles.serviceAction}
-                                onPress={() => navigation.navigate('Services')}
-                            >
-                                <Text style={styles.serviceActionText}>{t('viewDetails')}</Text>
-                                <Icon name="arrow-forward" size={16} color="#38bdf8" />
                             </TouchableOpacity>
-                        </View>
-                    ))}
+                        );
+                    })}
                 </View>
 
                 {/* Emergency Contacts */}
@@ -305,28 +371,49 @@ const DashboardScreen = ({ navigation }) => {
                         showsHorizontalScrollIndicator={false}
                         style={styles.emergencyScroll}
                     >
-                        <TouchableOpacity style={[styles.emergencyCard, { backgroundColor: '#ef4444' }]}>
+                        <TouchableOpacity 
+                            style={[styles.emergencyCard, { backgroundColor: '#ef4444' }]}
+                            onPress={() => Alert.alert(t('emergency'), t('callPolice'))}
+                        >
                             <Icon name="local-police" size={28} color="#ffffff" />
                             <Text style={styles.emergencyTitle}>{t('police')}</Text>
                             <Text style={styles.emergencyNumber}>100</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.emergencyCard, { backgroundColor: '#10b981' }]}>
+                        <TouchableOpacity 
+                            style={[styles.emergencyCard, { backgroundColor: '#10b981' }]}
+                            onPress={() => Alert.alert(t('emergency'), t('callAmbulance'))}
+                        >
                             <Icon name="local-hospital" size={28} color="#ffffff" />
                             <Text style={styles.emergencyTitle}>{t('ambulance')}</Text>
                             <Text style={styles.emergencyNumber}>108</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.emergencyCard, { backgroundColor: '#f59e0b' }]}>
+                        <TouchableOpacity 
+                            style={[styles.emergencyCard, { backgroundColor: '#f59e0b' }]}
+                            onPress={() => Alert.alert(t('emergency'), t('callFire'))}
+                        >
                             <Icon name="fire-hydrant" size={28} color="#ffffff" />
                             <Text style={styles.emergencyTitle}>{t('fire')}</Text>
                             <Text style={styles.emergencyNumber}>101</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={[styles.emergencyCard, { backgroundColor: '#3b82f6' }]}>
+                        <TouchableOpacity 
+                            style={[styles.emergencyCard, { backgroundColor: '#3b82f6' }]}
+                            onPress={() => Alert.alert(t('emergency'), t('callElectricity'))}
+                        >
                             <Icon name="electric-bolt" size={28} color="#ffffff" />
                             <Text style={styles.emergencyTitle}>{t('electricity')}</Text>
                             <Text style={styles.emergencyNumber}>1912</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                            style={[styles.emergencyCard, { backgroundColor: '#8b5cf6' }]}
+                            onPress={() => Alert.alert(t('emergency'), t('callDisaster'))}
+                        >
+                            <Icon name="warning" size={28} color="#ffffff" />
+                            <Text style={styles.emergencyTitle}>{t('disaster')}</Text>
+                            <Text style={styles.emergencyNumber}>112</Text>
                         </TouchableOpacity>
                     </ScrollView>
                 </View>
@@ -460,7 +547,7 @@ const styles = StyleSheet.create({
     section: {
         marginTop: 24,
     },
-    lastSection: {
+    emergencySection: {
         marginBottom: 100,
     },
     sectionHeader: {
@@ -474,10 +561,19 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#1e293b',
     },
-    seeAllText: {
-        fontSize: 14,
+    moreButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#eff6ff',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    moreButtonText: {
+        fontSize: 12,
         color: '#38bdf8',
         fontWeight: '600',
+        marginRight: 2,
     },
     gridContainer: {
         flexDirection: 'row',
@@ -505,118 +601,113 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#1e293b',
     },
+    // Announcement card styles matching AnnouncementsScreen
     announcementCard: {
         flexDirection: 'row',
-        alignItems: 'center',
         backgroundColor: '#ffffff',
-        borderRadius: 12,
-        padding: 16,
+        borderRadius: 16,
         marginBottom: 12,
         borderWidth: 1,
         borderColor: '#e2e8f0',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
-        shadowRadius: 2,
+        shadowRadius: 4,
         elevation: 2,
+        overflow: 'hidden',
     },
-    announcementIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#eff6ff',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
+    firstCard: {
+        marginTop: 0,
     },
-    announcementContent: {
+    priorityStrip: {
+        width: 4,
+        height: 'auto',
+    },
+    cardContent: {
         flex: 1,
+        padding: 12,
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    categoryBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 10,
+    },
+    categoryText: {
+        fontSize: 9,
+        fontWeight: '500',
+        marginLeft: 4,
+        textTransform: 'capitalize',
+    },
+    priorityBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 10,
+    },
+    priorityText: {
+        fontSize: 9,
+        fontWeight: '500',
+        marginLeft: 4,
+        textTransform: 'capitalize',
     },
     announcementTitle: {
         fontSize: 14,
         fontWeight: '600',
         color: '#1e293b',
         marginBottom: 4,
+        lineHeight: 18,
     },
-    announcementDesc: {
-        fontSize: 12,
+    announcementDescription: {
+        fontSize: 11,
         color: '#64748b',
+        lineHeight: 15,
         marginBottom: 6,
     },
-    announcementMeta: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    announcementDate: {
-        fontSize: 10,
-        color: '#94a3b8',
-        marginLeft: 4,
-        marginRight: 12,
-    },
-    announcementTime: {
-        fontSize: 10,
-        color: '#94a3b8',
-        marginLeft: 4,
-    },
-    serviceCard: {
+    cardFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#ffffff',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
     },
-    serviceInfo: {
+    dateInfo: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 4,
     },
-    serviceIcon: {
-        fontSize: 24,
-        marginRight: 12,
+    dateText: {
+        fontSize: 9,
+        color: '#94a3b8',
     },
-    serviceName: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1e293b',
-        marginBottom: 4,
-    },
-    serviceStatus: {
+    attachmentBadge: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: '#eff6ff',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 10,
+        maxWidth: width * 0.25,
     },
-    statusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        marginRight: 6,
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: '500',
-    },
-    serviceAction: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    serviceActionText: {
-        fontSize: 12,
+    attachmentText: {
+        fontSize: 8,
         color: '#38bdf8',
-        marginRight: 4,
-    },
-    emergencySection: {
-        marginBottom: 100,
+        marginLeft: 2,
     },
     emergencyScroll: {
         marginTop: 12,
     },
     emergencyCard: {
-        width: 110,
-        padding: 16,
+        width: 100,
+        padding: 14,
         borderRadius: 12,
-        marginRight: 12,
+        marginRight: 10,
         alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -625,16 +716,16 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     emergencyTitle: {
-        fontSize: 12,
+        fontSize: 11,
         color: '#ffffff',
-        marginTop: 8,
+        marginTop: 6,
         fontWeight: '500',
     },
     emergencyNumber: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
         color: '#ffffff',
-        marginTop: 4,
+        marginTop: 2,
     },
     chatButton: {
         position: 'absolute',

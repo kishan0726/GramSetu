@@ -321,14 +321,6 @@ export const translations = {
     en: 'Announcements',
     gu: 'જાહેરાતો',
   },
-  myAnimals: {
-    en: 'My Animals',
-    gu: 'મારા પ્રાણીઓ',
-  },
-  schemes: {
-    en: 'Schemes',
-    gu: 'યોજનાઓ',
-  },
   profile: {
     en: 'Profile',
     gu: 'પ્રોફાઇલ',
@@ -400,6 +392,519 @@ export const translations = {
   fire: {
     en: 'Fire',
     gu: 'ફાયર',
+  }, 
+  more: {
+    en: 'More',
+    gu: 'વધુ',
+  },
+  electricityMaintenance: {
+    en: 'Electricity Maintenance',
+    gu: 'વીજળી જાળવણી',
+  },
+  electricityDesc: {
+    en: 'Scheduled maintenance on Wednesday',
+    gu: 'બુધવારે સુનિશ્ચિત જાળવણી',
+  },
+  healthCamp: {
+    en: 'Free Health Camp',
+    gu: 'મફત આરોગ્ય શિબિર',
+  },
+  healthCampDesc: {
+    en: 'Free health checkup at community center',
+    gu: 'સામુદાયિક કેન્દ્રમાં મફત આરોગ્ય તપાસ',
+  },
+  roadRepair: {
+    en: 'Road Repair Work',
+    gu: 'રોડ રિપેર કામ',
+  },
+  roadRepairDesc: {
+    en: 'Main road repair starts Monday',
+    gu: 'સોમવારથી મુખ્ય માર્ગનું સમારકામ શરૂ થશે',
+  },
+  disaster: {
+    en: 'Disaster',
+    gu: 'આપત્તિ',
+  },
+  callPolice: {
+    en: 'Calling Police...',
+    gu: 'પોલીસને કૉલ કરી રહ્યા છે...',
+  },
+  callAmbulance: {
+    en: 'Calling Ambulance...',
+    gu: 'એમ્બ્યુલન્સને કૉલ કરી રહ્યા છે...',
+  },
+  callFire: {
+    en: 'Calling Fire Department...',
+    gu: 'ફાયર વિભાગને કૉલ કરી રહ્યા છે...',
+  },
+  callElectricity: {
+    en: 'Calling Electricity Board...',
+    gu: 'વીજળી બોર્ડને કૉલ કરી રહ્યા છે...',
+  },
+  callDisaster: {
+    en: 'Calling Disaster Management...',
+    gu: 'આપત્તિ વ્યવસ્થાપનને કૉલ કરી રહ્યા છે...',
+  },
+
+  // announcement
+  all: {
+    en: 'All',
+    gu: 'બધા',
+  },
+  general: {
+    en: 'General',
+    gu: 'સામાન્ય',
+  },
+  health: {
+    en: 'Health',
+    gu: 'આરોગ્ય',
+  },
+  utility: {
+    en: 'Utility',
+    gu: 'ઉપયોગિતા',
+  },
+  agriculture: {
+    en: 'Agriculture',
+    gu: 'કૃષિ',
+  },
+  environment: {
+    en: 'Environment',
+    gu: 'પર્યાવરણ',
+  },
+  infrastructure: {
+    en: 'Infrastructure',
+    gu: 'ઈન્ફ્રાસ્ટ્રક્ચર',
+  },
+  education: {
+    en: 'Education',
+    gu: 'શિક્ષણ',
+  },
+  sports: {
+    en: 'Sports',
+    gu: 'રમતગમત',
+  },
+  finance: {
+    en: 'Finance',
+    gu: 'નાણાં',
+  },
+  urgent: {
+    en: 'Urgent',
+    gu: 'તાકીદનું',
+  },
+  high: {
+    en: 'High',
+    gu: 'ઉચ્ચ',
+  },
+  normal: {
+    en: 'Normal',
+    gu: 'સામાન્ય',
+  },
+  priority: {
+    en: 'Priority',
+    gu: 'પ્રાથમિકતા',
+  },
+  today: {
+    en: 'Today',
+    gu: 'આજે',
+  },
+  yesterday: {
+    en: 'Yesterday',
+    gu: 'ગઈકાલે',
+  },
+  daysAgo: {
+    en: 'days ago',
+    gu: 'દિવસ પહેલા',
+  },
+  attachment: {
+    en: 'Attachment',
+    gu: 'જોડાણ',
+  },
+  showRecent: {
+    en: 'Show Recent',
+    gu: 'તાજેતરના બતાવો',
+  },
+  latestAnnouncements: {
+    en: 'Latest Announcements',
+    gu: 'તાજેતરની જાહેરાતો',
+  },
+  allAnnouncements: {
+    en: 'All Announcements',
+    gu: 'બધી જાહેરાતો',
+  },
+  announcements: {
+    en: 'Announcements',
+    gu: 'જાહેરાતો',
+  },
+  noAnnouncements: {
+    en: 'No announcements found',
+    gu: 'કોઈ જાહેરાત મળી નથી',
+  },
+  loadingAnnouncements: {
+    en: 'Loading announcements...',
+    gu: 'જાહેરાતો લોડ થાય છે...',
+  },
+  expiresOn: {
+    en: 'Expires on',
+    gu: 'સમાપ્તિ તારીખ',
+  },
+  announcementId: {
+    en: 'Announcement ID',
+    gu: 'જાહેરાત ID',
+  },
+  createdAt: {
+    en: 'Created at',
+    gu: 'બનાવવામાં આવી',
+  },
+  farmers: {
+    en: 'Farmers',
+    gu: 'ખેડૂતો',
+  },
+  senior_citizens: {
+    en: 'Senior Citizens',
+    gu: 'વરિષ્ઠ નાગરિકો',
+  },
+  youth: {
+    en: 'Youth',
+    gu: 'યુવાનો',
+  },
+  women: {
+    en: 'Women',
+    gu: 'મહિલાઓ',
+  },
+  all: {
+    en: 'All',
+    gu: 'બધા',
+  },
+
+
+
+  // complaints
+  complaints: {
+    en: 'Complaints',
+    gu: 'ફરિયાદો',
+  },
+  registerNewComplaint: {
+    en: 'Register New Complaint',
+    gu: 'નવી ફરિયાદ નોંધાવો',
+  },
+  total: {
+    en: 'Total',
+    gu: 'કુલ',
+  },
+  pending: {
+    en: 'Pending',
+    gu: 'બાકી',
+  },
+  inProgress: {
+    en: 'In Progress',
+    gu: 'પ્રગતિમાં',
+  },
+  resolved: {
+    en: 'Resolved',
+    gu: 'ઉકેલાયેલ',
+  },
+  rejected: {
+    en: 'Rejected',
+    gu: 'નામંજૂર',
+  },
+  category: {
+    en: 'Category',
+    gu: 'શ્રેણી',
+  },
+  status: {
+    en: 'Status',
+    gu: 'સ્થિતિ',
+  },
+  water: {
+    en: 'Water',
+    gu: 'પાણી',
+  },
+  electricity: {
+    en: 'Electricity',
+    gu: 'વીજળી',
+  },
+  road: {
+    en: 'Road',
+    gu: 'રોડ',
+  },
+  sanitation: {
+    en: 'Sanitation',
+    gu: 'સ્વચ્છતા',
+  },
+  drainage: {
+    en: 'Drainage',
+    gu: 'ડ્રેનેજ',
+  },
+  animal: {
+    en: 'Animal',
+    gu: 'પ્રાણી',
+  },
+  urgent: {
+    en: 'Urgent',
+    gu: 'તાકીદનું',
+  },
+  high: {
+    en: 'High',
+    gu: 'ઉચ્ચ',
+  },
+  medium: {
+    en: 'Medium',
+    gu: 'મધ્યમ',
+  },
+  low: {
+    en: 'Low',
+    gu: 'નીચું',
+  },
+  submitted: {
+    en: 'Submitted',
+    gu: 'સબમિટ કરેલ',
+  },
+  lastUpdated: {
+    en: 'Last Updated',
+    gu: 'છેલ્લે અપડેટ',
+  },
+  department: {
+    en: 'Department',
+    gu: 'વિભાગ',
+  },
+  assignedTo: {
+    en: 'Assigned To',
+    gu: 'સોંપાયેલ',
+  },
+  location: {
+    en: 'Location',
+    gu: 'સ્થળ',
+  },
+  viewOnMap: {
+    en: 'View on Map',
+    gu: 'નકશા પર જુઓ',
+  },
+  attachments: {
+    en: 'Attachments',
+    gu: 'જોડાણો',
+  },
+  complaintId: {
+    en: 'Complaint ID',
+    gu: 'ફરિયાદ ID',
+  },
+  complaintTitle: {
+    en: 'Complaint Title',
+    gu: 'ફરિયાદનું શીર્ષક',
+  },
+  enterComplaintTitle: {
+    en: 'Enter complaint title',
+    gu: 'ફરિયાદનું શીર્ષક દાખલ કરો',
+  },
+  describeComplaint: {
+    en: 'Describe your complaint in detail',
+    gu: 'તમારી ફરિયાદ વિગતવાર વર્ણવો',
+  },
+  enterAddress: {
+    en: 'Enter complete address',
+    gu: 'સંપૂર્ણ સરનામું દાખલ કરો',
+  },
+  getCurrentLocation: {
+    en: 'Get Current Location',
+    gu: 'વર્તમાન સ્થાન મેળવો',
+  },
+  locationCaptured: {
+    en: 'Location captured successfully',
+    gu: 'સ્થાન સફળતાપૂર્વક મેળવાયું',
+  },
+  addPhotos: {
+    en: 'Add Photos',
+    gu: 'ફોટા ઉમેરો',
+  },
+  submitComplaint: {
+    en: 'Submit Complaint',
+    gu: 'ફરિયાદ સબમિટ કરો',
+  },
+  requiredFields: {
+    en: 'Required fields',
+    gu: 'આવશ્યક ફીલ્ડ્સ',
+  },
+  noComplaints: {
+    en: 'No complaints found',
+    gu: 'કોઈ ફરિયાદ મળી નથી',
+  },
+  beFirstToComplain: {
+    en: 'Be the first to register a complaint',
+    gu: 'ફરિયાદ નોંધાવનાર પ્રથમ બનો',
+  },
+  registerComplaint: {
+    en: 'Register Complaint',
+    gu: 'ફરિયાદ નોંધાવો',
+  },
+  loadingComplaints: {
+    en: 'Loading complaints...',
+    gu: 'ફરિયાદો લોડ થાય છે...',
+  },
+  latestComplaints: {
+    en: 'Latest Complaints',
+    gu: 'તાજેતરની ફરિયાદો',
+  },
+  allComplaints: {
+    en: 'All Complaints',
+    gu: 'બધી ફરિયાદો',
+  },
+  showRecent: {
+    en: 'Show Recent',
+    gu: 'તાજેતરની બતાવો',
+  },
+  seeAll: {
+    en: 'See All',
+    gu: 'બધી જુઓ',
+  },
+  enterTitle: {
+    en: 'Please enter complaint title',
+    gu: 'કૃપા કરીને ફરિયાદનું શીર્ષક દાખલ કરો',
+  },
+  enterDescription: {
+    en: 'Please enter complaint description',
+    gu: 'કૃપા કરીને ફરિયાદનું વર્ણન દાખલ કરો',
+  },
+  selectCategory: {
+    en: 'Please select a category',
+    gu: 'કૃપા કરીને શ્રેણી પસંદ કરો',
+  },
+  enterAddress: {
+    en: 'Please enter address',
+    gu: 'કૃપા કરીને સરનામું દાખલ કરો',
+  },
+  complaintSubmitted: {
+    en: 'Your complaint has been submitted successfully!',
+    gu: 'તમારી ફરિયાદ સફળતાપૂર્વક સબમિટ થઈ ગઈ છે!',
+  },
+  locationFeatureComing: {
+    en: 'Location feature will be implemented with actual GPS',
+    gu: 'લોકેશન ફીચર વાસ્તવિક GPS સાથે લાગુ કરવામાં આવશે',
+  },
+  ok: {
+    en: 'OK',
+    gu: 'બરાબર',
+  },
+  error: {
+    en: 'Error',
+    gu: 'ભૂલ',
+  },
+  success: {
+    en: 'Success',
+    gu: 'સફળતા',
+  },
+
+
+  // service
+  publicServices: {
+    en: 'Public Services',
+    gu: 'જાહેર સેવાઓ',
+  },
+  totalServices: {
+    en: 'Total Services',
+    gu: 'કુલ સેવાઓ',
+  },
+  active: {
+    en: 'Active',
+    gu: 'સક્રિય',
+  },
+  maintenance: {
+    en: 'Maintenance',
+    gu: 'જાળવણી',
+  },
+  inactive: {
+    en: 'Inactive',
+    gu: 'નિષ્ક્રિય',
+  },
+  utility: {
+    en: 'Utility',
+    gu: 'ઉપયોગિતા',
+  },
+  infrastructure: {
+    en: 'Infrastructure',
+    gu: 'ઈન્ફ્રાસ્ટ્રક્ચર',
+  },
+  health: {
+    en: 'Health',
+    gu: 'આરોગ્ય',
+  },
+  education: {
+    en: 'Education',
+    gu: 'શિક્ષણ',
+  },
+  transport: {
+    en: 'Transport',
+    gu: 'પરિવહન',
+  },
+  emergency: {
+    en: 'Emergency',
+    gu: 'કટોકટી',
+  },
+  schedule: {
+    en: 'Schedule',
+    gu: 'સમયપત્રક',
+  },
+  department: {
+    en: 'Department',
+    gu: 'વિભાગ',
+  },
+  contact: {
+    en: 'Contact',
+    gu: 'સંપર્ક',
+  },
+  lastUpdated: {
+    en: 'Last Updated',
+    gu: 'છેલ્લે અપડેટ',
+  },
+  serviceDetails: {
+    en: 'Service Details',
+    gu: 'સેવાની વિગતો',
+  },
+  coverage: {
+    en: 'Coverage',
+    gu: 'કવરેજ',
+  },
+  nextMaintenance: {
+    en: 'Next Maintenance',
+    gu: 'આગામી જાળવણી',
+  },
+  quality: {
+    en: 'Quality',
+    gu: 'ગુણવત્તા',
+  },
+  pressure: {
+    en: 'Pressure',
+    gu: 'દબાણ',
+  },
+  voltage: {
+    en: 'Voltage',
+    gu: 'વોલ્ટેજ',
+  },
+  responseTime: {
+    en: 'Response Time',
+    gu: 'પ્રતિસાદ સમય',
+  },
+  activeComplaints: {
+    en: 'Active Complaints',
+    gu: 'સક્રિય ફરિયાદો',
+  },
+  callNow: {
+    en: 'Call Now',
+    gu: 'હમણાં કૉલ કરો',
+  },
+  navigate: {
+    en: 'Navigate',
+    gu: 'નેવિગેટ કરો',
+  },
+  loadingServices: {
+    en: 'Loading services...',
+    gu: 'સેવાઓ લોડ થાય છે...',
+  },
+  noServices: {
+    en: 'No services found',
+    gu: 'કોઈ સેવાઓ મળી નથી',
+  },
+  services: {
+    en: 'services',
+    gu: 'સેવાઓ',
   },
 };
 
