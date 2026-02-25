@@ -10,7 +10,15 @@ import ShopkeeperSignup from './src/screens/ShopkeeperSignup';
 import DashboardScreen from './src/screens/DashboardScreen';
 import AnnouncementsScreen from './src/screens/AnnouncementsScreen';
 import ComplaintsScreen from './src/screens/ComplaintsScreen';
-import PublicServicesScreen from './src/screens/PublicServicesScreen'
+import PublicServicesScreen from './src/screens/PublicServicesScreen';
+import ShopScreen from './src/screens/ShopsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import ShopkeeperApprovalWait from './src/screens/ShopkeeperApprovalWait';
+import ShopkeeperDashboard from './src/screens/ShopkeeperDashboard';
+import EditShopDetails from './src/screens/EditShopDetails';
+import AddShopItem from './src/screens/AddShopItem';
+import ManageStock from './src/screens/ManageStock';
+import ShopkeeperProfile from './src/screens/ShopkeeperProfile'
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +35,14 @@ const App = () => {
           <Stack.Screen name="AnnouncementsScreen" component={AnnouncementsScreen} />
           <Stack.Screen name="ComplaintsScreen" component={ComplaintsScreen} />
           <Stack.Screen name="PublicServicesScreen" component={PublicServicesScreen} />
+          <Stack.Screen name="ShopScreen" component={ShopScreen} />
+          <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+          <Stack.Screen name="ShopkeeperDashboard" component={ShopkeeperDashboard} />
+          <Stack.Screen name="EditShopDetails" component={EditShopDetails} />
+          <Stack.Screen name="AddShopItem" component={AddShopItem} />
+          <Stack.Screen name="ManageStock" component={ManageStock} />
+          <Stack.Screen name="ShopkeeperApprovalWait" component={ShopkeeperApprovalWait} />
+          <Stack.Screen name="ShopkeeperProfile" component={ShopkeeperProfile} />
         </Stack.Navigator>
       </NavigationContainer>
     </LanguageProvider>

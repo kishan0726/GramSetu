@@ -48,8 +48,7 @@ const ShopkeeperLogin = ({ navigation }) => {
     setTimeout(() => {
       setLoading(false);
       Alert.alert(t('success'), t('loginSuccess'));
-      // Navigate to shopkeeper dashboard
-      // navigation.replace('ShopkeeperDashboard');
+      navigation.navigate('ShopkeeperDashboard');
     }, 1500);
   };
 

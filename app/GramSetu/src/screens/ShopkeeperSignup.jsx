@@ -1,81 +1,76 @@
-// ShopkeeperSignup.js
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
+  ScrollView,
   TouchableOpacity,
+  TextInput,
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StatusBar,
+  SafeAreaView,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const ShopkeeperSignup = ({ navigation }) => {
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     shopName: '',
     ownerName: '',
-    shopType: '',
-    mobileNumber: '',
     email: '',
-    address: '',
+    mobile: '',
     password: '',
     confirmPassword: '',
   });
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
 
   const validateForm = () => {
     const newErrors = {};
 
+    // Shop Name validation
     if (!formData.shopName.trim()) {
       newErrors.shopName = t('shopNameRequired');
     }
 
+    // Owner Name validation
     if (!formData.ownerName.trim()) {
       newErrors.ownerName = t('ownerNameRequired');
     }
 
-    if (!formData.shopType.trim()) {
-      newErrors.shopType = t('shopTypeRequired');
-    }
-
-    if (!formData.mobileNumber.trim()) {
-      newErrors.mobileNumber = t('mobileRequired');
-    } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
-      newErrors.mobileNumber = t('validMobile');
-    }
-
-    if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = t('emailRequired');
+    } else if (!emailRegex.test(formData.email)) {
       newErrors.email = t('validEmail');
     }
 
-    if (!formData.address.trim()) {
-      newErrors.address = t('addressRequired');
+    // Mobile validation
+    const mobileRegex = /^[0-9]{10}$/;
+    if (!formData.mobile.trim()) {
+      newErrors.mobile = t('mobileRequired');
+    } else if (!mobileRegex.test(formData.mobile)) {
+      newErrors.mobile = t('validMobile');
     }
 
+    // Password validation
     if (!formData.password) {
       newErrors.password = t('passwordRequired');
     } else if (formData.password.length < 6) {
       newErrors.password = t('passwordMinLength');
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    // Confirm Password validation
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = t('confirmPasswordRequired');
+    } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = t('passwordMismatch');
     }
 
@@ -83,221 +78,217 @@ const ShopkeeperSignup = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignup = () => {
+  const handleRegister = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    
-    // Simulate API call - Replace with actual API call
+
+    // Simulate API call
     setTimeout(() => {
       setLoading(false);
+      // Generate shop ID (in real app, this would come from backend)
+      const shopId = 'SHOP' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      
       Alert.alert(
-        t('success'),
-        t('registrationSuccess'),
+        t('registrationSuccessful'),
+        `${t('yourShopId')}: ${shopId}\n${t('saveShopId')}`,
         [
           {
-            text: 'OK',
-            onPress: () => navigation.replace('ShopkeeperLogin'),
-          },
+            text: t('ok'),
+            onPress: () => navigation.navigate('ShopkeeperLogin')
+          }
         ]
       );
-    }, 1500);
-  };
-
-  const handleBackToWelcome = () => {
-    navigation.navigate('Welcome');
+    }, 2000);
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <StatusBar backgroundColor="#f8fafc" barStyle="dark-content" />
-      
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        {/* Back Button */}
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backButtonText}>← {t('backToLogin')}</Text>
-        </TouchableOpacity>
-        
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Text style={styles.logo}>🏪</Text>
-          </View>
-          <Text style={styles.title}>{t('shopRegistration_title')}</Text>
-          <Text style={styles.subtitle}>
-            {t('registerYourShop')}
-          </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-back" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('shopRegistration')}</Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Form */}
-        <View style={styles.formContainer}>
-          {/* Shop Name */}
-          <Text style={styles.label}>{t('shopName')} *</Text>
-          <TextInput
-            style={[styles.input, errors.shopName && styles.inputError]}
-            placeholder={t('enterShopName')}
-            value={formData.shopName}
-            onChangeText={(value) => handleChange('shopName', value)}
-          />
-          {errors.shopName && (
-            <Text style={styles.errorText}>{errors.shopName}</Text>
-          )}
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.contentContainer}
+        >
+          {/* Illustration */}
+          <View style={styles.illustrationContainer}>
+            <View style={styles.iconCircle}>
+              <Icon name="store" size={50} color="#38bdf8" />
+            </View>
+            <Text style={styles.illustrationTitle}>{t('registerYourShop')}</Text>
+            <Text style={styles.illustrationSubtitle}>{t('basicDetails')}</Text>
+          </View>
 
-          {/* Owner Name */}
-          <Text style={[styles.label, styles.fieldSpacing]}>{t('ownerName')} *</Text>
-          <TextInput
-            style={[styles.input, errors.ownerName && styles.inputError]}
-            placeholder={t('enterOwnerName')}
-            value={formData.ownerName}
-            onChangeText={(value) => handleChange('ownerName', value)}
-          />
-          {errors.ownerName && (
-            <Text style={styles.errorText}>{errors.ownerName}</Text>
-          )}
+          {/* Form */}
+          <View style={styles.formContainer}>
+            {/* Shop Name */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>{t('shopName')} *</Text>
+              <View style={[styles.inputContainer, errors.shopName && styles.inputError]}>
+                <Icon name="store" size={20} color="#94a3b8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('enterShopName')}
+                  placeholderTextColor="#94a3b8"
+                  value={formData.shopName}
+                  onChangeText={(text) => setFormData({ ...formData, shopName: text })}
+                />
+              </View>
+              {errors.shopName && <Text style={styles.errorText}>{errors.shopName}</Text>}
+            </View>
 
-          {/* Shop Type */}
-          <Text style={[styles.label, styles.fieldSpacing]}>{t('shopType')} *</Text>
-          <TextInput
-            style={[styles.input, errors.shopType && styles.inputError]}
-            placeholder={t('enterShopType')}
-            value={formData.shopType}
-            onChangeText={(value) => handleChange('shopType', value)}
-          />
-          {errors.shopType && (
-            <Text style={styles.errorText}>{errors.shopType}</Text>
-          )}
+            {/* Owner Name */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>{t('ownerName')} *</Text>
+              <View style={[styles.inputContainer, errors.ownerName && styles.inputError]}>
+                <Icon name="person" size={20} color="#94a3b8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('enterOwnerName')}
+                  placeholderTextColor="#94a3b8"
+                  value={formData.ownerName}
+                  onChangeText={(text) => setFormData({ ...formData, ownerName: text })}
+                />
+              </View>
+              {errors.ownerName && <Text style={styles.errorText}>{errors.ownerName}</Text>}
+            </View>
 
-          {/* Mobile Number */}
-          <Text style={[styles.label, styles.fieldSpacing]}>{t('mobileNumber')} *</Text>
-          <TextInput
-            style={[styles.input, errors.mobileNumber && styles.inputError]}
-            placeholder={t('enterMobileNumber')}
-            value={formData.mobileNumber}
-            onChangeText={(value) => handleChange('mobileNumber', value)}
-            keyboardType="numeric"
-            maxLength={10}
-          />
-          {errors.mobileNumber && (
-            <Text style={styles.errorText}>{errors.mobileNumber}</Text>
-          )}
+            {/* Email */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>{t('email')} *</Text>
+              <View style={[styles.inputContainer, errors.email && styles.inputError]}>
+                <Icon name="email" size={20} color="#94a3b8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('enterEmail')}
+                  placeholderTextColor="#94a3b8"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={formData.email}
+                  onChangeText={(text) => setFormData({ ...formData, email: text })}
+                />
+              </View>
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            </View>
 
-          {/* Email */}
-          <Text style={[styles.label, styles.fieldSpacing]}>{t('email')}</Text>
-          <TextInput
-            style={[styles.input, errors.email && styles.inputError]}
-            placeholder={t('enterEmail')}
-            value={formData.email}
-            onChangeText={(value) => handleChange('email', value)}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          {errors.email && (
-            <Text style={styles.errorText}>{errors.email}</Text>
-          )}
+            {/* Mobile Number */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>{t('mobileNumber')} *</Text>
+              <View style={[styles.inputContainer, errors.mobile && styles.inputError]}>
+                <Icon name="phone" size={20} color="#94a3b8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('enterMobileNumber')}
+                  placeholderTextColor="#94a3b8"
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                  value={formData.mobile}
+                  onChangeText={(text) => setFormData({ ...formData, mobile: text })}
+                />
+              </View>
+              {errors.mobile && <Text style={styles.errorText}>{errors.mobile}</Text>}
+            </View>
 
-          {/* Address */}
-          <Text style={[styles.label, styles.fieldSpacing]}>{t('address')} *</Text>
-          <TextInput
-            style={[styles.input, styles.textArea, errors.address && styles.inputError]}
-            placeholder={t('enterAddress')}
-            value={formData.address}
-            onChangeText={(value) => handleChange('address', value)}
-            multiline={true}
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
-          {errors.address && (
-            <Text style={styles.errorText}>{errors.address}</Text>
-          )}
+            {/* Password */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>{t('password')} *</Text>
+              <View style={[styles.inputContainer, errors.password && styles.inputError]}>
+                <Icon name="lock" size={20} color="#94a3b8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('enterPassword')}
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!showPassword}
+                  value={formData.password}
+                  onChangeText={(text) => setFormData({ ...formData, password: text })}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Icon 
+                    name={showPassword ? 'visibility' : 'visibility-off'} 
+                    size={20} 
+                    color="#94a3b8" 
+                  />
+                </TouchableOpacity>
+              </View>
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            </View>
 
-          {/* Password */}
-          <Text style={[styles.label, styles.fieldSpacing]}>{t('password')} *</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={[styles.passwordInput, errors.password && styles.inputError]}
-              placeholder={t('createPassword')}
-              value={formData.password}
-              onChangeText={(value) => handleChange('password', value)}
-              secureTextEntry={!showPassword}
-            />
-            <TouchableOpacity 
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeButton}
+            {/* Confirm Password */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>{t('confirmPassword')} *</Text>
+              <View style={[styles.inputContainer, errors.confirmPassword && styles.inputError]}>
+                <Icon name="lock" size={20} color="#94a3b8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder={t('confirmPassword')}
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!showConfirmPassword}
+                  value={formData.confirmPassword}
+                  onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+                />
+                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                  <Icon 
+                    name={showConfirmPassword ? 'visibility' : 'visibility-off'} 
+                    size={20} 
+                    color="#94a3b8" 
+                  />
+                </TouchableOpacity>
+              </View>
+              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+            </View>
+
+            {/* Info Note */}
+            <View style={styles.noteContainer}>
+              <Icon name="info" size={16} color="#38bdf8" />
+              <Text style={styles.noteText}>
+                {t('registrationNote')}
+              </Text>
+            </View>
+
+            {/* Register Button */}
+            <TouchableOpacity
+              style={[styles.registerButton, loading && styles.registerButtonDisabled]}
+              onPress={handleRegister}
+              disabled={loading}
             >
-              <Text>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+              {loading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <>
+                  <Icon name="how-to-reg" size={20} color="#ffffff" />
+                  <Text style={styles.registerButtonText}>{t('register')}</Text>
+                </>
+              )}
             </TouchableOpacity>
+
+            {/* Login Link */}
+            <View style={styles.loginLinkContainer}>
+              <Text style={styles.loginLinkText}>{t('alreadyHaveAccount')}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('ShopkeeperLogin')}>
+                <Text style={styles.loginLink}>{t('loginHere')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          {errors.password && (
-            <Text style={styles.errorText}>{errors.password}</Text>
-          )}
-
-          {/* Confirm Password */}
-          <Text style={[styles.label, styles.fieldSpacing]}>{t('confirmPassword')} *</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={[styles.passwordInput, errors.confirmPassword && styles.inputError]}
-              placeholder={t('reenterPassword')}
-              value={formData.confirmPassword}
-              onChangeText={(value) => handleChange('confirmPassword', value)}
-              secureTextEntry={!showConfirmPassword}
-            />
-            <TouchableOpacity 
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-              style={styles.eyeButton}
-            >
-              <Text>{showConfirmPassword ? '👁️' : '👁️‍🗨️'}</Text>
-            </TouchableOpacity>
-          </View>
-          {errors.confirmPassword && (
-            <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-          )}
-
-          {/* Terms */}
-          <View style={styles.termsContainer}>
-            <Text style={styles.termsText}>
-              {t('agreeToTerms')}{' '}
-              <Text style={styles.termsLink}>{t('termsAndConditions')}</Text>
-            </Text>
-          </View>
-
-          {/* Signup Button */}
-          <TouchableOpacity 
-            style={[styles.signupButton, loading && styles.signupButtonDisabled]}
-            onPress={handleSignup}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.signupButtonText}>{t('registerShop')}</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Login Link */}
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>{t('alreadyHaveAccount')} </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('ShopkeeperLogin')}>
-              <Text style={styles.loginLink}>{t('loginHere')}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Back to Welcome */}
-          <TouchableOpacity 
-            onPress={handleBackToWelcome}
-            style={styles.backToWelcomeButton}
-          >
-            <Text style={styles.backToWelcomeText}>← {t('backToWelcome')}</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -306,149 +297,161 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-    paddingTop: 60,
-  },
-  backButton: {
-    marginBottom: 10,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#38bdf8',
-    fontWeight: '600',
+  keyboardView: {
+    flex: 1,
   },
   header: {
+    backgroundColor: '#38bdf8',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  illustrationContainer: {
     alignItems: 'center',
     marginBottom: 30,
   },
-  logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#38bdf8',
-    alignItems: 'center',
+  iconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#eff6ff',
     justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 16,
+    borderWidth: 3,
+    borderColor: '#38bdf8',
   },
-  logo: {
-    fontSize: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
+  illustrationTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  subtitle: {
-    fontSize: 16,
+  illustrationSubtitle: {
+    fontSize: 14,
     color: '#64748b',
-    textAlign: 'center',
   },
   formContainer: {
-    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  fieldContainer: {
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 8,
-  },
-  fieldSpacing: {
-    marginTop: 16,
-  },
-  input: {
-    backgroundColor: '#ffffff',
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
+    fontWeight: '500',
     color: '#1e293b',
+    marginBottom: 6,
   },
-  textArea: {
-    minHeight: 80,
-    paddingTop: 16,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   inputError: {
     borderColor: '#ef4444',
   },
-  errorText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '500',
+  inputIcon: {
+    marginRight: 8,
   },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-  },
-  passwordInput: {
+  input: {
     flex: 1,
-    padding: 16,
-    fontSize: 16,
+    height: 48,
+    fontSize: 14,
     color: '#1e293b',
   },
-  eyeButton: {
-    padding: 16,
+  errorText: {
+    fontSize: 12,
+    color: '#ef4444',
+    marginTop: 4,
   },
-  termsContainer: {
-    marginTop: 24,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  termsText: {
-    fontSize: 13,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  termsLink: {
-    color: '#38bdf8',
-    fontWeight: '600',
-  },
-  signupButton: {
-    backgroundColor: '#38bdf8',
+  noteContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#eff6ff',
+    padding: 12,
     borderRadius: 12,
-    padding: 16,
+    marginVertical: 16,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+  },
+  noteText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#1e293b',
+    lineHeight: 18,
+  },
+  registerButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#38bdf8',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
     marginBottom: 16,
   },
-  signupButtonDisabled: {
-    opacity: 0.5,
+  registerButtonDisabled: {
+    opacity: 0.7,
   },
-  signupButtonText: {
-    color: '#ffffff',
+  registerButtonText: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#ffffff',
   },
-  loginContainer: {
+  loginLinkContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 16,
+    alignItems: 'center',
+    gap: 4,
   },
-  loginText: {
+  loginLinkText: {
     fontSize: 14,
     color: '#64748b',
   },
   loginLink: {
     fontSize: 14,
-    color: '#38bdf8',
     fontWeight: '600',
-  },
-  backToWelcomeButton: {
-    alignSelf: 'center',
-    marginBottom: 30,
-    padding: 10,
-  },
-  backToWelcomeText: {
-    fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500',
+    color: '#38bdf8',
   },
 });
 

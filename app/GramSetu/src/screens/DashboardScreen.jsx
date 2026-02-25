@@ -113,7 +113,7 @@ const DashboardScreen = ({ navigation }) => {
             id: 3,
             title: t('shops'),
             icon: 'store',
-            screen: 'Shops',
+            screen: 'ShopScreen',
             color: '#10b981',
             bgColor: '#f0fdf4',
         },
@@ -193,7 +193,7 @@ const DashboardScreen = ({ navigation }) => {
     };
 
     const handleProfilePress = () => {
-        navigation.navigate('Profile');
+        navigation.navigate('ProfileScreen');
     };
 
     const handleQuickAction = (screen) => {
