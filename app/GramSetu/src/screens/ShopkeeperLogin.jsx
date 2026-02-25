@@ -1,5 +1,5 @@
 // ShopkeeperLogin.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,10 @@ import {
   ScrollView,
   StatusBar,
 } from 'react-native';
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ShopkeeperLogin = ({ navigation }) => {
   const { t } = useLanguage();
@@ -23,6 +25,26 @@ const ShopkeeperLogin = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await AsyncStorage.getItem('shopSession');
+
+      if (session) {
+        const parsed = JSON.parse(session);
+
+        if (parsed.status === 'approved') {
+          navigation.replace('ShopkeeperDashboard');
+        } else if (parsed.status === 'pending') {
+          navigation.replace('ShopkeeperApprovalWait');
+        } else if (parsed.status === 'rejected') {
+          navigation.replace('ShopkeeperRejected');
+        }
+      }
+    };
+
+    checkSession();
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -39,17 +61,53 @@ const ShopkeeperLogin = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    
-    // Simulate API call - Replace with actual API call
-    setTimeout(() => {
+
+    try {
+      const snapshot = await db.ref(`shops_list/${shopId}`).once('value');
+
+      if (!snapshot.exists()) {
+        setLoading(false);
+        Alert.alert(t('error'), 'Invalid Shop ID');
+        return;
+      }
+
+      const shopData = snapshot.val();
+
+      if (shopData.password !== password) {
+        setLoading(false);
+        Alert.alert(t('error'), 'Invalid Password');
+        return;
+      }
+
+      // ✅ Store session locally
+      await AsyncStorage.setItem(
+        'shopSession',
+        JSON.stringify({
+          shopId: shopData.id,
+          shopName: shopData.shopName,
+          status: shopData.status,
+        })
+      );
+
       setLoading(false);
+
       Alert.alert(t('success'), t('loginSuccess'));
-      navigation.navigate('ShopkeeperDashboard');
-    }, 1500);
+
+      if (shopData.status === 'approved') {
+        navigation.replace('ShopkeeperDashboard');
+      } else {
+        navigation.replace('ShopkeeperApprovalWait');
+      }
+
+    } catch (error) {
+      setLoading(false);
+      console.log('Login Error:', error);
+      Alert.alert('Error', 'Something went wrong');
+    }
   };
 
   const handleBackToWelcome = () => {
@@ -57,22 +115,22 @@ const ShopkeeperLogin = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar backgroundColor="#f8fafc" barStyle="dark-content" />
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+
         {/* Back Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleBackToWelcome}
           style={styles.backButton}
         >
           <Text style={styles.backButtonText}>← {t('backToWelcome')}</Text>
         </TouchableOpacity>
-        
+
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
@@ -107,7 +165,7 @@ const ShopkeeperLogin = ({ navigation }) => {
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
               style={styles.eyeButton}
             >
@@ -124,7 +182,7 @@ const ShopkeeperLogin = ({ navigation }) => {
           </TouchableOpacity>
 
           {/* Login Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.loginButton, loading && styles.loginButtonDisabled]}
             onPress={handleLogin}
             disabled={loading}

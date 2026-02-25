@@ -15,6 +15,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -23,7 +24,7 @@ const { width } = Dimensions.get('window');
 const ShopkeeperProfile = ({ navigation, route }) => {
   const { t, language } = useLanguage();
   const { shopData: initialData } = route.params || {};
-  
+
   const [shopData, setShopData] = useState(initialData || null);
   const [loading, setLoading] = useState(false);
   const [editModal, setEditModal] = useState(false);
@@ -164,28 +165,30 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     }, 1500);
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      t('logout'),
-      t('logoutConfirmation'),
-      [
-        {
-          text: t('cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('logout'),
-          onPress: () => {
-            // Clear any stored data and navigate to login
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'ShopkeeperLogin' }],
-            });
-          },
-          style: 'destructive',
-        },
-      ]
-    );
+  const handleLogout = async () => {
+      await AsyncStorage.removeItem('shopSession');
+      navigation.replace('ShopkeeperLogin');
+    // Alert.alert(
+    //   t('logout'),
+    //   t('logoutConfirmation'),
+    //   [
+    //     {
+    //       text: t('cancel'),
+    //       style: 'cancel',
+    //     },
+    //     {
+    //       text: t('logout'),
+    //       onPress: () => {
+    //         // Clear any stored data and navigate to login
+    //         navigation.reset({
+    //           index: 0,
+    //           routes: [{ name: 'ShopkeeperLogin' }],
+    //         });
+    //       },
+    //       style: 'destructive',
+    //     },
+    //   ]
+    // );
   };
 
   if (!shopData) {
@@ -231,7 +234,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
@@ -258,7 +261,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         {/* Owner Information Card */}
         <View style={styles.infoCard}>
           <Text style={styles.cardTitle}>{t('ownerInformation')}</Text>
-          
+
           <View style={styles.infoRow}>
             <Icon name="person" size={20} color="#64748b" />
             <View style={styles.infoContent}>
@@ -287,7 +290,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         {/* Shop Information Card */}
         <View style={styles.infoCard}>
           <Text style={styles.cardTitle}>{t('shopInformation')}</Text>
-          
+
           <View style={styles.infoRow}>
             <Icon name="store" size={20} color="#64748b" />
             <View style={styles.infoContent}>
@@ -332,7 +335,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         {/* Document Status Card */}
         <View style={styles.infoCard}>
           <Text style={styles.cardTitle}>{t('documentStatus')}</Text>
-          
+
           <View style={styles.documentRow}>
             <Text style={styles.documentName}>{t('aadhaarCard')}</Text>
             <View style={[styles.documentBadge, { backgroundColor: getStatusColor(shopData.documents?.aadhaar) + '15' }]}>
@@ -364,7 +367,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         {/* Registration Info Card */}
         <View style={styles.infoCard}>
           <Text style={styles.cardTitle}>{t('registrationInfo')}</Text>
-          
+
           <View style={styles.infoRow}>
             <Icon name="event" size={20} color="#64748b" />
             <View style={styles.infoContent}>
@@ -384,7 +387,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.passwordButton}
             onPress={() => setPasswordModal(true)}
           >
@@ -392,7 +395,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Text style={styles.passwordButtonText}>{t('changePassword')}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
           >
@@ -477,7 +480,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
               </View>
 
               {/* Save Button */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalSaveButton}
                 onPress={handleSaveProfile}
                 disabled={loading}
@@ -574,7 +577,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
               </View>
 
               {/* Update Button */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalSaveButton}
                 onPress={handleChangePassword}
                 disabled={loading}

@@ -259,7 +259,7 @@ const Shops = () => {
                   <div className="shop-header">
                     <div className="shop-icon">{getCategoryIcon(shop.category)}</div>
                     <div className="shop-info">
-                      <h4 className="shop-name">{shop.name}</h4>
+                      <h4 className="shop-name">{shop.shopName}</h4>
                       <p className="shop-owner">👤 {shop.ownerName}</p>
                     </div>
                     <div
@@ -278,11 +278,11 @@ const Shops = () => {
                     </div>
                     <div className="shop-detail-item">
                       <span className="shop-detail-label">Type:</span>
-                      <span className="shop-detail-value">{shop.shopType}</span>
+                      <span className="shop-detail-value">{shop.shopType || "none"}</span>
                     </div>
                     <div className="shop-detail-item">
                       <span className="shop-detail-label">Area:</span>
-                      <span className="shop-detail-value">{shop.shopArea}</span>
+                      <span className="shop-detail-value">{shop.shopArea || "none"}</span>
                     </div>
                   </div>
 
@@ -293,13 +293,13 @@ const Shops = () => {
                         <div
                           className="shop-score-fill"
                           style={{
-                            width: `${shop.verificationScore}%`,
+                            width: `${shop.verificationScore || 0}%`,
                             background: shop.verificationScore >= 70 ? '#10b981' :
                               shop.verificationScore >= 50 ? '#f59e0b' : '#ef4444'
                           }}
                         ></div>
                       </div>
-                      <div className="shop-score-value">{shop.verificationScore}%</div>
+                      <div className="shop-score-value">{shop.verificationScore || "0"}%</div>
                     </div>
                   </div>
                 </div>
@@ -328,7 +328,7 @@ const Shops = () => {
                   {getCategoryIcon(selectedShop.category)}
                 </div>
                 <div className="shop-title">
-                  <h2>{selectedShop.name}</h2>
+                  <h2>{selectedShop.name ||  "N/A"}</h2>
                   <div className="shop-subtitle">
                     <span className="shop-id">ID: {selectedShop.id}</span>
                     <span
@@ -353,7 +353,7 @@ const Shops = () => {
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Contact:</span>
-                    <span className="shop-info-value">{selectedShop.phone}</span>
+                    <span className="shop-info-value">{selectedShop.mobile}</span>
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Email:</span>
@@ -361,7 +361,15 @@ const Shops = () => {
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Registration Date:</span>
-                    <span className="shop-info-value">{selectedShop.registrationDate}</span>
+                    <span className="shop-info-value">
+                      {selectedShop.createdAt
+                        ? new Date(selectedShop.createdAt).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                        : "N/A"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -374,28 +382,28 @@ const Shops = () => {
                 <div className="shop-info-grid">
                   <div className="shop-info-item">
                     <span className="shop-info-label">Shop Type:</span>
-                    <span className="shop-info-value">{selectedShop.shopType}</span>
+                    <span className="shop-info-value">{selectedShop.shopType ||  "N/A"}</span>
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Category:</span>
-                    <span className="shop-info-value">{selectedShop.category}</span>
+                    <span className="shop-info-value">{selectedShop.category ||  "N/A"}</span>
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Shop Area:</span>
-                    <span className="shop-info-value">{selectedShop.shopArea}</span>
+                    <span className="shop-info-value">{selectedShop.shopArea ||  "N/A"}</span>
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Business Proof:</span>
-                    <span className="shop-info-value">{selectedShop.businessProof}</span>
+                    <span className="shop-info-value">{selectedShop.businessProof ||  "N/A"}</span>
                   </div>
                 </div>
                 <div className="shop-info-item-full">
                   <span className="shop-info-label">Address:</span>
-                  <span className="shop-info-value">{selectedShop.address}</span>
+                  <span className="shop-info-value">{selectedShop.address ||  "N/A"}</span>
                 </div>
                 <div className="shop-info-item-full">
                   <span className="shop-info-label">Description:</span>
-                  <span className="shop-info-value">{selectedShop.description}</span>
+                  <span className="shop-info-value">{selectedShop.description ||  "N/A"}</span>
                 </div>
               </div>
 
@@ -407,11 +415,11 @@ const Shops = () => {
                 <div className="shop-coordinates-display">
                   <div className="shop-coordinate-item">
                     <span className="shop-coord-label">Latitude:</span>
-                    <span className="shop-coord-value">{selectedShop.coordinates.lat}</span>
+                    <span className="shop-coord-value">{selectedShop.coordinates?.lat || "N/A"}</span>
                   </div>
                   <div className="shop-coordinate-item">
                     <span className="shop-coord-label">Longitude:</span>
-                    <span className="shop-coord-value">{selectedShop.coordinates.lng}</span>
+                    <span className="shop-coord-value">{selectedShop.coordinates?.lng || "N/A"}</span>
                   </div>
                   <button className="shop-btn btn-outline" onClick={() => setMapView(true)}>
                     View on Map
@@ -425,20 +433,21 @@ const Shops = () => {
                   Document Verification
                 </h4>
                 <div className="shop-documents-grid">
-                  {Object.entries(selectedShop.documents).map(([doc, status]) => (
-                    <div key={doc} className="shop-document-item">
-                      <div className="shop-document-name">
-                        <span className="shop-doc-icon">📋</span>
-                        {doc.toUpperCase()}
+                  {selectedShop.documents &&
+                    Object.entries(selectedShop.documents).map(([doc, status]) => (
+                      <div key={doc} className="shop-document-item">
+                        <div className="shop-document-name">
+                          <span className="shop-doc-icon">📋</span>
+                          {doc.toUpperCase()}
+                        </div>
+                        <div className={`shop-document-status ${status}`}>
+                          {status === 'verified' && '✅ Verified'}
+                          {status === 'uploaded' && '📤 Uploaded'}
+                          {status === 'pending' && '⏳ Pending'}
+                          {status === 'rejected' && '❌ Rejected'}
+                        </div>
                       </div>
-                      <div className={`shop-document-status ${status}`}>
-                        {status === 'verified' && '✅ Verified'}
-                        {status === 'uploaded' && '📤 Uploaded'}
-                        {status === 'pending' && '⏳ Pending'}
-                        {status === 'rejected' && '❌ Rejected'}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
 
@@ -566,12 +575,12 @@ const Shops = () => {
                 <div className="shop-selected-shop-info">
                   <h4>Selected Shop: {selectedShop.name}</h4>
                   <div className="shop-coordinate-display">
-                    <div>Lat: {selectedShop.coordinates.lat}</div>
-                    <div>Lng: {selectedShop.coordinates.lng}</div>
+                    <div>Lat: {selectedShop.coordinates?.lat || "N/A"}</div>
+                    <div>Lng: {selectedShop.coordinates?.lng || "N/A"}</div>
                   </div>
                   <button
                     className="shop-btn btn-primary"
-                    onClick={() => window.open(`https://maps.google.com/?q=${selectedShop.coordinates.lat},${selectedShop.coordinates.lng}`, '_blank')}
+                    onClick={() => window.open(`https://maps.google.com/?q=${selectedShop.coordinates?.lat || "N/A"},${selectedShop.coordinates?.lng || "N/A"}`, '_blank')}
                   >
                     Open in Google Maps
                   </button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   StatusBar,
   SafeAreaView,
 } from 'react-native';
+import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -29,7 +30,21 @@ const ShopkeeperSignup = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [shopId, setShopId] = useState('');
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    db.ref('shops_list').once('value').then(snapshot => {
+      let total = 0;
+
+      if (snapshot.exists()) {
+        total = snapshot.numChildren();
+      }
+
+      const newShopId = 'SHOP' + String(total + 1).padStart(3, '0');
+      setShopId(newShopId);
+    });
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -78,28 +93,24 @@ const ShopkeeperSignup = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!validateForm()) return;
 
-    setLoading(true);
+      const snapshot = await db.ref('shops_list').once('value');
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      // Generate shop ID (in real app, this would come from backend)
-      const shopId = 'SHOP' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-      
-      Alert.alert(
-        t('registrationSuccessful'),
-        `${t('yourShopId')}: ${shopId}\n${t('saveShopId')}`,
-        [
-          {
-            text: t('ok'),
-            onPress: () => navigation.navigate('ShopkeeperLogin')
-          }
-        ]
-      );
-    }, 2000);
+      let total = snapshot.exists() ? snapshot.numChildren() : 0;
+
+      const newShopId = 'shop' + String(total + 1).padStart(3, '0');
+
+      await db.ref(`shops_list/${newShopId}`).set({
+        id: newShopId,
+        ...formData, // 🔥 this saves all fields
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      });
+
+      alert('Shop Registered Successfully');
+
   };
 
   return (
@@ -220,10 +231,10 @@ const ShopkeeperSignup = ({ navigation }) => {
                   onChangeText={(text) => setFormData({ ...formData, password: text })}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Icon 
-                    name={showPassword ? 'visibility' : 'visibility-off'} 
-                    size={20} 
-                    color="#94a3b8" 
+                  <Icon
+                    name={showPassword ? 'visibility' : 'visibility-off'}
+                    size={20}
+                    color="#94a3b8"
                   />
                 </TouchableOpacity>
               </View>
@@ -244,10 +255,10 @@ const ShopkeeperSignup = ({ navigation }) => {
                   onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
                 />
                 <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  <Icon 
-                    name={showConfirmPassword ? 'visibility' : 'visibility-off'} 
-                    size={20} 
-                    color="#94a3b8" 
+                  <Icon
+                    name={showConfirmPassword ? 'visibility' : 'visibility-off'}
+                    size={20}
+                    color="#94a3b8"
                   />
                 </TouchableOpacity>
               </View>

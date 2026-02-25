@@ -15,18 +15,20 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { db } from '../config/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 import * as ImagePicker from 'react-native-image-picker';
 
 const { width } = Dimensions.get('window');
 
-const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
+const ShopkeeperApprovalWait = ({ navigation, route }) => {
   const { t, language } = useLanguage();
   const { shopData: initialData } = route.params || {};
-  
+
   const [shopData, setShopData] = useState(initialData || null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [updateModal, setUpdateModal] = useState(false);
   const [documentModal, setDocumentModal] = useState(false);
   const [selectedDocType, setSelectedDocType] = useState('');
@@ -49,28 +51,75 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
   const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
-    if (shopData) {
-      setFormData({
-        shopName: shopData.name || '',
-        ownerName: shopData.ownerName || '',
-        email: shopData.email || '',
-        phone: shopData.phone || '',
-        address: shopData.address || '',
-        category: shopData.category || '',
-        description: shopData.description || '',
-        businessProof: shopData.businessProof || '',
-      });
-      
-      if (shopData.documents) {
-        setDocuments({
-          aadhaar: { status: shopData.documents.aadhaar || 'pending', uri: null },
-          pan: { status: shopData.documents.pan || 'pending', uri: null },
-          license: { status: shopData.documents.license || 'pending', uri: null },
-          businessProof: { status: shopData.businessProof ? 'uploaded' : 'pending', uri: null },
-        });
+    const loadShopData = async () => {
+      try {
+        console.log("STEP 1: Starting load...");
+        setLoading(true);
+
+        const session = await AsyncStorage.getItem('shopSession');
+        console.log("STEP 2: Session raw:", session);
+
+        if (!session) {
+          console.log("No session found!");
+          setLoading(false);
+          return;
+        }
+
+        const parsed = JSON.parse(session);
+        console.log("STEP 3: Parsed session:", parsed);
+
+        const shopId = parsed.shopId;
+        console.log("STEP 4: Shop ID:", shopId);
+
+        if (!shopId) {
+          console.log("Shop ID is undefined!");
+          setLoading(false);
+          return;
+        }
+
+        const snapshot = await db.ref(`shops_list/${shopId}`).once('value');
+        console.log("STEP 5: Snapshot exists?", snapshot.exists());
+
+        if (snapshot.exists()) {
+          console.log("STEP 6: Data:", snapshot.val());
+          const data = snapshot.val();
+          setShopData(data);
+          
+          // Initialize form data with fetched data
+          setFormData({
+            shopName: data.name || '',
+            ownerName: data.ownerName || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            address: data.address || '',
+            category: data.category || '',
+            description: data.description || '',
+            businessProof: data.businessProof || '',
+          });
+
+          // Initialize documents
+          if (data.documents) {
+            setDocuments({
+              aadhaar: { status: data.documents.aadhaar || 'pending', uri: null },
+              pan: { status: data.documents.pan || 'pending', uri: null },
+              license: { status: data.documents.license || 'pending', uri: null },
+              businessProof: { status: data.businessProof ? 'uploaded' : 'pending', uri: null },
+            });
+          }
+        } else {
+          console.log("Shop not found in DB");
+        }
+
+        setLoading(false);
+
+      } catch (error) {
+        console.log("ERROR:", error);
+        setLoading(false);
       }
-    }
-  }, [shopData]);
+    };
+
+    loadShopData();
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -247,7 +296,8 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
     { id: 'agriculture', name: t('agriculture'), icon: 'agriculture' },
   ];
 
-  if (!shopData) {
+  // Show loading state
+  if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
@@ -264,6 +314,35 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#38bdf8" />
           <Text style={styles.loadingText}>{t('loadingData')}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error if no shop data
+  if (!shopData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-back" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('applicationStatus')}</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Icon name="error-outline" size={60} color="#ef4444" />
+          <Text style={styles.errorText}>{t('noShopData')}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => navigation.replace('ShopkeeperLogin')}
+          >
+            <Text style={styles.retryText}>{t('goToLogin')}</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -290,28 +369,28 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
       >
         {/* Status Card */}
         <View style={styles.statusCard}>
-          <View style={[styles.statusIconContainer, { backgroundColor: getStatusColor(shopData.status) + '15' }]}>
-            <Icon 
-              name={getStatusIcon(shopData.status)} 
-              size={60} 
-              color={getStatusColor(shopData.status)} 
+          <View style={[styles.statusIconContainer, { backgroundColor: getStatusColor(shopData?.status) + '15' }]}>
+            <Icon
+              name={getStatusIcon(shopData?.status)}
+              size={60}
+              color={getStatusColor(shopData?.status)}
             />
           </View>
-          
+
           <Text style={styles.statusTitle}>
-            {shopData.status === 'pending' ? t('applicationPending') : t('applicationRejected')}
+            {shopData?.status === 'pending' ? t('applicationPending') : t('applicationRejected')}
           </Text>
-          
+
           <Text style={styles.statusMessage}>
-            {shopData.status === 'pending' 
-              ? t('pendingMessage') 
+            {shopData?.status === 'pending'
+              ? t('pendingMessage')
               : t('rejectedMessage')}
           </Text>
 
@@ -323,42 +402,42 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               </View>
               <View style={styles.timelineContent}>
                 <Text style={styles.timelineTitle}>{t('registrationSubmitted')}</Text>
-                <Text style={styles.timelineDate}>{shopData.registrationDate}</Text>
+                <Text style={styles.timelineDate}>{shopData?.registrationDate || '-'}</Text>
               </View>
             </View>
 
             <View style={styles.timelineItem}>
-              <View style={[styles.timelineDot, { 
-                backgroundColor: shopData.status === 'pending' ? '#f59e0b' : 
-                                shopData.status === 'approved' ? '#10b981' : '#ef4444' 
+              <View style={[styles.timelineDot, {
+                backgroundColor: shopData?.status === 'pending' ? '#f59e0b' :
+                  shopData?.status === 'approved' ? '#10b981' : '#ef4444'
               }]}>
-                <Icon 
-                  name={shopData.status === 'pending' ? 'hourglass-empty' : 
-                        shopData.status === 'approved' ? 'check' : 'close'} 
-                  size={12} 
-                  color="#ffffff" 
+                <Icon
+                  name={shopData?.status === 'pending' ? 'hourglass-empty' :
+                    shopData?.status === 'approved' ? 'check' : 'close'}
+                  size={12}
+                  color="#ffffff"
                 />
               </View>
               <View style={styles.timelineContent}>
                 <Text style={styles.timelineTitle}>{t('adminReview')}</Text>
                 <Text style={styles.timelineDate}>
-                  {shopData.status === 'pending' ? t('inProgress') : shopData.lastUpdated}
+                  {shopData?.status === 'pending' ? t('inProgress') : (shopData?.lastUpdated || '-')}
                 </Text>
               </View>
             </View>
 
             <View style={styles.timelineItem}>
-              <View style={[styles.timelineDot, { 
-                backgroundColor: shopData.status === 'approved' ? '#10b981' : '#e2e8f0' 
+              <View style={[styles.timelineDot, {
+                backgroundColor: shopData?.status === 'approved' ? '#10b981' : '#e2e8f0'
               }]}>
                 <Icon name="check" size={12} color="#ffffff" />
               </View>
               <View style={styles.timelineContent}>
-                <Text style={[styles.timelineTitle, shopData.status !== 'approved' && styles.timelineInactive]}>
+                <Text style={[styles.timelineTitle, shopData?.status !== 'approved' && styles.timelineInactive]}>
                   {t('finalApproval')}
                 </Text>
                 <Text style={styles.timelineDate}>
-                  {shopData.status === 'approved' ? shopData.lastUpdated : t('pending')}
+                  {shopData?.status === 'approved' ? (shopData?.lastUpdated || '-') : t('pending')}
                 </Text>
               </View>
             </View>
@@ -379,7 +458,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               <Icon name="store" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('shopName')}</Text>
-                <Text style={styles.detailValue}>{shopData.name}</Text>
+                <Text style={styles.detailValue}>{shopData?.name || '-'}</Text>
               </View>
             </View>
 
@@ -387,7 +466,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               <Icon name="person" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('ownerName')}</Text>
-                <Text style={styles.detailValue}>{shopData.ownerName}</Text>
+                <Text style={styles.detailValue}>{shopData?.ownerName || '-'}</Text>
               </View>
             </View>
 
@@ -395,7 +474,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               <Icon name="email" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('email')}</Text>
-                <Text style={styles.detailValue}>{shopData.email}</Text>
+                <Text style={styles.detailValue}>{shopData?.email || '-'}</Text>
               </View>
             </View>
 
@@ -403,7 +482,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               <Icon name="phone" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('mobile')}</Text>
-                <Text style={styles.detailValue}>{shopData.phone}</Text>
+                <Text style={styles.detailValue}>{shopData?.phone || '-'}</Text>
               </View>
             </View>
 
@@ -411,7 +490,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               <Icon name="category" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('category')}</Text>
-                <Text style={styles.detailValue}>{t(shopData.category)}</Text>
+                <Text style={styles.detailValue}>{shopData?.category ? t(shopData.category) : '-'}</Text>
               </View>
             </View>
 
@@ -419,14 +498,14 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               <Icon name="description" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('description')}</Text>
-                <Text style={styles.detailValue} numberOfLines={2}>{shopData.description}</Text>
+                <Text style={styles.detailValue} numberOfLines={2}>{shopData?.description || '-'}</Text>
               </View>
             </View>
           </View>
 
           <View style={styles.addressSection}>
             <Icon name="location-on" size={16} color="#64748b" />
-            <Text style={styles.addressText}>{shopData.address}</Text>
+            <Text style={styles.addressText}>{shopData?.address || '-'}</Text>
           </View>
         </View>
 
@@ -495,7 +574,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
         </View>
 
         {/* Update Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.updateMainButton}
           onPress={() => setUpdateModal(true)}
         >
@@ -531,7 +610,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView 
+            <ScrollView
               contentContainerStyle={styles.modalBody}
               showsVerticalScrollIndicator={false}
             >
@@ -590,8 +669,8 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               {/* Category */}
               <View style={styles.modalField}>
                 <Text style={styles.modalLabel}>{t('category')} *</Text>
-                <ScrollView 
-                  horizontal 
+                <ScrollView
+                  horizontal
                   showsHorizontalScrollIndicator={false}
                   style={styles.categoryScroll}
                 >
@@ -605,10 +684,10 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
                         ]}
                         onPress={() => setFormData({ ...formData, category: cat.id })}
                       >
-                        <Icon 
-                          name={cat.icon} 
-                          size={16} 
-                          color={formData.category === cat.id ? '#ffffff' : '#64748b'} 
+                        <Icon
+                          name={cat.icon}
+                          size={16}
+                          color={formData.category === cat.id ? '#ffffff' : '#64748b'}
                         />
                         <Text style={[
                           styles.categoryChipText,
@@ -665,8 +744,8 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               {/* Document Upload Section */}
               <View style={styles.modalDocumentSection}>
                 <Text style={styles.modalSectionTitle}>{t('uploadDocuments')}</Text>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.modalDocumentButton}
                   onPress={() => {
                     setSelectedDocType('aadhaar');
@@ -684,7 +763,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
                   </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.modalDocumentButton}
                   onPress={() => {
                     setSelectedDocType('pan');
@@ -702,7 +781,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
                   </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.modalDocumentButton}
                   onPress={() => {
                     setSelectedDocType('license');
@@ -722,7 +801,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               </View>
 
               {/* Save Button */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalSaveButton}
                 onPress={handleSaveDetails}
                 disabled={loading}
@@ -748,8 +827,8 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
         <View style={styles.simpleModalOverlay}>
           <View style={styles.simpleModalContent}>
             <Text style={styles.simpleModalTitle}>{t('uploadDocument')}</Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.simpleModalOption}
               onPress={() => handleTakePhoto(selectedDocType)}
             >
@@ -757,7 +836,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               <Text style={styles.simpleModalOptionText}>{t('takePhoto')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.simpleModalOption}
               onPress={() => handleSelectDocument(selectedDocType)}
             >
@@ -765,7 +844,7 @@ const ShopkeeperApprovalWaitScreen = ({ navigation, route }) => {
               <Text style={styles.simpleModalOptionText}>{t('chooseFromGallery')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.simpleModalCancel}
               onPress={() => setDocumentModal(false)}
             >
@@ -821,6 +900,30 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: '#64748b',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#ef4444',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: '#38bdf8',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -1208,4 +1311,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ShopkeeperApprovalWaitScreen;
+export default ShopkeeperApprovalWait;
