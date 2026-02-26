@@ -23,32 +23,40 @@ import * as ImagePicker from 'react-native-image-picker';
 
 const { width } = Dimensions.get('window');
 
+// Cloudinary configuration
+const CLOUDINARY_CLOUD_NAME = 'dmjwrm8sp';
+const CLOUDINARY_UPLOAD_PRESET = 'Documents';
+
 const ShopkeeperApprovalWait = ({ navigation, route }) => {
   const { t, language } = useLanguage();
   const { shopData: initialData } = route.params || {};
 
   const [shopData, setShopData] = useState(initialData || null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [updateModal, setUpdateModal] = useState(false);
   const [documentModal, setDocumentModal] = useState(false);
   const [selectedDocType, setSelectedDocType] = useState('');
   const [formData, setFormData] = useState({
     shopName: '',
-    ownerName: '',
     email: '',
     phone: '',
     address: '',
     category: '',
     description: '',
     businessProof: '',
+    latitude: '',
+    longitude: '',
   });
+  const [originalFormData, setOriginalFormData] = useState({});
   const [documents, setDocuments] = useState({
-    aadhaar: { status: 'pending', uri: null },
-    pan: { status: 'pending', uri: null },
-    license: { status: 'pending', uri: null },
-    businessProof: { status: 'pending', uri: null },
+    aadhaar: { status: 'pending', uri: null, cloudinaryUrl: null, fileName: null },
+    pan: { status: 'pending', uri: null, cloudinaryUrl: null, fileName: null },
+    license: { status: 'pending', uri: null, cloudinaryUrl: null, fileName: null },
+    businessProof: { status: 'pending', uri: null, cloudinaryUrl: null, fileName: null },
   });
   const [formErrors, setFormErrors] = useState({});
+  const [locationLoading, setLocationLoading] = useState(false);
 
   useEffect(() => {
     const loadShopData = async () => {
@@ -84,26 +92,56 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
           console.log("STEP 6: Data:", snapshot.val());
           const data = snapshot.val();
           setShopData(data);
-          
+
           // Initialize form data with fetched data
-          setFormData({
-            shopName: data.name || '',
-            ownerName: data.ownerName || '',
+          // Note: Using the same value for both name and ownerName in display
+          const newFormData = {
+            shopName: data.name || data.shopName || '',
             email: data.email || '',
             phone: data.phone || '',
             address: data.address || '',
             category: data.category || '',
             description: data.description || '',
             businessProof: data.businessProof || '',
-          });
+            latitude: data.coordinates?.lat?.toString() || '',
+            longitude: data.coordinates?.lng?.toString() || '',
+          };
+          
+          setFormData(newFormData);
+          setOriginalFormData(newFormData); // Store original values
 
-          // Initialize documents
-          if (data.documents) {
+          // Initialize documents - fetch from shops_list/shop_image path
+          if (data.shop_image) {
+            const updatedDocs = { ...documents };
+            
+            // Check each document type in shop_image
+            const docTypes = ['aadhaar', 'pan', 'license'];
+            for (const docType of docTypes) {
+              if (data.shop_image[docType]) {
+                updatedDocs[docType] = { 
+                  status: 'uploaded', 
+                  uri: null, 
+                  cloudinaryUrl: data.shop_image[docType].url,
+                  fileName: data.shop_image[docType].fileName || null
+                };
+              } else {
+                updatedDocs[docType] = { 
+                  status: data.documents?.[docType] || 'pending', 
+                  uri: null, 
+                  cloudinaryUrl: null,
+                  fileName: null 
+                };
+              }
+            }
+            
+            setDocuments(updatedDocs);
+          } else if (data.documents) {
+            // Fallback to old documents structure
             setDocuments({
-              aadhaar: { status: data.documents.aadhaar || 'pending', uri: null },
-              pan: { status: data.documents.pan || 'pending', uri: null },
-              license: { status: data.documents.license || 'pending', uri: null },
-              businessProof: { status: data.businessProof ? 'uploaded' : 'pending', uri: null },
+              aadhaar: { status: data.documents.aadhaar || 'pending', uri: null, cloudinaryUrl: null, fileName: null },
+              pan: { status: data.documents.pan || 'pending', uri: null, cloudinaryUrl: null, fileName: null },
+              license: { status: data.documents.license || 'pending', uri: null, cloudinaryUrl: null, fileName: null },
+              businessProof: { status: data.businessProof ? 'uploaded' : 'pending', uri: null, cloudinaryUrl: null, fileName: null },
             });
           }
         } else {
@@ -120,6 +158,253 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
 
     loadShopData();
   }, []);
+
+  // Function to generate custom filename
+  const generateFileName = (shopId, docType) => {
+    const timestamp = Date.now();
+    return `${shopId}${docType}_${timestamp}`;
+  };
+
+  // Function to upload image to Cloudinary with custom filename
+  const uploadToCloudinary = async (imageUri, shopId, docType) => {
+    console.log("🔥 uploadToCloudinary CALLED");
+    console.log("Cloud Name:", CLOUDINARY_CLOUD_NAME);
+    console.log("Upload Preset:", CLOUDINARY_UPLOAD_PRESET);
+    
+    const fileName = generateFileName(shopId, docType);
+    console.log("Generated filename:", fileName);
+    
+    const data = new FormData();
+
+    // Get file extension and set proper mime type
+    const fileExtension = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
+    const mimeType = fileExtension === 'png' ? 'image/png' : 
+                     fileExtension === 'jpg' || fileExtension === 'jpeg' ? 'image/jpeg' : 
+                     'image/jpeg';
+
+    data.append("file", {
+      uri: imageUri,
+      type: mimeType,
+      name: `${fileName}.${fileExtension}`,
+    });
+
+    data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    
+    // Optional: Add custom filename as public_id
+    data.append("public_id", fileName);
+
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+    console.log("Upload URL:", uploadUrl);
+
+    try {
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: data,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const result = await response.json();
+      console.log("Cloudinary response:", result);
+
+      if (!response.ok) {
+        console.log("Cloudinary error details:", result);
+        throw new Error(result.error?.message || "Upload failed");
+      }
+
+      return {
+        secure_url: result.secure_url,
+        public_id: result.public_id,
+        fileName: fileName
+      };
+    } catch (error) {
+      console.log("Cloudinary upload error:", error);
+      throw error;
+    }
+  };
+
+  // Function to save image URL to Firebase under shops_list/shop_image
+  const saveImageUrlToFirebase = async (shopId, docType, uploadResult) => {
+    console.log('Saving to Firebase shops_list/shop_image:', { shopId, docType, uploadResult });
+
+    try {
+      // Save to shops_list/shop_image path
+      await db.ref(`shops_list/${shopId}/shop_image/${docType}`).set({
+        url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+        fileName: uploadResult.fileName,
+        uploadedAt: new Date().toISOString(),
+        status: 'uploaded',
+        documentType: docType
+      });
+      
+      // Also update the document status in shops_list/documents for backward compatibility
+      await db.ref(`shops_list/${shopId}/documents/${docType}`).set('uploaded');
+      
+      // Update lastUpdated timestamp
+      await db.ref(`shops_list/${shopId}/lastUpdated`).set(new Date().toISOString());
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving to Firebase:', error);
+      throw error;
+    }
+  };
+
+  const handleSelectDocument = (docType) => {
+    setSelectedDocType(docType);
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      includeBase64: false,
+    };
+
+    ImagePicker.launchImageLibrary(options, async (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled');
+        return;
+      }
+
+      if (response.errorCode) {
+        console.log('ImagePicker Error:', response.errorMessage);
+        Alert.alert('Error', response.errorMessage || 'Image picker error');
+        return;
+      }
+
+      if (!response.assets || response.assets.length === 0) {
+        Alert.alert('Error', 'No image selected');
+        return;
+      }
+
+      const imageUri = response.assets[0].uri;
+      console.log("Selected Image URI:", imageUri);
+
+      try {
+        setUploading(true);
+        setDocumentModal(false);
+
+        // Upload to Cloudinary with custom filename
+        const uploadResult = await uploadToCloudinary(imageUri, shopData.id, docType);
+        console.log("Upload result:", uploadResult);
+
+        // Save to Firebase under shops_list/shop_image
+        await saveImageUrlToFirebase(shopData.id, docType, uploadResult);
+
+        // Update local state
+        setDocuments((prev) => ({
+          ...prev,
+          [docType]: { 
+            status: 'uploaded', 
+            uri: imageUri,
+            cloudinaryUrl: uploadResult.secure_url,
+            fileName: uploadResult.fileName
+          },
+        }));
+
+        Alert.alert('Success', `${docType} document uploaded successfully as ${uploadResult.fileName}`);
+
+      } catch (error) {
+        console.log(error);
+        Alert.alert(
+          'Upload Failed', 
+          error.message || 'Failed to upload document. Please try again.'
+        );
+      } finally {
+        setUploading(false);
+      }
+    });
+  };
+
+  const handleTakePhoto = (docType) => {
+    setSelectedDocType(docType);
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      saveToPhotos: true,
+      includeBase64: false,
+    };
+
+    ImagePicker.launchCamera(options, async (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled');
+        return;
+      }
+
+      if (response.errorCode) {
+        console.log('ImagePicker Error:', response.errorMessage);
+        Alert.alert('Error', response.errorMessage || 'Camera error');
+        return;
+      }
+
+      if (!response.assets || response.assets.length === 0) {
+        Alert.alert('Error', 'No image captured');
+        return;
+      }
+
+      const imageUri = response.assets[0].uri;
+      console.log("Captured Image URI:", imageUri);
+
+      try {
+        setUploading(true);
+        setDocumentModal(false);
+
+        // Upload to Cloudinary with custom filename
+        const uploadResult = await uploadToCloudinary(imageUri, shopData.id, docType);
+        console.log("Upload result:", uploadResult);
+
+        // Save to Firebase under shops_list/shop_image
+        await saveImageUrlToFirebase(shopData.id, docType, uploadResult);
+
+        // Update local state
+        setDocuments((prev) => ({
+          ...prev,
+          [docType]: { 
+            status: 'uploaded', 
+            uri: imageUri,
+            cloudinaryUrl: uploadResult.secure_url,
+            fileName: uploadResult.fileName
+          },
+        }));
+
+        Alert.alert('Success', `${docType} document uploaded successfully as ${uploadResult.fileName}`);
+
+      } catch (error) {
+        console.log(error);
+        Alert.alert(
+          'Upload Failed', 
+          error.message || 'Failed to upload document. Please try again.'
+        );
+      } finally {
+        setUploading(false);
+      }
+    });
+  };
+
+  // Function to fetch current location (to be implemented later)
+  const handleFetchLocation = () => {
+    setLocationLoading(true);
+
+    // TODO: Implement actual location fetching
+    // This will use Geolocation API to get current coordinates
+
+    // Mock location fetch for now
+    setTimeout(() => {
+      // Example coordinates (Village location)
+      const mockLat = '23.0225';
+      const mockLng = '72.5714';
+
+      setFormData({
+        ...formData,
+        latitude: mockLat,
+        longitude: mockLng,
+      });
+
+      setLocationLoading(false);
+      Alert.alert(t('success'), t('locationFetched'));
+    }, 1500);
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -166,32 +451,28 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
     }
   };
 
+  // Simplified validation - only check if fields are not empty when they are provided
   const validateForm = () => {
     const errors = {};
 
-    if (!formData.shopName.trim()) {
+    // Only validate if the field has a value (optional fields can be empty)
+    if (formData.shopName && !formData.shopName.trim()) {
       errors.shopName = t('shopNameRequired');
     }
-    if (!formData.ownerName.trim()) {
-      errors.ownerName = t('ownerNameRequired');
-    }
-    if (!formData.email.trim()) {
+    if (formData.email && !formData.email.trim()) {
       errors.email = t('emailRequired');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = t('validEmail');
     }
-    if (!formData.phone.trim()) {
+    if (formData.phone && !formData.phone.trim()) {
       errors.phone = t('mobileRequired');
-    } else if (!/^[0-9]{10}$/.test(formData.phone.replace(/\D/g, ''))) {
+    } else if (formData.phone && !/^[0-9]{10}$/.test(formData.phone.replace(/\D/g, ''))) {
       errors.phone = t('validMobile');
     }
-    if (!formData.address.trim()) {
+    if (formData.address && !formData.address.trim()) {
       errors.address = t('addressRequired');
     }
-    if (!formData.category) {
-      errors.category = t('categoryRequired');
-    }
-    if (!formData.description.trim()) {
+    if (formData.description && !formData.description.trim()) {
       errors.description = t('descriptionRequired');
     }
 
@@ -199,90 +480,92 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSelectDocument = (docType) => {
-    setSelectedDocType(docType);
-    const options = {
-      title: t('selectDocument'),
-      storageOptions: {
-        skipBackup: true,
-        path: 'documents',
-      },
-    };
-
-    ImagePicker.launchImageLibrary(options, (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled');
-      } else if (response.error) {
-        Alert.alert('Error', response.error);
-      } else {
-        const source = { uri: response.uri };
-        setDocuments({
-          ...documents,
-          [docType]: { status: 'uploaded', uri: source.uri },
-        });
-        Alert.alert(t('success'), t('documentUploaded'));
+  // Function to get only changed fields
+  const getChangedFields = () => {
+    const changes = {};
+    
+    // Compare each field with original value
+    Object.keys(formData).forEach(key => {
+      if (formData[key] !== originalFormData[key]) {
+        changes[key] = formData[key];
       }
-      setDocumentModal(false);
     });
+    
+    return changes;
   };
 
-  const handleTakePhoto = (docType) => {
-    setSelectedDocType(docType);
-    const options = {
-      title: t('takePhoto'),
-      storageOptions: {
-        skipBackup: true,
-        path: 'documents',
-      },
-    };
-
-    ImagePicker.launchCamera(options, (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled');
-      } else if (response.error) {
-        Alert.alert('Error', response.error);
-      } else {
-        const source = { uri: response.uri };
-        setDocuments({
-          ...documents,
-          [docType]: { status: 'uploaded', uri: source.uri },
-        });
-        Alert.alert(t('success'), t('documentUploaded'));
-      }
-      setDocumentModal(false);
-    });
-  };
-
-  const handleSaveDetails = () => {
+  const handleSaveDetails = async () => {
     if (!validateForm()) {
       Alert.alert(t('error'), t('pleaseFixErrors'));
       return;
     }
 
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    const changedFields = getChangedFields();
+    
+    // Check if any fields were changed
+    if (Object.keys(changedFields).length === 0) {
+      Alert.alert(t('info'), t('noChangesDetected'));
       setUpdateModal(false);
-      Alert.alert(t('success'), t('detailsUpdated'));
-      // Update local data
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Prepare update object with only changed fields
+      const updateData = {};
+      
+      // Map form fields to database fields
+      if (changedFields.shopName) updateData.name = changedFields.shopName;
+      if (changedFields.email) updateData.email = changedFields.email;
+      if (changedFields.phone) updateData.phone = changedFields.phone;
+      if (changedFields.address) updateData.address = changedFields.address;
+      if (changedFields.category) updateData.category = changedFields.category;
+      if (changedFields.description) updateData.description = changedFields.description;
+      if (changedFields.businessProof) updateData.businessProof = changedFields.businessProof;
+      
+      // Handle coordinates update
+      if (changedFields.latitude || changedFields.longitude) {
+        updateData.coordinates = {
+          lat: parseFloat(changedFields.latitude !== undefined ? changedFields.latitude : originalFormData.latitude) || 0,
+          lng: parseFloat(changedFields.longitude !== undefined ? changedFields.longitude : originalFormData.longitude) || 0,
+        };
+      }
+      
+      // Always update lastUpdated
+      updateData.lastUpdated = new Date().toISOString();
+
+      console.log("Updating with changed fields:", updateData);
+
+      // Update shop data in Firebase with only changed fields
+      await db.ref(`shops_list/${shopData.id}`).update(updateData);
+
+      // Update local data - merge with existing data
       setShopData({
         ...shopData,
-        name: formData.shopName,
-        ownerName: formData.ownerName,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        category: formData.category,
-        description: formData.description,
-        businessProof: formData.businessProof,
-        documents: {
-          aadhaar: documents.aadhaar.status,
-          pan: documents.pan.status,
-          license: documents.license.status,
+        ...updateData,
+        // Ensure coordinates object is properly merged
+        coordinates: {
+          ...shopData.coordinates,
+          ...(updateData.coordinates || {}),
         }
       });
-    }, 1500);
+
+      // Update original form data with new values
+      setOriginalFormData({
+        ...originalFormData,
+        ...formData
+      });
+
+      setUpdateModal(false);
+      Alert.alert(t('success'), t('detailsUpdated'));
+
+    } catch (error) {
+      console.error('Error saving details:', error);
+      Alert.alert(t('error'), t('saveFailed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const categories = [
@@ -337,7 +620,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
         <View style={styles.errorContainer}>
           <Icon name="error-outline" size={60} color="#ef4444" />
           <Text style={styles.errorText}>{t('noShopData')}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.retryButton}
             onPress={() => navigation.replace('ShopkeeperLogin')}
           >
@@ -402,7 +685,11 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
               </View>
               <View style={styles.timelineContent}>
                 <Text style={styles.timelineTitle}>{t('registrationSubmitted')}</Text>
-                <Text style={styles.timelineDate}>{shopData?.registrationDate || '-'}</Text>
+                <Text style={styles.timelineDate}>
+                  {shopData?.createdAt
+                    ? new Date(shopData.createdAt).toLocaleDateString('en-GB')
+                    : '-'}
+                </Text>
               </View>
             </View>
 
@@ -421,7 +708,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
               <View style={styles.timelineContent}>
                 <Text style={styles.timelineTitle}>{t('adminReview')}</Text>
                 <Text style={styles.timelineDate}>
-                  {shopData?.status === 'pending' ? t('inProgress') : (shopData?.lastUpdated || '-')}
+                  {shopData?.status === 'pending' ? t('inProgress') : t('rejected')}
                 </Text>
               </View>
             </View>
@@ -437,7 +724,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                   {t('finalApproval')}
                 </Text>
                 <Text style={styles.timelineDate}>
-                  {shopData?.status === 'approved' ? (shopData?.lastUpdated || '-') : t('pending')}
+                  {shopData?.status === 'rejected' ? t('rejected') : t('pending')}
                 </Text>
               </View>
             </View>
@@ -458,15 +745,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
               <Icon name="store" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('shopName')}</Text>
-                <Text style={styles.detailValue}>{shopData?.name || '-'}</Text>
-              </View>
-            </View>
-
-            <View style={styles.detailItem}>
-              <Icon name="person" size={16} color="#64748b" />
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t('ownerName')}</Text>
-                <Text style={styles.detailValue}>{shopData?.ownerName || '-'}</Text>
+                <Text style={styles.detailValue}>{shopData?.name || shopData?.shopName || 'N/A'}</Text>
               </View>
             </View>
 
@@ -474,7 +753,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
               <Icon name="email" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('email')}</Text>
-                <Text style={styles.detailValue}>{shopData?.email || '-'}</Text>
+                <Text style={styles.detailValue}>{shopData?.email || 'N/A'}</Text>
               </View>
             </View>
 
@@ -482,7 +761,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
               <Icon name="phone" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('mobile')}</Text>
-                <Text style={styles.detailValue}>{shopData?.phone || '-'}</Text>
+                <Text style={styles.detailValue}>{shopData?.phone || 'N/A'}</Text>
               </View>
             </View>
 
@@ -490,7 +769,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
               <Icon name="category" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('category')}</Text>
-                <Text style={styles.detailValue}>{shopData?.category ? t(shopData.category) : '-'}</Text>
+                <Text style={styles.detailValue}>{shopData?.category ? t(shopData.category) : 'N/A'}</Text>
               </View>
             </View>
 
@@ -498,14 +777,14 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
               <Icon name="description" size={16} color="#64748b" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>{t('description')}</Text>
-                <Text style={styles.detailValue} numberOfLines={2}>{shopData?.description || '-'}</Text>
+                <Text style={styles.detailValue} numberOfLines={2}>{shopData?.description || 'N/A'}</Text>
               </View>
             </View>
           </View>
 
           <View style={styles.addressSection}>
             <Icon name="location-on" size={16} color="#64748b" />
-            <Text style={styles.addressText}>{shopData?.address || '-'}</Text>
+            <Text style={styles.addressText}>{shopData?.address || 'N/A'}</Text>
           </View>
         </View>
 
@@ -524,11 +803,18 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                 <Icon name="badge" size={20} color="#64748b" />
                 <Text style={styles.documentName}>{t('aadhaarCard')}</Text>
               </View>
-              <View style={[styles.documentBadge, { backgroundColor: getStatusColor(documents.aadhaar.status) + '15' }]}>
-                <Icon name={getStatusIcon(documents.aadhaar.status)} size={14} color={getStatusColor(documents.aadhaar.status)} />
-                <Text style={[styles.documentStatus, { color: getStatusColor(documents.aadhaar.status) }]}>
-                  {getStatusText(documents.aadhaar.status)}
-                </Text>
+              <View style={styles.documentRight}>
+                {documents.aadhaar.fileName && (
+                  <Text style={styles.fileNameText} numberOfLines={1}>
+                    {documents.aadhaar.fileName}
+                  </Text>
+                )}
+                <View style={[styles.documentBadge, { backgroundColor: getStatusColor(documents.aadhaar.status) + '15' }]}>
+                  <Icon name={getStatusIcon(documents.aadhaar.status)} size={14} color={getStatusColor(documents.aadhaar.status)} />
+                  <Text style={[styles.documentStatus, { color: getStatusColor(documents.aadhaar.status) }]}>
+                    {getStatusText(documents.aadhaar.status)}
+                  </Text>
+                </View>
               </View>
             </View>
 
@@ -537,11 +823,18 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                 <Icon name="credit-card" size={20} color="#64748b" />
                 <Text style={styles.documentName}>{t('panCard')}</Text>
               </View>
-              <View style={[styles.documentBadge, { backgroundColor: getStatusColor(documents.pan.status) + '15' }]}>
-                <Icon name={getStatusIcon(documents.pan.status)} size={14} color={getStatusColor(documents.pan.status)} />
-                <Text style={[styles.documentStatus, { color: getStatusColor(documents.pan.status) }]}>
-                  {getStatusText(documents.pan.status)}
-                </Text>
+              <View style={styles.documentRight}>
+                {documents.pan.fileName && (
+                  <Text style={styles.fileNameText} numberOfLines={1}>
+                    {documents.pan.fileName}
+                  </Text>
+                )}
+                <View style={[styles.documentBadge, { backgroundColor: getStatusColor(documents.pan.status) + '15' }]}>
+                  <Icon name={getStatusIcon(documents.pan.status)} size={14} color={getStatusColor(documents.pan.status)} />
+                  <Text style={[styles.documentStatus, { color: getStatusColor(documents.pan.status) }]}>
+                    {getStatusText(documents.pan.status)}
+                  </Text>
+                </View>
               </View>
             </View>
 
@@ -550,24 +843,18 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                 <Icon name="receipt" size={20} color="#64748b" />
                 <Text style={styles.documentName}>{t('shopLicense')}</Text>
               </View>
-              <View style={[styles.documentBadge, { backgroundColor: getStatusColor(documents.license.status) + '15' }]}>
-                <Icon name={getStatusIcon(documents.license.status)} size={14} color={getStatusColor(documents.license.status)} />
-                <Text style={[styles.documentStatus, { color: getStatusColor(documents.license.status) }]}>
-                  {getStatusText(documents.license.status)}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.documentRow}>
-              <View style={styles.documentInfo}>
-                <Icon name="business" size={20} color="#64748b" />
-                <Text style={styles.documentName}>{t('businessProof')}</Text>
-              </View>
-              <View style={[styles.documentBadge, { backgroundColor: getStatusColor(documents.businessProof.status) + '15' }]}>
-                <Icon name={getStatusIcon(documents.businessProof.status)} size={14} color={getStatusColor(documents.businessProof.status)} />
-                <Text style={[styles.documentStatus, { color: getStatusColor(documents.businessProof.status) }]}>
-                  {getStatusText(documents.businessProof.status)}
-                </Text>
+              <View style={styles.documentRight}>
+                {documents.license.fileName && (
+                  <Text style={styles.fileNameText} numberOfLines={1}>
+                    {documents.license.fileName}
+                  </Text>
+                )}
+                <View style={[styles.documentBadge, { backgroundColor: getStatusColor(documents.license.status) + '15' }]}>
+                  <Icon name={getStatusIcon(documents.license.status)} size={14} color={getStatusColor(documents.license.status)} />
+                  <Text style={[styles.documentStatus, { color: getStatusColor(documents.license.status) }]}>
+                    {getStatusText(documents.license.status)}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -614,9 +901,9 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
               contentContainerStyle={styles.modalBody}
               showsVerticalScrollIndicator={false}
             >
-              {/* Shop Name */}
+              {/* Shop Name - Optional now */}
               <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>{t('shopName')} *</Text>
+                <Text style={styles.modalLabel}>{t('shopName')} (Optional)</Text>
                 <TextInput
                   style={[styles.modalInput, formErrors.shopName && styles.inputError]}
                   value={formData.shopName}
@@ -626,21 +913,9 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                 {formErrors.shopName && <Text style={styles.errorText}>{formErrors.shopName}</Text>}
               </View>
 
-              {/* Owner Name */}
+              {/* Email - Optional now */}
               <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>{t('ownerName')} *</Text>
-                <TextInput
-                  style={[styles.modalInput, formErrors.ownerName && styles.inputError]}
-                  value={formData.ownerName}
-                  onChangeText={(text) => setFormData({ ...formData, ownerName: text })}
-                  placeholder={t('enterOwnerName')}
-                />
-                {formErrors.ownerName && <Text style={styles.errorText}>{formErrors.ownerName}</Text>}
-              </View>
-
-              {/* Email */}
-              <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>{t('email')} *</Text>
+                <Text style={styles.modalLabel}>{t('email')} (Optional)</Text>
                 <TextInput
                   style={[styles.modalInput, formErrors.email && styles.inputError]}
                   value={formData.email}
@@ -652,9 +927,9 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                 {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
               </View>
 
-              {/* Phone */}
+              {/* Phone - Optional now */}
               <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>{t('mobileNumber')} *</Text>
+                <Text style={styles.modalLabel}>{t('mobileNumber')} (Optional)</Text>
                 <TextInput
                   style={[styles.modalInput, formErrors.phone && styles.inputError]}
                   value={formData.phone}
@@ -666,9 +941,9 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                 {formErrors.phone && <Text style={styles.errorText}>{formErrors.phone}</Text>}
               </View>
 
-              {/* Category */}
+              {/* Category - Optional now */}
               <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>{t('category')} *</Text>
+                <Text style={styles.modalLabel}>{t('category')} (Optional)</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -702,9 +977,9 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                 {formErrors.category && <Text style={styles.errorText}>{formErrors.category}</Text>}
               </View>
 
-              {/* Address */}
+              {/* Address - Optional now */}
               <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>{t('address')} *</Text>
+                <Text style={styles.modalLabel}>{t('address')} (Optional)</Text>
                 <TextInput
                   style={[styles.modalInput, styles.modalTextArea, formErrors.address && styles.inputError]}
                   value={formData.address}
@@ -716,9 +991,9 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                 {formErrors.address && <Text style={styles.errorText}>{formErrors.address}</Text>}
               </View>
 
-              {/* Description */}
+              {/* Description - Optional now */}
               <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>{t('description')} *</Text>
+                <Text style={styles.modalLabel}>{t('description')} (Optional)</Text>
                 <TextInput
                   style={[styles.modalInput, styles.modalTextArea, formErrors.description && styles.inputError]}
                   value={formData.description}
@@ -730,9 +1005,55 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                 {formErrors.description && <Text style={styles.errorText}>{formErrors.description}</Text>}
               </View>
 
-              {/* Business Proof */}
+              {/* Location Section - Optional */}
               <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>{t('businessProof')}</Text>
+                <Text style={styles.modalLabel}>{t('shopLocation')} (Optional)</Text>
+
+                {/* Latitude and Longitude Row */}
+                <View style={styles.locationRow}>
+                  <View style={styles.locationInputContainer}>
+                    <Text style={styles.locationInputLabel}>Latitude</Text>
+                    <TextInput
+                      style={[styles.locationInput, styles.halfInput]}
+                      value={formData.latitude}
+                      onChangeText={(text) => setFormData({ ...formData, latitude: text })}
+                      placeholder="23.0225"
+                      keyboardType="numeric"
+                    />
+                  </View>
+
+                  <View style={styles.locationInputContainer}>
+                    <Text style={styles.locationInputLabel}>Longitude</Text>
+                    <TextInput
+                      style={[styles.locationInput, styles.halfInput]}
+                      value={formData.longitude}
+                      onChangeText={(text) => setFormData({ ...formData, longitude: text })}
+                      placeholder="72.5714"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+
+                {/* Fetch Location Button */}
+                <TouchableOpacity
+                  style={styles.fetchLocationButton}
+                  onPress={handleFetchLocation}
+                  disabled={locationLoading}
+                >
+                  {locationLoading ? (
+                    <ActivityIndicator size="small" color="#38bdf8" />
+                  ) : (
+                    <>
+                      <Icon name="my-location" size={20} color="#38bdf8" />
+                      <Text style={styles.fetchLocationText}>{t('fetchCurrentLocation')}</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Business Proof - Optional */}
+              <View style={styles.modalField}>
+                <Text style={styles.modalLabel}>{t('businessProof')} (Optional)</Text>
                 <TextInput
                   style={styles.modalInput}
                   value={formData.businessProof}
@@ -812,6 +1133,11 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
                   <Text style={styles.modalSaveButtonText}>{t('saveChanges')}</Text>
                 )}
               </TouchableOpacity>
+
+              {/* Note about partial updates */}
+              <Text style={styles.partialUpdateNote}>
+                {t('partialUpdateNote')}
+              </Text>
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -853,11 +1179,22 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Uploading Overlay */}
+      {uploading && (
+        <View style={styles.uploadingOverlay}>
+          <View style={styles.uploadingContainer}>
+            <ActivityIndicator size="large" color="#38bdf8" />
+            <Text style={styles.uploadingText}>{t('uploading')}</Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  // ... (keep all existing styles)
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
@@ -1078,10 +1415,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   documentName: {
     fontSize: 14,
     color: '#1e293b',
+  },
+  documentRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    maxWidth: '60%',
+  },
+  fileNameText: {
+    fontSize: 10,
+    color: '#64748b',
+    maxWidth: 100,
   },
   documentBadge: {
     flexDirection: 'row',
@@ -1210,6 +1559,48 @@ const styles = StyleSheet.create({
   selectedCategoryChipText: {
     color: '#ffffff',
   },
+  locationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  locationInputContainer: {
+    flex: 0.48,
+  },
+  locationInputLabel: {
+    fontSize: 11,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  locationInput: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    padding: 10,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    color: '#94a3b8',
+  },
+  halfInput: {
+    width: '100%',
+  },
+  fetchLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eff6ff',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 8,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+  },
+  fetchLocationText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#38bdf8',
+  },
   modalDocumentSection: {
     marginTop: 8,
     paddingTop: 16,
@@ -1264,6 +1655,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#ffffff',
   },
+  partialUpdateNote: {
+    fontSize: 11,
+    color: '#64748b',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+  },
   simpleModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -1308,6 +1706,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ef4444',
     fontWeight: '600',
+  },
+  uploadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadingContainer: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    gap: 12,
+  },
+  uploadingText: {
+    fontSize: 14,
+    color: '#1e293b',
   },
 });
 

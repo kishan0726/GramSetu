@@ -8,6 +8,9 @@ const Shops = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [mapView, setMapView] = useState(false);
+  const [documentImages, setDocumentImages] = useState({});
+  const [documentViewer, setDocumentViewer] = useState(null);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
 
   // Fetch Shops List from Backend
   useEffect(() => {
@@ -20,11 +23,40 @@ const Shops = () => {
       }
       catch (error) {
         console.error("Error fetching shops : ", error);
+        setLoading(false);
       }
     }
 
     fetchShop();
   }, []);
+
+  // Fetch document images when a shop is selected
+  useEffect(() => {
+    const fetchDocumentImages = async () => {
+      if (selectedShop?.id) {
+        try {
+          setLoadingDocuments(true);
+          console.log("Fetching documents for shop:", selectedShop.id);
+          const response = await fetch(`http://localhost:5000/get-shop-documents/${selectedShop.id}`);
+          const result = await response.json();
+          console.log("Document images response:", result);
+          
+          if (result.success) {
+            setDocumentImages(result.data || {});
+          } else {
+            setDocumentImages({});
+          }
+        } catch (error) {
+          console.error("Error fetching document images:", error);
+          setDocumentImages({});
+        } finally {
+          setLoadingDocuments(false);
+        }
+      }
+    };
+
+    fetchDocumentImages();
+  }, [selectedShop]);
 
   // Filter Data for Display
   const filteredShops = shops.filter(shop => {
@@ -33,10 +65,12 @@ const Shops = () => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       return (
-        shop.name.toLowerCase().includes(term) ||
-        shop.ownerName.toLowerCase().includes(term) ||
-        shop.id.toLowerCase().includes(term) ||
-        shop.shopType.toLowerCase().includes(term)
+        (shop.name || '').toLowerCase().includes(term) ||
+        (shop.shopName || '').toLowerCase().includes(term) ||
+        (shop.ownerName || '').toLowerCase().includes(term) ||
+        (shop.id || '').toLowerCase().includes(term) ||
+        (shop.shopType || '').toLowerCase().includes(term) ||
+        (shop.category || '').toLowerCase().includes(term)
       );
     }
 
@@ -46,39 +80,107 @@ const Shops = () => {
   // Approve Shops
   const handleApprove = async (id) => {
     if (window.confirm('Are you sure you want to approve this shop?')) {
-      const response = await fetch(`http://localhost:5000/update-shop-status/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "approved" })
-      });
-      const result = await response.json();
-      if (result.success)
-        alert('Shop approved successfully!');
+      try {
+        const response = await fetch(`http://localhost:5000/update-shop-status/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "approved" })
+        });
+        const result = await response.json();
+        if (result.success) {
+          alert('Shop approved successfully!');
+          // Update local state
+          setShops(shops.map(shop => 
+            shop.id === id ? { ...shop, status: 'approved' } : shop
+          ));
+          if (selectedShop?.id === id) {
+            setSelectedShop({ ...selectedShop, status: 'approved' });
+          }
+        }
+      } catch (error) {
+        console.error("Error approving shop:", error);
+        alert('Failed to approve shop');
+      }
     }
   };
 
   // Reject Shops
   const handleReject = async (id) => {
     if (window.confirm('Are you sure you want to reject this shop?')) {
-      const response = await fetch(`http://localhost:5000/update-shop-status/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "rejected" })
-      })
-      const result = await response.json();
-      if (result.success)
-        alert('Shop rejected!');
+      try {
+        const response = await fetch(`http://localhost:5000/update-shop-status/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "rejected" })
+        });
+        const result = await response.json();
+        if (result.success) {
+          alert('Shop rejected!');
+          // Update local state
+          setShops(shops.map(shop => 
+            shop.id === id ? { ...shop, status: 'rejected' } : shop
+          ));
+          if (selectedShop?.id === id) {
+            setSelectedShop({ ...selectedShop, status: 'rejected' });
+          }
+        }
+      } catch (error) {
+        console.error("Error rejecting shop:", error);
+        alert('Failed to reject shop');
+      }
     }
   };
 
   // Remove shops from database
   const handleRemove = async (id) => {
     if (window.confirm('Are you sure you want to permanently remove this shop?')) {
-      const response = await fetch(`http://localhost:5000/delete-shop/${id}`, { method: "DELETE" });
-      const result = await response.json();
-      if (result.success)
-        alert('Shop removed from system!');
+      try {
+        const response = await fetch(`http://localhost:5000/delete-shop/${id}`, { method: "DELETE" });
+        const result = await response.json();
+        if (result.success) {
+          alert('Shop removed from system!');
+          setShops(shops.filter(shop => shop.id !== id));
+          if (selectedShop?.id === id) {
+            setSelectedShop(null);
+            setDocumentImages({});
+          }
+        }
+      } catch (error) {
+        console.error("Error removing shop:", error);
+        alert('Failed to remove shop');
+      }
     }
+  };
+
+  // Download document
+  const handleDownloadDocument = async (shopId, docType, fileName) => {
+    try {
+      const response = await fetch(`http://localhost:5000/download-document/${shopId}/${docType}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName || `${shopId}_${docType}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('Failed to download document');
+      }
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      alert('Error downloading document');
+    }
+  };
+
+  // View document in modal
+  const handleViewDocument = (imageUrl, docType) => {
+    setDocumentViewer({
+      url: imageUrl,
+      type: docType
+    });
   };
 
   const getStatusColor = (status) => {
@@ -107,9 +209,23 @@ const Shops = () => {
       clothing: '👕',
       electronics: '📱',
       restaurant: '🍽️',
-      general: '🏪'
+      general: '🏪',
+      food: '🍲',
+      dairy: '🥛',
+      stationery: '✏️',
+      agriculture: '🌾'
     };
-    return icons[category] || '🏪';
+    return icons[category?.toLowerCase()] || '🏪';
+  };
+
+  const formatDocumentType = (docType) => {
+    const types = {
+      aadhaar: 'Aadhaar Card',
+      pan: 'PAN Card',
+      license: 'Shop License',
+      businessProof: 'Business Proof'
+    };
+    return types[docType] || docType.charAt(0).toUpperCase() + docType.slice(1);
   };
 
   const stats = {
@@ -259,8 +375,8 @@ const Shops = () => {
                   <div className="shop-header">
                     <div className="shop-icon">{getCategoryIcon(shop.category)}</div>
                     <div className="shop-info">
-                      <h4 className="shop-name">{shop.shopName}</h4>
-                      <p className="shop-owner">👤 {shop.ownerName}</p>
+                      <h4 className="shop-name">{shop.name || shop.shopName || 'N/A'}</h4>
+                      <p className="shop-owner">👤 {shop.ownerName || 'N/A'}</p>
                     </div>
                     <div
                       className="shop-status"
@@ -278,28 +394,7 @@ const Shops = () => {
                     </div>
                     <div className="shop-detail-item">
                       <span className="shop-detail-label">Type:</span>
-                      <span className="shop-detail-value">{shop.shopType || "none"}</span>
-                    </div>
-                    <div className="shop-detail-item">
-                      <span className="shop-detail-label">Area:</span>
-                      <span className="shop-detail-value">{shop.shopArea || "none"}</span>
-                    </div>
-                  </div>
-
-                  <div className="shop-actions">
-                    <div className="shop-verification-score">
-                      <div className="shop-score-label">Verification:</div>
-                      <div className="shop-score-bar">
-                        <div
-                          className="shop-score-fill"
-                          style={{
-                            width: `${shop.verificationScore || 0}%`,
-                            background: shop.verificationScore >= 70 ? '#10b981' :
-                              shop.verificationScore >= 50 ? '#f59e0b' : '#ef4444'
-                          }}
-                        ></div>
-                      </div>
-                      <div className="shop-score-value">{shop.verificationScore || "0"}%</div>
+                      <span className="shop-detail-value">{shop.shopType || shop.category || "none"}</span>
                     </div>
                   </div>
                 </div>
@@ -315,7 +410,10 @@ const Shops = () => {
               <h3>Shop Details</h3>
               <button
                 className="shop-close-btn"
-                onClick={() => setSelectedShop(null)}
+                onClick={() => {
+                  setSelectedShop(null);
+                  setDocumentImages({});
+                }}
               >
                 ✕
               </button>
@@ -328,14 +426,14 @@ const Shops = () => {
                   {getCategoryIcon(selectedShop.category)}
                 </div>
                 <div className="shop-title">
-                  <h2>{selectedShop.name ||  "N/A"}</h2>
+                  <h2>{selectedShop.name || selectedShop.shopName || "N/A"}</h2>
                   <div className="shop-subtitle">
                     <span className="shop-id">ID: {selectedShop.id}</span>
                     <span
                       className="shop-status-badge"
                       style={{ background: getStatusColor(selectedShop.status) }}
                     >
-                      {getStatusIcon(selectedShop.status)} {selectedShop.status.toUpperCase()}
+                      {getStatusIcon(selectedShop.status)} {selectedShop.status?.toUpperCase()}
                     </span>
                   </div>
                 </div>
@@ -349,15 +447,15 @@ const Shops = () => {
                 <div className="shop-info-grid">
                   <div className="shop-info-item">
                     <span className="shop-info-label">Owner Name:</span>
-                    <span className="shop-info-value">{selectedShop.ownerName}</span>
+                    <span className="shop-info-value">{selectedShop.ownerName || 'N/A'}</span>
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Contact:</span>
-                    <span className="shop-info-value">{selectedShop.mobile}</span>
+                    <span className="shop-info-value">{selectedShop.phone || selectedShop.mobile || 'N/A'}</span>
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Email:</span>
-                    <span className="shop-info-value">{selectedShop.email}</span>
+                    <span className="shop-info-value">{selectedShop.email || 'N/A'}</span>
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Registration Date:</span>
@@ -381,29 +479,21 @@ const Shops = () => {
                 </h4>
                 <div className="shop-info-grid">
                   <div className="shop-info-item">
-                    <span className="shop-info-label">Shop Type:</span>
-                    <span className="shop-info-value">{selectedShop.shopType ||  "N/A"}</span>
-                  </div>
-                  <div className="shop-info-item">
                     <span className="shop-info-label">Category:</span>
-                    <span className="shop-info-value">{selectedShop.category ||  "N/A"}</span>
-                  </div>
-                  <div className="shop-info-item">
-                    <span className="shop-info-label">Shop Area:</span>
-                    <span className="shop-info-value">{selectedShop.shopArea ||  "N/A"}</span>
+                    <span className="shop-info-value">{selectedShop.category || "N/A"}</span>
                   </div>
                   <div className="shop-info-item">
                     <span className="shop-info-label">Business Proof:</span>
-                    <span className="shop-info-value">{selectedShop.businessProof ||  "N/A"}</span>
+                    <span className="shop-info-value">{selectedShop.businessProof || "N/A"}</span>
                   </div>
                 </div>
                 <div className="shop-info-item-full">
                   <span className="shop-info-label">Address:</span>
-                  <span className="shop-info-value">{selectedShop.address ||  "N/A"}</span>
+                  <span className="shop-info-value">{selectedShop.address || "N/A"}</span>
                 </div>
                 <div className="shop-info-item-full">
                   <span className="shop-info-label">Description:</span>
-                  <span className="shop-info-value">{selectedShop.description ||  "N/A"}</span>
+                  <span className="shop-info-value">{selectedShop.description || "N/A"}</span>
                 </div>
               </div>
 
@@ -427,29 +517,107 @@ const Shops = () => {
                 </div>
               </div>
 
-              {/* Document Status */}
+              {/* Document Images */}
               <div className="shop-details-section">
                 <h4 className="shop-section-title">
-                  Document Verification
+                  Document Images
                 </h4>
-                <div className="shop-documents-grid">
-                  {selectedShop.documents &&
-                    Object.entries(selectedShop.documents).map(([doc, status]) => (
+                {loadingDocuments ? (
+                  <div className="shop-documents-loading">
+                    <div className="shop-loading-spinner-small"></div>
+                    <p>Loading documents...</p>
+                  </div>
+                ) : (
+                  <div className="shop-document-images-grid">
+                    {Object.keys(documentImages).length > 0 ? (
+                      Object.entries(documentImages).map(([docType, docData]) => (
+                        <div key={docType} className="shop-document-image-card">
+                          <div className="shop-document-image-header">
+                            <span className="shop-document-image-icon">📄</span>
+                            <span className="shop-document-image-name">
+                              {formatDocumentType(docType)}
+                            </span>
+                          </div>
+                          {docData.url ? (
+                            <>
+                              <img 
+                                src={docData.url} 
+                                alt={docType}
+                                className="shop-document-thumbnail"
+                                onClick={() => handleViewDocument(docData.url, docType)}
+                                onError={(e) => {
+                                  console.error("Error loading image:", docData.url);
+                                  e.target.style.display = 'none';
+                                  e.target.parentNode.innerHTML += '<div class="shop-image-error">Failed to load image</div>';
+                                }}
+                              />
+                              <div className="shop-document-image-actions">
+                                <button
+                                  className="shop-doc-btn view"
+                                  onClick={() => handleViewDocument(docData.url, docType)}
+                                  title="View Document"
+                                >
+                                  👁️ View
+                                </button>
+                                <button
+                                  className="shop-doc-btn download"
+                                  onClick={() => handleDownloadDocument(selectedShop.id, docType, docData.fileName)}
+                                  title="Download Document"
+                                >
+                                  ⬇️ Download
+                                </button>
+                              </div>
+                              {docData.fileName && (
+                                <div className="shop-document-filename" title={docData.fileName}>
+                                  {docData.fileName.length > 20 
+                                    ? docData.fileName.substring(0, 17) + '...' 
+                                    : docData.fileName}
+                                </div>
+                              )}
+                              {docData.uploadedAt && (
+                                <div className="shop-document-date">
+                                  Uploaded: {new Date(docData.uploadedAt).toLocaleDateString()}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="shop-no-image">No image available</div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="shop-no-documents">
+                        <p>No document images uploaded yet</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Document Status */}
+              {selectedShop.documents && Object.keys(selectedShop.documents).length > 0 && (
+                <div className="shop-details-section">
+                  <h4 className="shop-section-title">
+                    Document Verification Status
+                  </h4>
+                  <div className="shop-documents-grid">
+                    {Object.entries(selectedShop.documents).map(([doc, status]) => (
                       <div key={doc} className="shop-document-item">
                         <div className="shop-document-name">
                           <span className="shop-doc-icon">📋</span>
-                          {doc.toUpperCase()}
+                          {formatDocumentType(doc)}
                         </div>
                         <div className={`shop-document-status ${status}`}>
-                          {status === 'verified' && '✅ Verified'}
+                          {status === 'approved' && '✅ Approved'}
                           {status === 'uploaded' && '📤 Uploaded'}
                           {status === 'pending' && '⏳ Pending'}
                           {status === 'rejected' && '❌ Rejected'}
                         </div>
                       </div>
                     ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Action Buttons */}
               <div className="shop-action-buttons-panel">
@@ -526,16 +694,16 @@ const Shops = () => {
                   </div>
 
                   {/* Plot shop locations */}
-                  {shops.map(shop => (
+                  {shops.filter(shop => shop.coordinates?.lat && shop.coordinates?.lng).map(shop => (
                     <div
                       key={shop.id}
                       className="shop-marker"
                       style={{
-                        left: `${(shop.coordinates.lng - 72.57) * 1000}px`,
-                        top: `${(shop.coordinates.lat - 23.02) * 1000}px`,
+                        left: `${((shop.coordinates.lng || 72.57) - 72.57) * 1000 + 200}px`,
+                        top: `${((shop.coordinates.lat || 23.02) - 23.02) * 1000 + 200}px`,
                         borderColor: getStatusColor(shop.status)
                       }}
-                      title={`${shop.name} (${shop.status})`}
+                      title={`${shop.name || shop.shopName} (${shop.status})`}
                       onClick={() => {
                         setSelectedShop(shop);
                         setMapView(false);
@@ -544,8 +712,8 @@ const Shops = () => {
                       <div className="shop-marker-icon">{getCategoryIcon(shop.category)}</div>
                       {shop.status === 'pending' && <div className="shop-marker-pulse"></div>}
                       <div className="shop-marker-tooltip">
-                        <strong>{shop.name}</strong>
-                        <div>{shop.shopType}</div>
+                        <strong>{shop.name || shop.shopName}</strong>
+                        <div>{shop.category}</div>
                         <div>{shop.ownerName}</div>
                         <div className={`shop-tooltip-status ${shop.status}`}>
                           {getStatusIcon(shop.status)} {shop.status}
@@ -573,14 +741,14 @@ const Shops = () => {
 
               {selectedShop && (
                 <div className="shop-selected-shop-info">
-                  <h4>Selected Shop: {selectedShop.name}</h4>
+                  <h4>Selected Shop: {selectedShop.name || selectedShop.shopName}</h4>
                   <div className="shop-coordinate-display">
                     <div>Lat: {selectedShop.coordinates?.lat || "N/A"}</div>
                     <div>Lng: {selectedShop.coordinates?.lng || "N/A"}</div>
                   </div>
                   <button
                     className="shop-btn btn-primary"
-                    onClick={() => window.open(`https://maps.google.com/?q=${selectedShop.coordinates?.lat || "N/A"},${selectedShop.coordinates?.lng || "N/A"}`, '_blank')}
+                    onClick={() => window.open(`https://maps.google.com/?q=${selectedShop.coordinates?.lat || 0},${selectedShop.coordinates?.lng || 0}`, '_blank')}
                   >
                     Open in Google Maps
                   </button>
@@ -590,6 +758,29 @@ const Shops = () => {
           </div>
         )}
       </div>
+
+      {/* Document Viewer Modal */}
+      {documentViewer && (
+        <div className="shop-document-viewer-modal" onClick={() => setDocumentViewer(null)}>
+          <div className="shop-document-viewer-content" onClick={(e) => e.stopPropagation()}>
+            <div className="shop-document-viewer-header">
+              <h3>{formatDocumentType(documentViewer.type)}</h3>
+              <button className="shop-document-viewer-close" onClick={() => setDocumentViewer(null)}>✕</button>
+            </div>
+            <div className="shop-document-viewer-body">
+              <img src={documentViewer.url} alt={documentViewer.type} className="shop-document-full-image" />
+            </div>
+            <div className="shop-document-viewer-footer">
+              <button
+                className="shop-btn btn-primary"
+                onClick={() => handleDownloadDocument(selectedShop?.id, documentViewer.type)}
+              >
+                ⬇️ Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -8,6 +8,7 @@ const db = require("./firebase");
 const otpGenerator = require("otp-generator");
 const transporter = require("./emailService");
 const app = express();
+const axios = require("axios");
 
 const router = express.Router();
 const otpStore = {};
@@ -247,6 +248,62 @@ app.get('/get-shops', async (req, res) => {
         res.json({ data: [], success: false });
     }
 })
+
+app.get('/get-shop-documents/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const shopId = id.toLowerCase();
+        
+        const snapshot = await db.ref(`shops_list/${shopId}/shop_image`).once("value");
+        const data = snapshot.val() || {};
+        
+        const documents = {};
+        Object.keys(data).forEach(docType => {
+            documents[docType] = {
+                url: data[docType].url,
+                fileName: data[docType].fileName,
+                uploadedAt: data[docType].uploadedAt,
+                public_id: data[docType].public_id
+            };
+        });
+        
+        res.json({ data: documents, success: true });
+    }
+    catch (error) {
+        console.error("Error fetching shop documents:", error);
+        res.json({ data: {}, success: false });
+    }
+});
+
+app.get('/download-document/:id/:docType', async (req, res) => {
+    try {
+        const { id, docType } = req.params;
+        const shopId = id.toLowerCase();
+        
+        const snapshot = await db.ref(`shops_list/${shopId}/shop_image/${docType}`).once("value");
+        const docData = snapshot.val();
+        
+        if (!docData || !docData.url) {
+            return res.status(404).json({ error: "Document not found" });
+        }
+        
+        const response = await axios({
+            method: 'GET',
+            url: docData.url,
+            responseType: 'stream'
+        });
+        
+        res.setHeader('Content-Disposition', `attachment; filename="${docData.fileName || `${shopId}_${docType}.jpg`}"`);
+        res.setHeader('Content-Type', response.headers['content-type']);
+        
+        response.data.pipe(res);
+    }
+    catch (error) {
+        console.error("Error downloading document:", error);
+        res.status(500).json({ error: "Failed to download document" });
+    }
+});
+
 
 app.put('/update-shop-status/:id', async (req, res) => {
     try {

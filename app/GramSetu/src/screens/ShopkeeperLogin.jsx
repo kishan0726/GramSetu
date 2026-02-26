@@ -27,23 +27,54 @@ const ShopkeeperLogin = ({ navigation }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    const checkSession = async () => {
-      const session = await AsyncStorage.getItem('shopSession');
+    const checkSessionAndNavigate = async () => {
+      try {
+        const session = await AsyncStorage.getItem('shopSession');
 
-      if (session) {
+        if (!session) return;
+
         const parsed = JSON.parse(session);
+        const shopId = parsed.shopId;
 
-        if (parsed.status === 'approved') {
-          navigation.replace('ShopkeeperDashboard');
-        } else if (parsed.status === 'pending') {
-          navigation.replace('ShopkeeperApprovalWait');
-        } else if (parsed.status === 'rejected') {
-          navigation.replace('ShopkeeperRejected');
+        if (!shopId) {
+          await AsyncStorage.removeItem('shopSession');
+          return;
         }
+
+        // 🔥 ALWAYS fetch fresh data from DB
+        const snapshot = await db.ref(`shops_list/${shopId}`).once('value');
+
+        if (!snapshot.exists()) {
+          await AsyncStorage.removeItem('shopSession');
+          return;
+        }
+
+        const shopData = snapshot.val();
+
+        // 🚀 Navigate ONLY using DB status
+        switch (shopData.status) {
+          case 'approved':
+            navigation.replace('ShopkeeperDashboard');
+            break;
+
+          case 'pending':
+            navigation.replace('ShopkeeperApprovalWait');
+            break;
+
+          case 'rejected':
+            navigation.replace('ShopkeeperApprovalWait');
+            break;
+
+          default:
+            navigation.replace('Welcome');
+        }
+
+      } catch (error) {
+        console.log('Navigation error:', error);
       }
     };
 
-    checkSession();
+    checkSessionAndNavigate();
   }, []);
 
   const validateForm = () => {

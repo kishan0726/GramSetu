@@ -1910,6 +1910,34 @@ export const translations = {
     en: 'Save Changes',
     gu: 'ફેરફારો સાચવો',
   },
+
+  shopLocation: {
+  en: 'Shop Location',
+  gu: 'દુકાનનું સ્થાન',
+},
+fetchCurrentLocation: {
+  en: 'Fetch Current Location',
+  gu: 'વર્તમાન સ્થાન મેળવો',
+},
+locationFetched: {
+  en: 'Location fetched successfully',
+  gu: 'સ્થાન સફળતાપૂર્વક મેળવાયું',
+},
+
+uploading: {
+  en: 'Uploading...',
+  gu: 'અપલોડ થઈ રહ્યું છે...',
+},
+
+noChangesDetected: {
+  en: 'No changes detected',
+  gu: 'કોઈ ફેરફાર મળ્યો નથી',
+},
+partialUpdateNote: {
+  en: 'Only fields you edit will be updated. Empty fields will keep their original values.',
+  gu: 'તમે જે ફીલ્ડ્સ એડિટ કરશો તે જ અપડેટ થશે. ખાલી ફીલ્ડ્સ તેમના મૂળ મૂલ્યો જાળવી રાખશે.',
+},
+
 };
 
 export const LanguageProvider = ({ children }) => {
