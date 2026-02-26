@@ -12,130 +12,224 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { db } from '../config/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
-// Sample shop data - this would come from API after login
-const SAMPLE_SHOP_DATA = {
-  id: "SHOP001",
-  name: "Ram Kirana Store",
-  ownerName: "Ram Kumar",
-  email: "ram.kirana@example.com",
-  phone: "+91 9876543210",
-  address: "Main Road, Near Post Office, Ramnagar Village",
-  category: "grocery",
-  description: "Daily grocery items, vegetables, and household essentials",
-  businessProof: "GST Certificate",
-  documents: {
-    aadhaar: "uploaded",
-    pan: "uploaded",
-    license: "approved"
-  },
-  status: "approved",
-  registrationDate: "2024-01-15",
-  lastUpdated: "2026-02-21",
-  coordinates: {
-    lat: 23.0225,
-    lng: 72.5714
-  },
-  inventory: [
-    { id: 1, name: "Rice", price: 45, unit: "kg", stock: 100 },
-    { id: 2, name: "Wheat", price: 35, unit: "kg", stock: 80 },
-    { id: 3, name: "Sugar", price: 42, unit: "kg", stock: 60 },
-    { id: 4, name: "Oil", price: 120, unit: "liter", stock: 40 },
-    { id: 5, name: "Milk", price: 25, unit: "liter", stock: 30 },
-    { id: 6, name: "Eggs", price: 6, unit: "piece", stock: 200 },
-  ]
-};
-
 const ShopkeeperDashboard = ({ navigation }) => {
   const { t, language } = useLanguage();
   const [shopData, setShopData] = useState(null);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [shopId, setShopId] = useState(null);
 
   useEffect(() => {
-    fetchShopData();
+    loadShopData();
   }, []);
 
-  const fetchShopData = () => {
-    setLoading(true);
-    setError(null);
-    // Simulate API call
-    setTimeout(() => {
-      try {
-        setShopData(SAMPLE_SHOP_DATA);
+  const loadShopData = async () => {
+    try {
+      console.log("STEP 1: Loading shop data...");
+      setLoading(true);
+
+      const session = await AsyncStorage.getItem('shopSession');
+      console.log("STEP 2: Session raw:", session);
+
+      if (!session) {
+        console.log("No session found!");
+        setError(t('noSessionFound'));
         setLoading(false);
-      } catch (err) {
+        return;
+      }
+
+      const parsed = JSON.parse(session);
+      console.log("STEP 3: Parsed session:", parsed);
+
+      const shopId = parsed.shopId;
+      console.log("STEP 4: Shop ID:", shopId);
+
+      if (!shopId) {
+        console.log("Shop ID is undefined!");
+        setError(t('noShopId'));
+        setLoading(false);
+        return;
+      }
+
+      setShopId(shopId);
+
+      // Set up real-time listener for shop data
+      const shopRef = db.ref(`shops_list/${shopId}`);
+      
+      shopRef.on('value', (snapshot) => {
+        console.log("STEP 5: Snapshot exists?", snapshot.exists());
+
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          console.log("STEP 6: Data loaded:", data);
+          setShopData(data);
+          
+          // Extract items from the items object
+          if (data.items) {
+            const itemsArray = Object.keys(data.items).map(key => ({
+              id: key,
+              ...data.items[key]
+            }));
+            setItems(itemsArray);
+          } else {
+            setItems([]);
+          }
+          
+          setError(null);
+        } else {
+          console.log("Shop not found in DB");
+          setError(t('shopNotFound'));
+        }
+        setLoading(false);
+      }, (error) => {
+        console.log("STEP 5 Error:", error);
         setError(t('failedToLoad'));
         setLoading(false);
-      }
-    }, 1000);
+      });
+
+      // Cleanup listener on unmount
+      return () => shopRef.off();
+
+    } catch (error) {
+      console.log("ERROR:", error);
+      setError(t('failedToLoad'));
+      setLoading(false);
+    }
   };
 
   const handleProfilePress = () => {
-    try {
-      navigation.navigate('ShopkeeperProfile', { shopData });
-    } catch (err) {
-      Alert.alert(t('error'), t('screenNotAvailable'));
+    if (shopData) {
+      navigation.navigate('ShopkeeperProfile', { shopData, shopId });
     }
   };
 
   const handleEditShop = () => {
-    try {
-      navigation.navigate('EditShopDetails', { shopData });
-    } catch (err) {
-      Alert.alert(t('error'), t('featureComingSoon'));
+    if (shopData) {
+      navigation.navigate('EditShopDetails', { shopData, shopId });
     }
   };
 
   const handleAddItem = () => {
-    try {
-      navigation.navigate('AddShopItem', { shopData });
-    } catch (err) {
-      Alert.alert(t('error'), t('featureComingSoon'));
+    if (shopData) {
+      navigation.navigate('AddShopItem', { shopData, shopId });
     }
   };
 
   const handleManageStock = () => {
-    try {
-      navigation.navigate('ManageStock', { shopData });
-    } catch (err) {
-      Alert.alert(t('error'), t('featureComingSoon'));
+    if (shopData) {
+      navigation.navigate('ManageStock', { shopData, shopId });
     }
   };
 
   const handleViewReports = () => {
-    try {
-      navigation.navigate('ShopReports', { shopData });
-    } catch (err) {
-      Alert.alert(t('info'), t('comingSoon'));
-    }
+    Alert.alert(t('info'), t('comingSoon'));
   };
 
   const handleViewAllItems = () => {
-    try {
-      navigation.navigate('ShopInventory', { shopData });
-    } catch (err) {
-      Alert.alert(t('info'), t('comingSoon'));
+    if (shopData) {
+      navigation.navigate('ShopInventory', { shopData, shopId, items });
     }
   };
 
   const handleItemPress = (item) => {
-    try {
-      navigation.navigate('ItemDetails', { item, shopId: shopData.id });
-    } catch (err) {
-      Alert.alert(t('info'), t('comingSoon'));
+    if (shopData) {
+      navigation.navigate('ItemDetails', { item, shopId });
     }
   };
 
+  const handleLogout = async () => {
+    Alert.alert(
+      t('logout'),
+      t('logoutConfirmation'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('logout'),
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('shopSession');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'ShopkeeperLogin' }],
+              });
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
+  };
+
   const calculateTotalValue = () => {
-    return shopData?.inventory?.reduce((sum, item) => sum + (item.price * item.stock), 0) || 0;
+    return items.reduce((sum, item) => sum + (item.price * (item.stock || 0)), 0) || 0;
   };
 
   const calculateTotalStock = () => {
-    return shopData?.inventory?.reduce((sum, item) => sum + item.stock, 0) || 0;
+    return items.reduce((sum, item) => sum + (item.stock || 0), 0) || 0;
+  };
+
+  const getRecentItems = () => {
+    // Sort items by createdAt date (newest first) and return top 3
+    return [...items]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 3);
+  };
+
+  const getStockStatusColor = (stock) => {
+    if (stock <= 0) return '#ef4444'; // Red - Out of stock
+    if (stock < 10) return '#f59e0b'; // Orange - Low stock
+    return '#10b981'; // Green - In stock
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved':
+        return '#10b981';
+      case 'pending':
+        return '#f59e0b';
+      case 'rejected':
+        return '#ef4444';
+      default:
+        return '#64748b';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'approved':
+        return 'check-circle';
+      case 'pending':
+        return 'hourglass-empty';
+      case 'rejected':
+        return 'cancel';
+      default:
+        return 'info';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'approved':
+        return t('approved');
+      case 'pending':
+        return t('pending');
+      case 'rejected':
+        return t('rejected');
+      default:
+        return status;
+    }
   };
 
   if (loading) {
@@ -177,13 +271,80 @@ const ShopkeeperDashboard = ({ navigation }) => {
         <View style={styles.errorContainer}>
           <Icon name="error-outline" size={60} color="#ef4444" />
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchShopData}>
+          <TouchableOpacity style={styles.retryButton} onPress={loadShopData}>
             <Text style={styles.retryText}>{t('retry')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutButtonText}>{t('logout')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
+
+  // If shop is not approved, show appropriate message and redirect
+  if (shopData?.status !== 'approved') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-back" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('shopkeeperDashboard')}</Text>
+          <TouchableOpacity 
+            style={styles.profileButton}
+            onPress={handleProfilePress}
+          >
+            <Icon name="person" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.statusMessageContainer}>
+          <View style={[styles.statusIconLarge, { backgroundColor: getStatusColor(shopData?.status) + '15' }]}>
+            <Icon
+              name={getStatusIcon(shopData?.status)}
+              size={60}
+              color={getStatusColor(shopData?.status)}
+            />
+          </View>
+          
+          <Text style={styles.statusTitle}>
+            {shopData?.status === 'pending' ? t('applicationPending') : t('applicationRejected')}
+          </Text>
+          
+          <Text style={styles.statusDescription}>
+            {shopData?.status === 'pending' 
+              ? t('pendingDashboardMessage') 
+              : t('rejectedDashboardMessage')}
+          </Text>
+
+          <TouchableOpacity 
+            style={styles.goToApprovalButton}
+            onPress={() => navigation.navigate('ShopkeeperApprovalWait', { shopData })}
+          >
+            <Text style={styles.goToApprovalButtonText}>{t('viewApplicationStatus')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutButtonText}>{t('logout')}</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Approved Shop Dashboard
+  const recentItems = getRecentItems();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -198,7 +359,7 @@ const ShopkeeperDashboard = ({ navigation }) => {
           <Icon name="arrow-back" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
-          {shopData?.name || t('shopkeeperDashboard')}
+          {shopData?.shopName || shopData?.name || t('shopkeeperDashboard')}
         </Text>
         <TouchableOpacity 
           style={styles.profileButton}
@@ -212,11 +373,13 @@ const ShopkeeperDashboard = ({ navigation }) => {
       <View style={styles.welcomeBanner}>
         <View>
           <Text style={styles.welcomeTitle}>{t('welcomeBack')}</Text>
-          <Text style={styles.welcomeName}>{shopData?.ownerName}</Text>
+          <Text style={styles.welcomeName}>{shopData?.ownerName || 'Shop Owner'}</Text>
         </View>
-        <View style={styles.shopBadge}>
-          <Icon name="check-circle" size={16} color="#10b981" />
-          <Text style={styles.shopBadgeText}>{t('active')}</Text>
+        <View style={[styles.approvedBadge, { backgroundColor: getStatusColor('approved') + '15' }]}>
+          <Icon name="check-circle" size={16} color={getStatusColor('approved')} />
+          <Text style={[styles.approvedBadgeText, { color: getStatusColor('approved') }]}>
+            {t('approved')}
+          </Text>
         </View>
       </View>
 
@@ -229,7 +392,7 @@ const ShopkeeperDashboard = ({ navigation }) => {
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
             <Icon name="inventory" size={24} color="#38bdf8" />
-            <Text style={styles.statNumber}>{shopData?.inventory?.length || 0}</Text>
+            <Text style={styles.statNumber}>{items.length}</Text>
             <Text style={styles.statLabel}>{t('totalItems')}</Text>
           </View>
           
@@ -289,25 +452,31 @@ const ShopkeeperDashboard = ({ navigation }) => {
           <View style={styles.infoRow}>
             <Icon name="category" size={16} color="#64748b" />
             <Text style={styles.infoLabel}>{t('category')}:</Text>
-            <Text style={styles.infoValue}>{t(shopData?.category || '')}</Text>
+            <Text style={styles.infoValue}>{shopData?.category ? t(shopData.category) : 'N/A'}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Icon name="description" size={16} color="#64748b" />
             <Text style={styles.infoLabel}>{t('description')}:</Text>
-            <Text style={styles.infoValue} numberOfLines={2}>{shopData?.description}</Text>
+            <Text style={styles.infoValue} numberOfLines={2}>{shopData?.description || 'N/A'}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Icon name="location-on" size={16} color="#64748b" />
             <Text style={styles.infoLabel}>{t('address')}:</Text>
-            <Text style={styles.infoValue} numberOfLines={2}>{shopData?.address}</Text>
+            <Text style={styles.infoValue} numberOfLines={2}>{shopData?.address || 'N/A'}</Text>
           </View>
 
           <View style={styles.infoRow}>
             <Icon name="phone" size={16} color="#64748b" />
             <Text style={styles.infoLabel}>{t('contact')}:</Text>
-            <Text style={styles.infoValue}>{shopData?.phone}</Text>
+            <Text style={styles.infoValue}>{shopData?.mobileNumber || shopData?.phone || 'N/A'}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Icon name="email" size={16} color="#64748b" />
+            <Text style={styles.infoLabel}>{t('email')}:</Text>
+            <Text style={styles.infoValue}>{shopData?.email || 'N/A'}</Text>
           </View>
         </View>
       </ScrollView>
@@ -372,18 +541,62 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#ef4444',
     textAlign: 'center',
+    marginBottom: 20,
   },
   retryButton: {
-    marginTop: 20,
     backgroundColor: '#38bdf8',
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 8,
+    marginBottom: 12,
   },
   retryText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  statusMessageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  statusIconLarge: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  statusTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  statusDescription: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+    paddingHorizontal: 20,
+  },
+  goToApprovalButton: {
+    backgroundColor: '#38bdf8',
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 16,
+    width: '100%',
+  },
+  goToApprovalButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   welcomeBanner: {
     backgroundColor: '#ffffff',
@@ -412,18 +625,16 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     marginTop: 2,
   },
-  shopBadge: {
+  approvedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e6f7e6',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
     gap: 4,
   },
-  shopBadgeText: {
+  approvedBadgeText: {
     fontSize: 12,
-    color: '#10b981',
     fontWeight: '500',
   },
   content: {
@@ -432,6 +643,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 16,
     paddingTop: 8,
+    paddingBottom: 30,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -631,6 +843,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#ffffff',
     fontWeight: '500',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fee2e2',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    marginTop: 8,
+  },
+  logoutButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ef4444',
   },
 });
 

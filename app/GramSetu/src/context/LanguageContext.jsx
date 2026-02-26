@@ -1912,32 +1912,349 @@ export const translations = {
   },
 
   shopLocation: {
-  en: 'Shop Location',
-  gu: 'દુકાનનું સ્થાન',
-},
-fetchCurrentLocation: {
-  en: 'Fetch Current Location',
-  gu: 'વર્તમાન સ્થાન મેળવો',
-},
-locationFetched: {
-  en: 'Location fetched successfully',
-  gu: 'સ્થાન સફળતાપૂર્વક મેળવાયું',
-},
+    en: 'Shop Location',
+    gu: 'દુકાનનું સ્થાન',
+  },
+  fetchCurrentLocation: {
+    en: 'Fetch Current Location',
+    gu: 'વર્તમાન સ્થાન મેળવો',
+  },
+  locationFetched: {
+    en: 'Location fetched successfully',
+    gu: 'સ્થાન સફળતાપૂર્વક મેળવાયું',
+  },
 
-uploading: {
-  en: 'Uploading...',
-  gu: 'અપલોડ થઈ રહ્યું છે...',
-},
+  uploading: {
+    en: 'Uploading...',
+    gu: 'અપલોડ થઈ રહ્યું છે...',
+  },
 
-noChangesDetected: {
-  en: 'No changes detected',
-  gu: 'કોઈ ફેરફાર મળ્યો નથી',
-},
-partialUpdateNote: {
-  en: 'Only fields you edit will be updated. Empty fields will keep their original values.',
-  gu: 'તમે જે ફીલ્ડ્સ એડિટ કરશો તે જ અપડેટ થશે. ખાલી ફીલ્ડ્સ તેમના મૂળ મૂલ્યો જાળવી રાખશે.',
-},
+  noChangesDetected: {
+    en: 'No changes detected',
+    gu: 'કોઈ ફેરફાર મળ્યો નથી',
+  },
+  partialUpdateNote: {
+    en: 'Only fields you edit will be updated. Empty fields will keep their original values.',
+    gu: 'તમે જે ફીલ્ડ્સ એડિટ કરશો તે જ અપડેટ થશે. ખાલી ફીલ્ડ્સ તેમના મૂળ મૂલ્યો જાળવી રાખશે.',
+  },
 
+  noSessionFound: {
+    en: 'No session found. Please login again.',
+    gu: 'કોઈ સત્ર મળ્યું નથી. કૃપા કરીને ફરીથી લોગિન કરો.',
+  },
+  noShopId: {
+    en: 'Shop ID not found. Please login again.',
+    gu: 'દુકાન ID મળી નથી. કૃપા કરીને ફરીથી લોગિન કરો.',
+  },
+  shopNotFound: {
+    en: 'Shop not found in database.',
+    gu: 'ડેટાબેઝમાં દુકાન મળી નથી.',
+  },
+  pendingDashboardMessage: {
+    en: 'Your shop is currently under review. You cannot access the full dashboard until your application is approved.',
+    gu: 'તમારી દુકાન હાલમાં સમીક્ષા હેઠળ છે. તમારી અરજી મંજૂર ન થાય ત્યાં સુધી તમે સંપૂર્ણ ડેશબોર્ડને ઍક્સેસ કરી શકતા નથી.',
+  },
+  rejectedDashboardMessage: {
+    en: 'Your shop application has been rejected. Please update your information and try again.',
+    gu: 'તમારી દુકાન અરજી નામંજૂર કરવામાં આવી છે. કૃપા કરીને તમારી માહિતી અપડેટ કરો અને ફરી પ્રયાસ કરો.',
+  },
+  viewApplicationStatus: {
+    en: 'View Application Status',
+    gu: 'અરજી સ્થિતિ જુઓ',
+  },
+  approved: {
+    en: 'Approved',
+    gu: 'મંજૂર',
+  },
+  pending: {
+    en: 'Pending',
+    gu: 'બાકી',
+  },
+  rejected: {
+    en: 'Rejected',
+    gu: 'નામંજૂર',
+  },
+  logoutConfirmation: {
+    en: 'Are you sure you want to logout?',
+    gu: 'શું તમે લોગઆઉટ કરવા માંગો છો?',
+  },
+
+
+  // Add to your translations object
+  saving: {
+    en: 'Saving...',
+    gu: 'સેવ થઈ રહ્યું છે...',
+  },
+  updating: {
+    en: 'Updating...',
+    gu: 'અપડેટ થઈ રહ્યું છે...',
+  },
+  enterPhone: {
+    en: 'Enter phone number',
+    gu: 'ફોન નંબર દાખલ કરો',
+  },
+  shopLocation: {
+    en: 'Shop Location',
+    gu: 'દુકાનનું સ્થાન',
+  },
+  partialUpdateNote: {
+    en: 'Only changed fields will be updated. Leave fields empty to keep existing values.',
+    gu: 'ફક્ત બદલાયેલ ફીલ્ડ્સ અપડેટ થશે. હાલની કિંમતો રાખવા માટે ફીલ્ડ્સ ખાલી રાખો.',
+  },
+  noChangesDetected: {
+    en: 'No changes detected',
+    gu: 'કોઈ ફેરફાર મળ્યો નથી',
+  },
+  saveFailed: {
+    en: 'Failed to save changes',
+    gu: 'ફેરફારો સેવ કરવામાં નિષ્ફળ',
+  },
+  fetchCurrentLocation: {
+    en: 'Get Current Location',
+    gu: 'વર્તમાન સ્થાન મેળવો',
+  },
+  locationFetched: {
+    en: 'Location fetched successfully',
+    gu: 'સ્થાન સફળતાપૂર્વક મેળવાયું',
+  },
+
+  addItemsFailed: {
+    en: 'Failed to add items. Please try again.',
+    gu: 'વસ્તુઓ ઉમેરવામાં નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો.',
+  },
+
+  // Add to your translations object
+  noStockChanges: {
+    en: 'No stock changes detected',
+    gu: 'કોઈ સ્ટોક ફેરફાર મળ્યો નથી',
+  },
+  itemsUpdated: {
+    en: 'items updated successfully',
+    gu: 'વસ્તુઓ સફળતાપૂર્વક અપડેટ થઈ',
+  },
+  stockUpdateFailed: {
+    en: 'Failed to update stock',
+    gu: 'સ્ટોક અપડેટ કરવામાં નિષ્ફળ',
+  },
+  noItemsToManage: {
+    en: 'No items found to manage',
+    gu: 'મેનેજ કરવા માટે કોઈ વસ્તુઓ મળી નથી',
+  },
+  addItems: {
+    en: 'Add Items',
+    gu: 'વસ્તુઓ ઉમેરો',
+  },
+  changesSummary: {
+    en: 'Changes Summary',
+    gu: 'ફેરફારોનો સારાંશ',
+  },
+  itemsWillBeUpdated: {
+    en: 'items will be updated',
+    gu: 'વસ્તુઓ અપડેટ થશે',
+  },
+  saving: {
+    en: 'Saving...',
+    gu: 'સેવ થઈ રહ્યું છે...',
+  },
+  updating: {
+    en: 'Updating...',
+    gu: 'અપડેટ થઈ રહ્યું છે...',
+  },
+
+  // Add to your translations object
+  shopDataNotFound: {
+    en: 'Shop data not found',
+    gu: 'દુકાનનો ડેટા મળ્યો નથી',
+  },
+  shopIdNotFound: {
+    en: 'Shop ID not found',
+    gu: 'દુકાન ID મળી નથી',
+  },
+  goBack: {
+    en: 'Go Back',
+    gu: 'પાછા જાઓ',
+  },
+
+  // Add these missing translations to your translations object
+  loading: {
+    en: 'Loading...',
+    gu: 'લોડ થઈ રહ્યું છે...',
+  },
+  info: {
+    en: 'Info',
+    gu: 'માહિતી',
+  },
+  unnamedItem: {
+    en: 'Unnamed Item',
+    gu: 'નામ વગરની વસ્તુ',
+  },
+  unit: {
+    en: 'unit',
+    gu: 'એકમ',
+  },
+
+  // Add to your translations object
+  modified: {
+    en: 'Modified',
+    gu: 'સંશોધિત',
+  },
+  updateFailed: {
+    en: 'Failed to update items',
+    gu: 'વસ્તુઓ અપડેટ કરવામાં નિષ્ફળ',
+  },
+  unnamedItem: {
+    en: 'Unnamed Item',
+    gu: 'નામ વગરની વસ્તુ',
+  },
+
+  // Add these to your translations object in LanguageContext.js
+
+  // Add after the addMultipleItems translations
+  manageStock: {
+    en: 'Manage Stock',
+    gu: 'સ્ટોક મેનેજ કરો',
+  },
+  searchItems: {
+    en: 'Search items...',
+    gu: 'વસ્તુઓ શોધો...',
+  },
+  lowStock: {
+    en: 'Low Stock',
+    gu: 'ઓછો સ્ટોક',
+  },
+  outOfStock: {
+    en: 'Out of Stock',
+    gu: 'સ્ટોક નથી',
+  },
+  inStock: {
+    en: 'In Stock',
+    gu: 'સ્ટોકમાં છે',
+  },
+  currentStock: {
+    en: 'Current Stock',
+    gu: 'વર્તમાન સ્ટોક',
+  },
+  reduce: {
+    en: 'Reduce',
+    gu: 'ઘટાડો',
+  },
+  add: {
+    en: 'Add',
+    gu: 'ઉમેરો',
+  },
+  setStock: {
+    en: 'Set Stock',
+    gu: 'સ્ટોક સેટ કરો',
+  },
+  update: {
+    en: 'Update',
+    gu: 'અપડેટ કરો',
+  },
+  lastUpdated: {
+    en: 'Last Updated',
+    gu: 'છેલ્લે અપડેટ',
+  },
+  never: {
+    en: 'Never',
+    gu: 'ક્યારેય નહીં',
+  },
+  loadingItems: {
+    en: 'Loading items...',
+    gu: 'વસ્તુઓ લોડ થાય છે...',
+  },
+  noItemsFound: {
+    en: 'No items found',
+    gu: 'કોઈ વસ્તુ મળી નથી',
+  },
+  noItemsInShop: {
+    en: 'No items in this shop',
+    gu: 'આ દુકાનમાં કોઈ વસ્તુ નથી',
+  },
+  addStock: {
+    en: 'Add Stock',
+    gu: 'સ્ટોક ઉમેરો',
+  },
+  reduceStock: {
+    en: 'Reduce Stock',
+    gu: 'સ્ટોક ઘટાડો',
+  },
+  quantityTo: {
+    en: 'Quantity to',
+    gu: 'જથ્થો',
+  },
+  enterQuantity: {
+    en: 'Enter quantity',
+    gu: 'જથ્થો દાખલ કરો',
+  },
+  updatingStock: {
+    en: 'Updating stock...',
+    gu: 'સ્ટોક અપડેટ થાય છે...',
+  },
+  stockUpdatedSuccessfully: {
+    en: 'Stock updated successfully',
+    gu: 'સ્ટોક સફળતાપૂર્વક અપડેટ થયો',
+  },
+  failedToUpdateStock: {
+    en: 'Failed to update stock',
+    gu: 'સ્ટોક અપડેટ કરવામાં નિષ્ફળ',
+  },
+  failedToLoadItems: {
+    en: 'Failed to load items',
+    gu: 'વસ્તુઓ લોડ કરવામાં નિષ્ફળ',
+  },
+  stockCannotBeNegative: {
+    en: 'Stock cannot be negative',
+    gu: 'સ્ટોક નકારાત્મક ન હોઈ શકે',
+  },
+  enterValidQuantity: {
+    en: 'Please enter a valid quantity',
+    gu: 'કૃપા કરીને માન્ય જથ્થો દાખલ કરો',
+  },
+  insufficientStock: {
+    en: 'Insufficient stock',
+    gu: 'અપૂરતો સ્ટોક',
+  },
+
+  priceMustBePositive: {
+    en: 'Price must be greater than 0',
+    gu: 'કિંમત ૦ કરતાં વધુ હોવી જોઈએ',
+  },
+  priceUpdatedSuccessfully: {
+    en: 'Price updated successfully',
+    gu: 'કિંમત સફળતાપૂર્વક અપડેટ થઈ',
+  },
+  failedToUpdatePrice: {
+    en: 'Failed to update price',
+    gu: 'કિંમત અપડેટ કરવામાં નિષ્ફળ',
+  },
+  enterValidPrice: {
+    en: 'Please enter a valid price',
+    gu: 'કૃપા કરીને માન્ય કિંમત દાખલ કરો',
+  },
+  updatePrice: {
+    en: 'Update Price',
+    gu: 'કિંમત અપડેટ કરો',
+  },
+  newPrice: {
+    en: 'New Price',
+    gu: 'નવી કિંમત',
+  },
+  enterNewPrice: {
+    en: 'Enter new price',
+    gu: 'નવી કિંમત દાખલ કરો',
+  },
+  currentPrice: {
+    en: 'Current Price',
+    gu: 'વર્તમાન કિંમત',
+  },
+  lastStockUpdate: {
+    en: 'Last Stock Update',
+    gu: 'છેલ્લો સ્ટોક અપડેટ',
+  },
+  lastPriceUpdate: {
+    en: 'Last Price Update',
+    gu: 'છેલ્લો કિંમત અપડેટ',
+  },
 };
 
 export const LanguageProvider = ({ children }) => {

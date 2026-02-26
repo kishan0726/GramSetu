@@ -17,23 +17,29 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
 const ShopkeeperProfile = ({ navigation, route }) => {
   const { t, language } = useLanguage();
-  const { shopData: initialData } = route.params || {};
+  const { shopData: initialData, shopId: routeShopId } = route.params || {};
 
   const [shopData, setShopData] = useState(initialData || null);
+  const [shopId, setShopId] = useState(routeShopId || null);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(!initialData);
   const [editModal, setEditModal] = useState(false);
   const [passwordModal, setPasswordModal] = useState(false);
   const [editForm, setEditForm] = useState({
     ownerName: '',
     email: '',
+    mobileNumber: '',
     phone: '',
     address: '',
+    description: '',
+    category: '',
   });
   const [passwords, setPasswords] = useState({
     current: '',
@@ -47,15 +53,50 @@ const ShopkeeperProfile = ({ navigation, route }) => {
   const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
+    if (!initialData && shopId) {
+      fetchShopData();
+    } else if (shopData) {
+      initializeForm();
+    }
+  }, []);
+
+  useEffect(() => {
     if (shopData) {
-      setEditForm({
-        ownerName: shopData.ownerName || '',
-        email: shopData.email || '',
-        phone: shopData.phone || '',
-        address: shopData.address || '',
-      });
+      initializeForm();
     }
   }, [shopData]);
+
+  const fetchShopData = async () => {
+    setFetching(true);
+    try {
+      const shopRef = db.ref(`shops_list/${shopId}`);
+      const snapshot = await shopRef.once('value');
+      
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setShopData(data);
+      } else {
+        Alert.alert(t('error'), t('shopNotFound'));
+      }
+    } catch (error) {
+      console.error('Error fetching shop data:', error);
+      Alert.alert(t('error'), t('failedToLoad'));
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  const initializeForm = () => {
+    setEditForm({
+      ownerName: shopData.ownerName || '',
+      email: shopData.email || '',
+      mobileNumber: shopData.mobileNumber || '',
+      phone: shopData.phone || '',
+      address: shopData.address || '',
+      description: shopData.description || '',
+      category: shopData.category || '',
+    });
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -94,13 +135,22 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email)) {
       errors.email = t('validEmail');
     }
-    if (!editForm.phone.trim()) {
-      errors.phone = t('mobileRequired');
-    } else if (!/^[0-9]{10}$/.test(editForm.phone.replace(/\D/g, ''))) {
-      errors.phone = t('validMobile');
+    
+    const phoneNumber = editForm.mobileNumber || editForm.phone;
+    if (!phoneNumber.trim()) {
+      errors.mobileNumber = t('mobileRequired');
+    } else if (!/^[0-9]{10}$/.test(phoneNumber.replace(/\D/g, ''))) {
+      errors.mobileNumber = t('validMobile');
     }
+    
     if (!editForm.address.trim()) {
       errors.address = t('addressRequired');
+    }
+    if (!editForm.description.trim()) {
+      errors.description = t('descriptionRequired');
+    }
+    if (!editForm.category.trim()) {
+      errors.category = t('categoryRequired');
     }
 
     setFormErrors(errors);
@@ -128,35 +178,72 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!validateEditForm()) {
       Alert.alert(t('error'), t('pleaseFixErrors'));
       return;
     }
 
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const shopRef = db.ref(`shops_list/${shopId}`);
+      
+      // Prepare update data (only include fields that have changed)
+      const updates = {};
+      
+      if (editForm.ownerName !== shopData.ownerName) {
+        updates.ownerName = editForm.ownerName;
+      }
+      if (editForm.email !== shopData.email) {
+        updates.email = editForm.email;
+      }
+      if (editForm.mobileNumber !== shopData.mobileNumber) {
+        updates.mobileNumber = editForm.mobileNumber;
+      }
+      if (editForm.address !== shopData.address) {
+        updates.address = editForm.address;
+      }
+      if (editForm.description !== shopData.description) {
+        updates.description = editForm.description;
+      }
+      if (editForm.category !== shopData.category) {
+        updates.category = editForm.category;
+      }
+
+      // Only update if there are changes
+      if (Object.keys(updates).length > 0) {
+        updates.lastUpdated = new Date().toISOString().split('T')[0];
+        await shopRef.update(updates);
+        
+        // Update local state
+        setShopData({
+          ...shopData,
+          ...updates
+        });
+        
+        Alert.alert(t('success'), t('profileUpdated'));
+      } else {
+        Alert.alert(t('info'), t('noChangesDetected'));
+      }
+      
       setEditModal(false);
-      setShopData({
-        ...shopData,
-        ownerName: editForm.ownerName,
-        email: editForm.email,
-        phone: editForm.phone,
-        address: editForm.address,
-      });
-      Alert.alert(t('success'), t('profileUpdated'));
-    }, 1500);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert(t('error'), t('updateFailed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!validatePasswordForm()) {
       return;
     }
 
     setLoading(true);
-    // Simulate API call
+    
+    // Note: Password change would typically be handled by authentication service
+    // This is a placeholder for the functionality
     setTimeout(() => {
       setLoading(false);
       setPasswordModal(false);
@@ -166,32 +253,43 @@ const ShopkeeperProfile = ({ navigation, route }) => {
   };
 
   const handleLogout = async () => {
-      await AsyncStorage.removeItem('shopSession');
-      navigation.replace('ShopkeeperLogin');
-    // Alert.alert(
-    //   t('logout'),
-    //   t('logoutConfirmation'),
-    //   [
-    //     {
-    //       text: t('cancel'),
-    //       style: 'cancel',
-    //     },
-    //     {
-    //       text: t('logout'),
-    //       onPress: () => {
-    //         // Clear any stored data and navigate to login
-    //         navigation.reset({
-    //           index: 0,
-    //           routes: [{ name: 'ShopkeeperLogin' }],
-    //         });
-    //       },
-    //       style: 'destructive',
-    //     },
-    //   ]
-    // );
+    Alert.alert(
+      t('logout'),
+      t('logoutConfirmation'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('logout'),
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('shopSession');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'ShopkeeperLogin' }],
+              });
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
-  if (!shopData) {
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch {
+      return dateString;
+    }
+  };
+
+  if (fetching) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
@@ -208,6 +306,34 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#38bdf8" />
           <Text style={styles.loadingText}>{t('loadingData')}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!shopData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-back" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('profile')}</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Icon name="error-outline" size={60} color="#ef4444" />
+          <Text style={styles.errorText}>{t('shopNotFound')}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={fetchShopData}
+          >
+            <Text style={styles.retryText}>{t('retry')}</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -244,18 +370,18 @@ const ShopkeeperProfile = ({ navigation, route }) => {
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {shopData.name?.charAt(0) || 'S'}
+                {shopData.shopName?.charAt(0) || shopData.name?.charAt(0) || 'S'}
               </Text>
             </View>
           </View>
-          <Text style={styles.shopName}>{shopData.name}</Text>
+          <Text style={styles.shopName}>{shopData.shopName || shopData.name}</Text>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(shopData.status) + '15' }]}>
             <Icon name="circle" size={8} color={getStatusColor(shopData.status)} />
             <Text style={[styles.statusText, { color: getStatusColor(shopData.status) }]}>
               {getStatusText(shopData.status)}
             </Text>
           </View>
-          <Text style={styles.shopId}>{t('shopId')}: {shopData.id}</Text>
+          <Text style={styles.shopId}>{t('shopId')}: {shopId}</Text>
         </View>
 
         {/* Owner Information Card */}
@@ -266,7 +392,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="person" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('ownerName')}</Text>
-              <Text style={styles.infoValue}>{shopData.ownerName}</Text>
+              <Text style={styles.infoValue}>{shopData.ownerName || 'N/A'}</Text>
             </View>
           </View>
 
@@ -274,7 +400,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="email" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('email')}</Text>
-              <Text style={styles.infoValue}>{shopData.email}</Text>
+              <Text style={styles.infoValue}>{shopData.email || 'N/A'}</Text>
             </View>
           </View>
 
@@ -282,7 +408,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="phone" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('phone')}</Text>
-              <Text style={styles.infoValue}>{shopData.phone}</Text>
+              <Text style={styles.infoValue}>{shopData.mobileNumber || shopData.phone || 'N/A'}</Text>
             </View>
           </View>
         </View>
@@ -295,7 +421,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="store" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('shopName')}</Text>
-              <Text style={styles.infoValue}>{shopData.name}</Text>
+              <Text style={styles.infoValue}>{shopData.shopName || shopData.name}</Text>
             </View>
           </View>
 
@@ -303,7 +429,9 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="category" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('category')}</Text>
-              <Text style={styles.infoValue}>{t(shopData.category)}</Text>
+              <Text style={styles.infoValue}>
+                {shopData.category ? t(shopData.category) : 'N/A'}
+              </Text>
             </View>
           </View>
 
@@ -311,7 +439,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="description" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('description')}</Text>
-              <Text style={styles.infoValue}>{shopData.description}</Text>
+              <Text style={styles.infoValue}>{shopData.description || 'N/A'}</Text>
             </View>
           </View>
 
@@ -319,7 +447,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="location-on" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('address')}</Text>
-              <Text style={styles.infoValue}>{shopData.address}</Text>
+              <Text style={styles.infoValue}>{shopData.address || 'N/A'}</Text>
             </View>
           </View>
 
@@ -327,9 +455,21 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="business" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('businessProof')}</Text>
-              <Text style={styles.infoValue}>{shopData.businessProof}</Text>
+              <Text style={styles.infoValue}>{shopData.businessProof || 'N/A'}</Text>
             </View>
           </View>
+
+          {shopData.coordinates && (
+            <View style={styles.infoRow}>
+              <Icon name="map" size={20} color="#64748b" />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>{t('location')}</Text>
+                <Text style={styles.infoValue}>
+                  Lat: {shopData.coordinates.lat}, Lng: {shopData.coordinates.lng}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Document Status Card */}
@@ -338,27 +478,27 @@ const ShopkeeperProfile = ({ navigation, route }) => {
 
           <View style={styles.documentRow}>
             <Text style={styles.documentName}>{t('aadhaarCard')}</Text>
-            <View style={[styles.documentBadge, { backgroundColor: getStatusColor(shopData.documents?.aadhaar) + '15' }]}>
-              <Text style={[styles.documentStatus, { color: getStatusColor(shopData.documents?.aadhaar) }]}>
-                {getStatusText(shopData.documents?.aadhaar)}
+            <View style={[styles.documentBadge, { backgroundColor: getStatusColor(shopData.documents?.aadhaar || 'pending') + '15' }]}>
+              <Text style={[styles.documentStatus, { color: getStatusColor(shopData.documents?.aadhaar || 'pending') }]}>
+                {getStatusText(shopData.documents?.aadhaar || 'pending')}
               </Text>
             </View>
           </View>
 
           <View style={styles.documentRow}>
             <Text style={styles.documentName}>{t('panCard')}</Text>
-            <View style={[styles.documentBadge, { backgroundColor: getStatusColor(shopData.documents?.pan) + '15' }]}>
-              <Text style={[styles.documentStatus, { color: getStatusColor(shopData.documents?.pan) }]}>
-                {getStatusText(shopData.documents?.pan)}
+            <View style={[styles.documentBadge, { backgroundColor: getStatusColor(shopData.documents?.pan || 'pending') + '15' }]}>
+              <Text style={[styles.documentStatus, { color: getStatusColor(shopData.documents?.pan || 'pending') }]}>
+                {getStatusText(shopData.documents?.pan || 'pending')}
               </Text>
             </View>
           </View>
 
           <View style={styles.documentRow}>
             <Text style={styles.documentName}>{t('shopLicense')}</Text>
-            <View style={[styles.documentBadge, { backgroundColor: getStatusColor(shopData.documents?.license) + '15' }]}>
-              <Text style={[styles.documentStatus, { color: getStatusColor(shopData.documents?.license) }]}>
-                {getStatusText(shopData.documents?.license)}
+            <View style={[styles.documentBadge, { backgroundColor: getStatusColor(shopData.documents?.license || 'pending') + '15' }]}>
+              <Text style={[styles.documentStatus, { color: getStatusColor(shopData.documents?.license || 'pending') }]}>
+                {getStatusText(shopData.documents?.license || 'pending')}
               </Text>
             </View>
           </View>
@@ -372,7 +512,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="event" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('registrationDate')}</Text>
-              <Text style={styles.infoValue}>{shopData.registrationDate}</Text>
+              <Text style={styles.infoValue}>{formatDate(shopData.createdAt)}</Text>
             </View>
           </View>
 
@@ -380,7 +520,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Icon name="update" size={20} color="#64748b" />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>{t('lastUpdated')}</Text>
-              <Text style={styles.infoValue}>{shopData.lastUpdated}</Text>
+              <Text style={styles.infoValue}>{formatDate(shopData.lastUpdated)}</Text>
             </View>
           </View>
         </View>
@@ -433,6 +573,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
                   value={editForm.ownerName}
                   onChangeText={(text) => setEditForm({ ...editForm, ownerName: text })}
                   placeholder={t('enterOwnerName')}
+                  placeholderTextColor="#94a3b8"
                 />
                 {formErrors.ownerName && <Text style={styles.errorText}>{formErrors.ownerName}</Text>}
               </View>
@@ -445,24 +586,54 @@ const ShopkeeperProfile = ({ navigation, route }) => {
                   value={editForm.email}
                   onChangeText={(text) => setEditForm({ ...editForm, email: text })}
                   placeholder={t('enterEmail')}
+                  placeholderTextColor="#94a3b8"
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
                 {formErrors.email && <Text style={styles.errorText}>{formErrors.email}</Text>}
               </View>
 
-              {/* Phone */}
+              {/* Mobile Number */}
               <View style={styles.modalField}>
-                <Text style={styles.modalLabel}>{t('phone')} *</Text>
+                <Text style={styles.modalLabel}>{t('mobileNumber')} *</Text>
                 <TextInput
-                  style={[styles.modalInput, formErrors.phone && styles.inputError]}
-                  value={editForm.phone}
-                  onChangeText={(text) => setEditForm({ ...editForm, phone: text })}
+                  style={[styles.modalInput, formErrors.mobileNumber && styles.inputError]}
+                  value={editForm.mobileNumber || editForm.phone}
+                  onChangeText={(text) => setEditForm({ ...editForm, mobileNumber: text })}
                   placeholder={t('enterMobileNumber')}
+                  placeholderTextColor="#94a3b8"
                   keyboardType="phone-pad"
                   maxLength={10}
                 />
-                {formErrors.phone && <Text style={styles.errorText}>{formErrors.phone}</Text>}
+                {formErrors.mobileNumber && <Text style={styles.errorText}>{formErrors.mobileNumber}</Text>}
+              </View>
+
+              {/* Category */}
+              <View style={styles.modalField}>
+                <Text style={styles.modalLabel}>{t('category')} *</Text>
+                <TextInput
+                  style={[styles.modalInput, formErrors.category && styles.inputError]}
+                  value={editForm.category}
+                  onChangeText={(text) => setEditForm({ ...editForm, category: text })}
+                  placeholder={t('enterShopType')}
+                  placeholderTextColor="#94a3b8"
+                />
+                {formErrors.category && <Text style={styles.errorText}>{formErrors.category}</Text>}
+              </View>
+
+              {/* Description */}
+              <View style={styles.modalField}>
+                <Text style={styles.modalLabel}>{t('description')} *</Text>
+                <TextInput
+                  style={[styles.modalInput, styles.modalTextArea, formErrors.description && styles.inputError]}
+                  value={editForm.description}
+                  onChangeText={(text) => setEditForm({ ...editForm, description: text })}
+                  placeholder={t('enterDescription')}
+                  placeholderTextColor="#94a3b8"
+                  multiline
+                  numberOfLines={3}
+                />
+                {formErrors.description && <Text style={styles.errorText}>{formErrors.description}</Text>}
               </View>
 
               {/* Address */}
@@ -473,11 +644,15 @@ const ShopkeeperProfile = ({ navigation, route }) => {
                   value={editForm.address}
                   onChangeText={(text) => setEditForm({ ...editForm, address: text })}
                   placeholder={t('enterAddress')}
+                  placeholderTextColor="#94a3b8"
                   multiline
                   numberOfLines={3}
                 />
                 {formErrors.address && <Text style={styles.errorText}>{formErrors.address}</Text>}
               </View>
+
+              {/* Note about partial updates */}
+              <Text style={styles.noteText}>{t('partialUpdateNote')}</Text>
 
               {/* Save Button */}
               <TouchableOpacity
@@ -639,6 +814,30 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     color: '#64748b',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#ef4444',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#38bdf8',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -842,6 +1041,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    color: '#1e293b',
   },
   modalTextArea: {
     minHeight: 80,
@@ -883,6 +1083,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  noteText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
 

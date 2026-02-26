@@ -375,7 +375,7 @@ const Shops = () => {
                   <div className="shop-header">
                     <div className="shop-icon">{getCategoryIcon(shop.category)}</div>
                     <div className="shop-info">
-                      <h4 className="shop-name">{shop.name || shop.shopName || 'N/A'}</h4>
+                      <h4 className="shop-name">{shop.shopName || 'N/A'}</h4>
                       <p className="shop-owner">👤 {shop.ownerName || 'N/A'}</p>
                     </div>
                     <div
@@ -426,7 +426,7 @@ const Shops = () => {
                   {getCategoryIcon(selectedShop.category)}
                 </div>
                 <div className="shop-title">
-                  <h2>{selectedShop.name || selectedShop.shopName || "N/A"}</h2>
+                  <h2>{selectedShop.shopName || "N/A"}</h2>
                   <div className="shop-subtitle">
                     <span className="shop-id">ID: {selectedShop.id}</span>
                     <span
@@ -655,13 +655,6 @@ const Shops = () => {
                     Reconsider Approval
                   </button>
                 )}
-
-                <button
-                  className="shop-btn btn-danger"
-                  onClick={() => handleRemove(selectedShop.id)}
-                >
-                  Remove from System
-                </button>
 
                 <button className="shop-btn btn-outline">
                   Contact Shop

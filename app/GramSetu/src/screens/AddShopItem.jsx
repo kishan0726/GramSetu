@@ -13,20 +13,35 @@ import {
   FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const AddShopItem = ({ navigation, route }) => {
   const { t } = useLanguage();
-  const { shopData } = route.params;
+  const { shopData, shopId } = route.params;
   const [items, setItems] = useState([
-    { id: Date.now().toString(), name: '', price: '', unit: '', stock: '' }
+    { 
+      id: Date.now().toString(), 
+      name: '', 
+      price: '', 
+      unit: '', 
+      stock: '',
+      createdAt: new Date().toISOString()
+    }
   ]);
   const [loading, setLoading] = useState(false);
 
   const addNewItem = () => {
     setItems([
       ...items,
-      { id: Date.now().toString() + Math.random(), name: '', price: '', unit: '', stock: '' }
+      { 
+        id: Date.now().toString() + Math.random(), 
+        name: '', 
+        price: '', 
+        unit: '', 
+        stock: '',
+        createdAt: new Date().toISOString()
+      }
     ]);
   };
 
@@ -67,13 +82,50 @@ const AddShopItem = ({ navigation, route }) => {
     return true;
   };
 
-  const handleAddItems = () => {
+  // Generate a unique item ID
+  const generateItemId = () => {
+    return 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  };
+
+  const handleAddItems = async () => {
     if (!validateItems()) return;
 
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      // Get reference to the items path in Firebase
+      const itemsRef = db.ref(`shops_list/${shopId}/items`);
+      
+      // Prepare items for batch upload
+      const uploadPromises = items.map(async (item) => {
+        if (!item.name.trim()) return null; // Skip empty items
+        
+        const itemId = generateItemId();
+        const itemData = {
+          id: itemId,
+          name: item.name.trim(),
+          price: parseFloat(item.price),
+          unit: item.unit.trim(),
+          stock: parseInt(item.stock) || 0,
+          createdAt: new Date().toISOString(),
+          lastUpdated: new Date().toISOString().split('T')[0],
+          status: 'active'
+        };
+
+        // Save individual item under items path with unique ID
+        await itemsRef.child(itemId).set(itemData);
+        return itemData;
+      });
+
+      // Wait for all items to be uploaded
+      await Promise.all(uploadPromises);
+
+      // Update shop's lastUpdated timestamp
+      await db.ref(`shops_list/${shopId}`).update({
+        lastUpdated: new Date().toISOString().split('T')[0]
+      });
+
+      // Success message with options
       Alert.alert(
         t('success'),
         `${items.length} ${t('itemsAddedSuccessfully')}`,
@@ -81,7 +133,14 @@ const AddShopItem = ({ navigation, route }) => {
           {
             text: t('addMore'),
             onPress: () => {
-              setItems([{ id: Date.now().toString(), name: '', price: '', unit: '', stock: '' }]);
+              setItems([{ 
+                id: Date.now().toString(), 
+                name: '', 
+                price: '', 
+                unit: '', 
+                stock: '',
+                createdAt: new Date().toISOString()
+              }]);
             }
           },
           {
@@ -90,7 +149,13 @@ const AddShopItem = ({ navigation, route }) => {
           }
         ]
       );
-    }, 1500);
+
+    } catch (error) {
+      console.error('Error adding items:', error);
+      Alert.alert(t('error'), error.message || t('addItemsFailed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderItem = ({ item, index }) => (
@@ -113,6 +178,7 @@ const AddShopItem = ({ navigation, route }) => {
             value={item.name}
             onChangeText={(text) => updateItem(item.id, 'name', text)}
             placeholder={t('enterItemName')}
+            placeholderTextColor="#94a3b8"
           />
         </View>
       </View>
@@ -125,6 +191,7 @@ const AddShopItem = ({ navigation, route }) => {
             value={item.price}
             onChangeText={(text) => updateItem(item.id, 'price', text)}
             placeholder={t('enterPrice')}
+            placeholderTextColor="#94a3b8"
             keyboardType="numeric"
           />
         </View>
@@ -136,6 +203,7 @@ const AddShopItem = ({ navigation, route }) => {
             value={item.unit}
             onChangeText={(text) => updateItem(item.id, 'unit', text)}
             placeholder={t('enterUnit')}
+            placeholderTextColor="#94a3b8"
           />
         </View>
       </View>
@@ -148,6 +216,7 @@ const AddShopItem = ({ navigation, route }) => {
             value={item.stock}
             onChangeText={(text) => updateItem(item.id, 'stock', text)}
             placeholder={t('enterStock')}
+            placeholderTextColor="#94a3b8"
             keyboardType="numeric"
           />
         </View>
@@ -210,8 +279,10 @@ const AddShopItem = ({ navigation, route }) => {
           <Icon name="arrow-back" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('addMultipleItems')}</Text>
-        <TouchableOpacity onPress={handleAddItems}>
-          <Text style={styles.saveText}>{t('save')}</Text>
+        <TouchableOpacity onPress={handleAddItems} disabled={loading}>
+          <Text style={[styles.saveText, loading && styles.disabledText]}>
+            {loading ? t('saving') : t('save')}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -222,6 +293,7 @@ const AddShopItem = ({ navigation, route }) => {
         <TouchableOpacity 
           style={styles.addMoreButton}
           onPress={addNewItem}
+          disabled={loading}
         >
           <Icon name="add" size={20} color="#38bdf8" />
           <Text style={styles.addMoreText}>{t('addAnother')}</Text>
@@ -256,8 +328,10 @@ const AddShopItem = ({ navigation, route }) => {
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#38bdf8" />
-          <Text style={styles.loadingText}>{t('addingItems')}</Text>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#38bdf8" />
+            <Text style={styles.loadingText}>{t('addingItems')}</Text>
+          </View>
         </View>
       )}
     </SafeAreaView>
@@ -287,6 +361,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  disabledText: {
+    opacity: 0.5,
   },
   summaryBar: {
     flexDirection: 'row',
@@ -370,6 +447,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    color: '#1e293b',
   },
   suggestionContainer: {
     flexDirection: 'row',
@@ -408,8 +486,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingContainer: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   loadingText: {
-    marginTop: 12,
     fontSize: 14,
     color: '#1e293b',
   },
