@@ -39,19 +39,280 @@ router.post("/send-otp", async (req, res) => {
             expires: Date.now() + 5 * 60 * 1000
         }
 
+        const htmlTemplate = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>OTP Verification</title>
+                <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+                    
+                    body {
+                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f8fafc;
+                    }
+                    
+                    .email-container {
+                        max-width: 600px;
+                        margin: 20px auto;
+                        background-color: #ffffff;
+                        border-radius: 24px;
+                        overflow: hidden;
+                        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+                        border: 1px solid #e2e8f0;
+                    }
+                    
+                    .email-header {
+                        background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+                        padding: 40px 30px;
+                        text-align: center;
+                    }
+                    
+                    .logo {
+                        font-size: 48px;
+                        margin-bottom: 10px;
+                        display: inline-block;
+                        background: rgba(255, 255, 255, 0.2);
+                        width: 80px;
+                        height: 80px;
+                        line-height: 80px;
+                        border-radius: 50%;
+                    }
+                    
+                    .header-title {
+                        color: #ffffff;
+                        font-size: 28px;
+                        font-weight: 700;
+                        margin: 15px 0 5px;
+                        letter-spacing: -0.5px;
+                    }
+                    
+                    .header-subtitle {
+                        color: rgba(255, 255, 255, 0.9);
+                        font-size: 14px;
+                        font-weight: 400;
+                        margin: 0;
+                    }
+                    
+                    .email-body {
+                        padding: 40px 30px;
+                        background: #ffffff;
+                    }
+                    
+                    .greeting {
+                        font-size: 18px;
+                        color: #1e293b;
+                        font-weight: 600;
+                        margin-bottom: 10px;
+                    }
+                    
+                    .message {
+                        font-size: 15px;
+                        color: #475569;
+                        line-height: 24px;
+                        margin-bottom: 30px;
+                    }
+                    
+                    .otp-container {
+                        background: #f8fafc;
+                        border-radius: 20px;
+                        padding: 30px;
+                        text-align: center;
+                        border: 2px dashed #38bdf8;
+                        margin-bottom: 30px;
+                    }
+                    
+                    .otp-label {
+                        font-size: 14px;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        letter-spacing: 2px;
+                        font-weight: 500;
+                        margin-bottom: 15px;
+                    }
+                    
+                    .otp-code {
+                        font-size: 48px;
+                        font-weight: 700;
+                        color: #0ea5e9;
+                        letter-spacing: 8px;
+                        margin: 20px 0;
+                        font-family: 'Courier New', monospace;
+                        background: #ffffff;
+                        padding: 15px;
+                        border-radius: 16px;
+                        border: 2px solid #e2e8f0;
+                        display: inline-block;
+                    }
+                    
+                    .otp-expiry {
+                        font-size: 13px;
+                        color: #ef4444;
+                        font-weight: 500;
+                        margin-top: 15px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 5px;
+                    }
+                    
+                    .expiry-icon {
+                        font-size: 16px;
+                    }
+                    
+                    .info-box {
+                        background: #f1f5f9;
+                        border-radius: 16px;
+                        padding: 20px;
+                        margin-top: 20px;
+                    }
+                    
+                    .info-title {
+                        font-size: 14px;
+                        color: #334155;
+                        font-weight: 600;
+                        margin-bottom: 10px;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                    }
+                    
+                    .info-text {
+                        font-size: 13px;
+                        color: #64748b;
+                        line-height: 20px;
+                        margin: 5px 0;
+                    }
+                    
+                    .email-footer {
+                        background: #f1f5f9;
+                        padding: 30px;
+                        text-align: center;
+                        border-top: 1px solid #e2e8f0;
+                    }
+                    
+                    .footer-text {
+                        font-size: 13px;
+                        color: #64748b;
+                        line-height: 20px;
+                        margin: 5px 0;
+                    }
+                    
+                    .footer-note {
+                        font-size: 12px;
+                        color: #94a3b8;
+                        margin-top: 15px;
+                    }
+                    
+                    .divider {
+                        height: 1px;
+                        background: linear-gradient(to right, transparent, #cbd5e1, transparent);
+                        margin: 20px 0;
+                    }
+                    
+                    .badge {
+                        display: inline-block;
+                        background: #38bdf8;
+                        color: white;
+                        padding: 4px 12px;
+                        border-radius: 20px;
+                        font-size: 12px;
+                        font-weight: 500;
+                        margin: 10px 0;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="email-container">
+                    <div class="email-header">
+                        <div class="logo">🔐</div>
+                        <h1 class="header-title">GramSetu</h1>
+                        <p class="header-subtitle">Digital Village Management System</p>
+                    </div>
+                    
+                    <div class="email-body">
+                        <div class="greeting">Hello Admin,</div>
+                        
+                        <p class="message">
+                            We received a request to verify your email address for the GramSetu admin portal. 
+                            Use the following One-Time Password (OTP) to complete your verification.
+                        </p>
+                        
+                        <div class="otp-container">
+                            <div class="otp-label">Verification Code</div>
+                            <div class="otp-code">${otp}</div>
+                            <div class="otp-expiry">
+                                <span class="expiry-icon">⏰</span>
+                                This OTP will expire in 5 minutes
+                            </div>
+                        </div>
+                        
+                        <div class="info-box">
+                            <div class="info-title">
+                                <span>📋</span>
+                                Important Security Information
+                            </div>
+                            <p class="info-text">• Never share this OTP with anyone, including GramSetu staff.</p>
+                            <p class="info-text">• If you didn't request this verification, please ignore this email.</p>
+                            <p class="info-text">• For security reasons, this OTP is valid for only 5 minutes.</p>
+                        </div>
+                        
+                        <div class="badge">Secure Verification</div>
+                    </div>
+                    
+                    <div class="email-footer">
+                        <p class="footer-text">This is an automated message from GramSetu.</p>
+                        <p class="footer-text">Please do not reply to this email.</p>
+                        <div class="divider"></div>
+                        <p class="footer-note">
+                            GramSetu - Connecting Villages Digitally<br>
+                            © 2024 GramSetu. All rights reserved.
+                        </p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        const textTemplate = `
+            GramSetu - Admin OTP Verification
+            
+            Hello Admin,
+            
+            We received a request to verify your email address for the GramSetu admin portal.
+            
+            Your OTP is: ${otp}
+            
+            This OTP will expire in 5 minutes.
+            
+            Important Security Information:
+            - Never share this OTP with anyone, including GramSetu staff.
+            - If you didn't request this verification, please ignore this email.
+            
+            This is an automated message from GramSetu. Please do not reply to this email.
+            
+            GramSetu - Connecting Villages Digitally
+            © 2024 GramSetu. All rights reserved.
+        `;
+
         await transporter.sendMail({
-            from: process.env.EMAIL_USER,
+            from: `"GramSetu Admin" <${process.env.EMAIL_USER}>`,
             to: email,
-            subject: "Your OTP Verification",
-            text: `Your OTP is ${otp}`
-        })
+            subject: "🔐 GramSetu Admin OTP Verification",
+            text: textTemplate,
+            html: htmlTemplate
+        });
 
         res.json({ success: true });
     }
     else {
         res.json({ success: false });
     }
-})
+});
 
 router.post("/verity-otp", async (req, res) => {
     const { email, otp } = req.body;
@@ -67,7 +328,7 @@ router.post("/verity-otp", async (req, res) => {
     }
     delete otpStore[email];
     res.json({ success: true });
-})
+});
 
 router.post("/reset-password", async (req, res) => {
     const { email, newPassword } = req.body;
@@ -253,10 +514,10 @@ app.get('/get-shop-documents/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const shopId = id.toLowerCase();
-        
+
         const snapshot = await db.ref(`shops_list/${shopId}/shop_image`).once("value");
         const data = snapshot.val() || {};
-        
+
         const documents = {};
         Object.keys(data).forEach(docType => {
             documents[docType] = {
@@ -266,7 +527,7 @@ app.get('/get-shop-documents/:id', async (req, res) => {
                 public_id: data[docType].public_id
             };
         });
-        
+
         res.json({ data: documents, success: true });
     }
     catch (error) {
@@ -279,23 +540,23 @@ app.get('/download-document/:id/:docType', async (req, res) => {
     try {
         const { id, docType } = req.params;
         const shopId = id.toLowerCase();
-        
+
         const snapshot = await db.ref(`shops_list/${shopId}/shop_image/${docType}`).once("value");
         const docData = snapshot.val();
-        
+
         if (!docData || !docData.url) {
             return res.status(404).json({ error: "Document not found" });
         }
-        
+
         const response = await axios({
             method: 'GET',
             url: docData.url,
             responseType: 'stream'
         });
-        
+
         res.setHeader('Content-Disposition', `attachment; filename="${docData.fileName || `${shopId}_${docType}.jpg`}"`);
         res.setHeader('Content-Type', response.headers['content-type']);
-        
+
         response.data.pipe(res);
     }
     catch (error) {
@@ -410,52 +671,357 @@ app.get("/get-user-detail/:id", async (req, res) => {
 
 
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 app.post("/profile/upload", upload.single("image"), async (req, res) => {
-  try {
-    const uid = "admin";
-    const file = req.file;
+    try {
+        const uid = "admin";
+        const file = req.file;
 
-    if (!file) {
-      return res.status(400).json({ error: "No image uploaded" });
-    }
-
-    if (!file.mimetype.startsWith("image/")) {
-      return res.status(400).json({ error: "Only images allowed" });
-    }
-
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: "profileImages",
-        public_id: uid,
-        overwrite: true,
-        transformation: [
-          { width: 300, height: 300, crop: "fill" }
-        ]
-      },
-      async (error, result) => {
-        if (error) {
-          console.log(error);
-          return res.status(500).json({ error: "Cloudinary upload failed" });
+        if (!file) {
+            return res.status(400).json({ error: "No image uploaded" });
         }
 
-        res.json({
-          success: true,
-          photoURL: result.secure_url
-        });
-      }
-    );
+        if (!file.mimetype.startsWith("image/")) {
+            return res.status(400).json({ error: "Only images allowed" });
+        }
 
-    streamifier.createReadStream(file.buffer).pipe(uploadStream);
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: "profileImages",
+                public_id: uid,
+                overwrite: true,
+                transformation: [
+                    { width: 300, height: 300, crop: "fill" }
+                ]
+            },
+            async (error, result) => {
+                if (error) {
+                    console.log(error);
+                    return res.status(500).json({ error: "Cloudinary upload failed" });
+                }
 
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Server error" });
-  }
+                res.json({
+                    success: true,
+                    photoURL: result.secure_url
+                });
+            }
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(uploadStream);
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Server error" });
+    }
 });
+
+
+// Forgot password - send OTP to shopkeeper email
+router.post("/shopkeeper-forgot-password", async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const snapshot = await db.ref('shops_list').orderByChild('email').equalTo(email).once('value');
+
+        if (!snapshot.exists()) {
+            return res.json({
+                success: false,
+                message: "No shop found with this email address"
+            });
+        }
+
+        let shopData = null;
+        let shopId = null;
+        snapshot.forEach((child) => {
+            shopData = child.val();
+            shopId = child.key;
+        });
+
+        const otp = otpGenerator.generate(6, {
+            digits: true,
+            lowerCaseAlphabets: false,
+            upperCaseAlphabets: false,
+            specialChars: false
+        });
+
+        otpStore[email] = {
+            otp,
+            shopId,
+            shopData,
+            expires: Date.now() + 5 * 60 * 1000,
+            purpose: 'forgot-password'
+        };
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Password Reset OTP - Shopkeeper Account",
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                    <h2 style="color: #38bdf8; text-align: center;">Password Reset Request</h2>
+                    <p style="font-size: 16px; color: #334155;">Hello ${shopData.ownerName || shopData.shopName},</p>
+                    <p style="font-size: 16px; color: #334155;">We received a request to reset your password for your shop account.</p>
+                    <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                        <h1 style="font-size: 36px; color: #38bdf8; letter-spacing: 5px; margin: 0;">${otp}</h1>
+                        <p style="font-size: 14px; color: #64748b; margin-top: 10px;">This OTP is valid for 5 minutes</p>
+                    </div>
+                    <p style="font-size: 14px; color: #64748b;">If you didn't request this, please ignore this email.</p>
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #94a3b8; text-align: center;">GramSetu - Digital Village Management System</p>
+                </div>
+            `
+        });
+
+        res.json({
+            success: true,
+            message: "OTP sent to your email",
+            email: email
+        });
+
+    } catch (error) {
+        console.error("Error in forgot password:", error);
+        res.json({
+            success: false,
+            message: "Failed to process request"
+        });
+    }
+});
+
+// Verify OTP for password reset
+router.post("/verify-reset-otp", async (req, res) => {
+    const { email, otp } = req.body;
+    const record = otpStore[email];
+
+    if (!record || record.purpose !== 'forgot-password') {
+        return res.json({
+            success: false,
+            message: "No OTP request found. Please request again."
+        });
+    }
+
+    if (Date.now() > record.expires) {
+        delete otpStore[email];
+        return res.json({
+            success: false,
+            message: "OTP has expired. Please request again."
+        });
+    }
+
+    if (record.otp != otp) {
+        return res.json({
+            success: false,
+            message: "Invalid OTP. Please try again."
+        });
+    }
+
+    const resetToken = otpGenerator.generate(20, {
+        digits: true,
+        lowerCaseAlphabets: true,
+        upperCaseAlphabets: true,
+        specialChars: false
+    });
+
+    otpStore[email] = {
+        ...record,
+        resetToken,
+        otpVerified: true,
+        expires: Date.now() + 15 * 60 * 1000
+    };
+
+    res.json({
+        success: true,
+        message: "OTP verified successfully",
+        resetToken: resetToken
+    });
+});
+
+// Reset password
+router.post("/reset-password", async (req, res) => {
+    const { email, resetToken, newPassword, confirmPassword } = req.body;
+
+    if (newPassword !== confirmPassword) {
+        return res.json({
+            success: false,
+            message: "Passwords do not match"
+        });
+    }
+
+    if (newPassword.length < 6) {
+        return res.json({
+            success: false,
+            message: "Password must be at least 6 characters"
+        });
+    }
+
+    const record = otpStore[email];
+
+    if (!record || record.purpose !== 'forgot-password') {
+        return res.json({
+            success: false,
+            message: "Invalid reset request"
+        });
+    }
+
+    if (!record.otpVerified) {
+        return res.json({
+            success: false,
+            message: "OTP not verified"
+        });
+    }
+
+    if (record.resetToken !== resetToken) {
+        return res.json({
+            success: false,
+            message: "Invalid reset token"
+        });
+    }
+
+    if (Date.now() > record.expires) {
+        delete otpStore[email];
+        return res.json({
+            success: false,
+            message: "Reset session expired"
+        });
+    }
+
+    try {
+        await db.ref(`shops_list/${record.shopId}`).update({
+            password: newPassword,
+            confirmPassword: newPassword,
+            lastUpdated: new Date().toISOString().split('T')[0]
+        });
+
+        delete otpStore[email];
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Password Reset Successful",
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                    <h2 style="color: #10b981; text-align: center;">✓ Password Reset Successful</h2>
+                    <p style="font-size: 16px; color: #334155;">Hello ${record.shopData.ownerName || record.shopData.shopName},</p>
+                    <p style="font-size: 16px; color: #334155;">Your password has been successfully reset.</p>
+                    <p style="font-size: 14px; color: #64748b;">You can now login with your new password.</p>
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #94a3b8; text-align: center;">If you didn't make this change, please contact support immediately.</p>
+                </div>
+            `
+        });
+
+        res.json({
+            success: true,
+            message: "Password reset successfully"
+        });
+
+    } catch (error) {
+        console.error("Error resetting password:", error);
+        res.json({
+            success: false,
+            message: "Failed to reset password"
+        });
+    }
+});
+
+// Resend OTP for forgot password
+router.post("/resend-reset-otp", async (req, res) => {
+    const { email } = req.body;
+    const record = otpStore[email];
+
+    if (!record || record.purpose !== 'forgot-password') {
+        return res.json({
+            success: false,
+            message: "No OTP request found"
+        });
+    }
+
+    const otp = otpGenerator.generate(6, {
+        digits: true,
+        lowerCaseAlphabets: false,
+        upperCaseAlphabets: false,
+        specialChars: false
+    });
+
+    otpStore[email] = {
+        ...record,
+        otp,
+        expires: Date.now() + 5 * 60 * 1000,
+        otpVerified: false
+    };
+
+    await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "New OTP for Password Reset",
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                <h2 style="color: #38bdf8; text-align: center;">New OTP Request</h2>
+                <p style="font-size: 16px; color: #334155;">Hello ${record.shopData.ownerName || record.shopData.shopName},</p>
+                <p style="font-size: 16px; color: #334155;">Here's your new OTP for password reset:</p>
+                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                    <h1 style="font-size: 36px; color: #38bdf8; letter-spacing: 5px; margin: 0;">${otp}</h1>
+                    <p style="font-size: 14px; color: #64748b; margin-top: 10px;">This OTP is valid for 5 minutes</p>
+                </div>
+            </div>
+        `
+    });
+
+    res.json({
+        success: true,
+        message: "New OTP sent successfully"
+    });
+});
+
+router.post("/get-shop-by-email", async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const snapshot = await db.ref('shops_list').orderByChild('email').equalTo(email).once('value');
+
+        if (!snapshot.exists()) {
+            return res.json({
+                success: false,
+                message: "No shop found with this email"
+            });
+        }
+
+        let shopData = null;
+        snapshot.forEach((child) => {
+            shopData = child.val();
+        });
+
+        res.json({
+            success: true,
+            data: {
+                shopName: shopData.shopName || shopData.name,
+                ownerName: shopData.ownerName,
+                email: shopData.email
+            }
+        });
+
+    } catch (error) {
+        console.error("Error fetching shop:", error);
+        res.json({
+            success: false,
+            message: "Failed to fetch shop data"
+        });
+    }
+});
+
+// Optional: Clean up expired OTPs periodically
+setInterval(() => {
+    const now = Date.now();
+    Object.keys(otpStore).forEach(email => {
+        if (otpStore[email].expires < now) {
+            delete otpStore[email];
+        }
+    });
+}, 60 * 1000);
+
+
 
 
 app.listen(5000, () => {

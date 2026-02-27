@@ -14,6 +14,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -71,7 +72,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     try {
       const shopRef = db.ref(`shops_list/${shopId}`);
       const snapshot = await shopRef.once('value');
-      
+
       if (snapshot.exists()) {
         const data = snapshot.val();
         setShopData(data);
@@ -83,6 +84,12 @@ const ShopkeeperProfile = ({ navigation, route }) => {
       Alert.alert(t('error'), t('failedToLoad'));
     } finally {
       setFetching(false);
+    }
+  };
+
+  const handleEditShop = () => {
+    if (shopData) {
+      navigation.navigate('EditShopDetails', { shopData, shopId });
     }
   };
 
@@ -135,14 +142,14 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email)) {
       errors.email = t('validEmail');
     }
-    
+
     const phoneNumber = editForm.mobileNumber || editForm.phone;
     if (!phoneNumber.trim()) {
       errors.mobileNumber = t('mobileRequired');
     } else if (!/^[0-9]{10}$/.test(phoneNumber.replace(/\D/g, ''))) {
       errors.mobileNumber = t('validMobile');
     }
-    
+
     if (!editForm.address.trim()) {
       errors.address = t('addressRequired');
     }
@@ -187,10 +194,10 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     setLoading(true);
     try {
       const shopRef = db.ref(`shops_list/${shopId}`);
-      
+
       // Prepare update data (only include fields that have changed)
       const updates = {};
-      
+
       if (editForm.ownerName !== shopData.ownerName) {
         updates.ownerName = editForm.ownerName;
       }
@@ -214,18 +221,18 @@ const ShopkeeperProfile = ({ navigation, route }) => {
       if (Object.keys(updates).length > 0) {
         updates.lastUpdated = new Date().toISOString().split('T')[0];
         await shopRef.update(updates);
-        
+
         // Update local state
         setShopData({
           ...shopData,
           ...updates
         });
-        
+
         Alert.alert(t('success'), t('profileUpdated'));
       } else {
         Alert.alert(t('info'), t('noChangesDetected'));
       }
-      
+
       setEditModal(false);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -241,15 +248,56 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     }
 
     setLoading(true);
-    
-    // Note: Password change would typically be handled by authentication service
-    // This is a placeholder for the functionality
-    setTimeout(() => {
-      setLoading(false);
-      setPasswordModal(false);
+
+    try {
+      // Get the current shop data to verify current password
+      const shopRef = db.ref(`shops_list/${shopId}`);
+      const snapshot = await shopRef.once('value');
+
+      if (!snapshot.exists()) {
+        Alert.alert(t('error'), t('shopNotFound'));
+        setLoading(false);
+        return;
+      }
+
+      const shopData = snapshot.val();
+
+      // Check if current password matches (considering both password and confirmPassword fields)
+      const storedPassword = shopData.password || shopData.confirmPassword;
+
+      if (!storedPassword) {
+        Alert.alert(t('error'), t('noPasswordSet'));
+        setLoading(false);
+        return;
+      }
+
+      // Verify current password
+      if (passwords.current !== storedPassword) {
+        setPasswordErrors({ ...passwordErrors, current: t('incorrectCurrentPassword') });
+        setLoading(false);
+        return;
+      }
+
+      // Update password in Firebase
+      // Update both password and confirmPassword fields to keep them in sync
+      await shopRef.update({
+        password: passwords.new,
+        confirmPassword: passwords.new,
+        lastUpdated: new Date().toISOString().split('T')[0]
+      });
+
+      // Clear the form and close modal
       setPasswords({ current: '', new: '', confirm: '' });
+      setPasswordModal(false);
+
       Alert.alert(t('success'), t('passwordChanged'));
-    }, 1500);
+
+    } catch (error) {
+      console.error('Error changing password:', error);
+      Alert.alert(t('error'), error.message || t('passwordChangeFailed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -287,6 +335,16 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     } catch {
       return dateString;
     }
+  };
+
+  // Get profile image URL from shop_image
+  const getProfileImage = () => {
+    return shopData?.shop_image?.profile?.url || null;
+  };
+
+  // Get first letter for avatar fallback
+  const getInitial = () => {
+    return shopData?.shopName?.charAt(0) || shopData?.name?.charAt(0) || 'S';
   };
 
   if (fetching) {
@@ -339,6 +397,8 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     );
   }
 
+  const profileImage = getProfileImage();
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
@@ -354,7 +414,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         <Text style={styles.headerTitle}>{t('profile')}</Text>
         <TouchableOpacity
           style={styles.editButton}
-          onPress={() => setEditModal(true)}
+          onPress={handleEditShop}
         >
           <Icon name="edit" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -365,14 +425,20 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
       >
-        {/* Profile Header Card */}
+        {/* Profile Header Card with Image */}
         <View style={styles.profileHeaderCard}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {shopData.shopName?.charAt(0) || shopData.name?.charAt(0) || 'S'}
-              </Text>
-            </View>
+            {profileImage ? (
+              <Image
+                source={{ uri: profileImage }}
+                style={styles.profileImage}
+                onError={() => console.log('Failed to load image')}
+              />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{getInitial()}</Text>
+              </View>
+            )}
           </View>
           <Text style={styles.shopName}>{shopData.shopName || shopData.name}</Text>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(shopData.status) + '15' }]}>
@@ -862,6 +928,13 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginBottom: 12,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: '#38bdf8',
   },
   avatar: {
     width: 80,

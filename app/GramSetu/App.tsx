@@ -18,7 +18,9 @@ import ShopkeeperDashboard from './src/screens/ShopkeeperDashboard';
 import EditShopDetails from './src/screens/EditShopDetails';
 import AddShopItem from './src/screens/AddShopItem';
 import ManageStock from './src/screens/ManageStock';
-import ShopkeeperProfile from './src/screens/ShopkeeperProfile'
+import ShopkeeperProfile from './src/screens/ShopkeeperProfile';
+import ForgotPassword from './src/screens/ForgotPassword';
+import ShopInventory from './src/screens/ShopInventory';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,6 +45,8 @@ const App = () => {
           <Stack.Screen name="ManageStock" component={ManageStock} />
           <Stack.Screen name="ShopkeeperApprovalWait" component={ShopkeeperApprovalWait} />
           <Stack.Screen name="ShopkeeperProfile" component={ShopkeeperProfile} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+          <Stack.Screen name="ShopInventory" component={ShopInventory} />
         </Stack.Navigator>
       </NavigationContainer>
     </LanguageProvider>

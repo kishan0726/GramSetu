@@ -2255,6 +2255,240 @@ export const translations = {
     en: 'Last Price Update',
     gu: 'છેલ્લો કિંમત અપડેટ',
   },
+
+  shopImage: {
+    en: 'Shop Image',
+    gu: 'દુકાનનું ચિત્ર',
+  },
+  addImage: {
+    en: 'Add Image',
+    gu: 'ચિત્ર ઉમેરો',
+  },
+  uploadImage: {
+    en: 'Upload Image',
+    gu: 'ચિત્ર અપલોડ કરો',
+  },
+  uploading: {
+    en: 'Uploading...',
+    gu: 'અપલોડ થઈ રહ્યું છે...',
+  },
+
+  incorrectCurrentPassword: {
+    en: 'Current password is incorrect',
+    gu: 'વર્તમાન પાસવર્ડ ખોટો છે',
+  },
+  noPasswordSet: {
+    en: 'No password set for this account',
+    gu: 'આ એકાઉન્ટ માટે કોઈ પાસવર્ડ સેટ નથી',
+  },
+  passwordChangeFailed: {
+    en: 'Failed to change password',
+    gu: 'પાસવર્ડ બદલવામાં નિષ્ફળ',
+  },
+
+  // Add to your translations object
+  forgotPassword: {
+    en: 'Forgot Password',
+    gu: 'પાસવર્ડ ભૂલી ગયા',
+  },
+  enterEmailForReset: {
+    en: 'Enter your email address to receive OTP',
+    gu: 'OTP મેળવવા માટે તમારું ઈમેલ સરનામું દાખલ કરો',
+  },
+  sendOtp: {
+    en: 'Send OTP',
+    gu: 'OTP મોકલો',
+  },
+  verifyOtp: {
+    en: 'Verify OTP',
+    gu: 'OTP ચકાસો',
+  },
+  otpSentTo: {
+    en: 'OTP sent to',
+    gu: 'OTP મોકલાયો',
+  },
+  enterOtp: {
+    en: 'Enter OTP',
+    gu: 'OTP દાખલ કરો',
+  },
+  otpExpiresIn: {
+    en: 'OTP expires in',
+    gu: 'OTP સમાપ્ત થાય છે',
+  },
+  resendOtp: {
+    en: 'Resend OTP',
+    gu: 'ફરીથી OTP મોકલો',
+  },
+  resetPassword: {
+    en: 'Reset Password',
+    gu: 'પાસવર્ડ રીસેટ કરો',
+  },
+  enterNewPassword: {
+    en: 'Enter new password',
+    gu: 'નવો પાસવર્ડ દાખલ કરો',
+  },
+  confirmNewPassword: {
+    en: 'Confirm new password',
+    gu: 'નવા પાસવર્ડની પુષ્ટિ કરો',
+  },
+  verify: {
+    en: 'Verify',
+    gu: 'ચકાસો',
+  },
+  emailNotFound: {
+    en: 'No account found with this email',
+    gu: 'આ ઈમેલ સાથે કોઈ એકાઉન્ટ મળ્યું નથી',
+  },
+  otpSent: {
+    en: 'OTP sent successfully',
+    gu: 'OTP સફળતાપૂર્વક મોકલાયો',
+  },
+  invalidOtp: {
+    en: 'Invalid OTP',
+    gu: 'અમાન્ય OTP',
+  },
+  otpResent: {
+    en: 'OTP resent successfully',
+    gu: 'OTP ફરીથી સફળતાપૂર્વક મોકલાયો',
+  },
+  failedToResend: {
+    en: 'Failed to resend OTP',
+    gu: 'OTP ફરીથી મોકલવામાં નિષ્ફળ',
+  },
+  passwordResetSuccess: {
+    en: 'Password reset successfully! You can now login with your new password.',
+    gu: 'પાસવર્ડ સફળતાપૂર્વક રીસેટ થયો! તમે હવે તમારા નવા પાસવર્ડથી લોગિન કરી શકો છો.',
+  },
+  resetFailed: {
+    en: 'Failed to reset password',
+    gu: 'પાસવર્ડ રીસેટ કરવામાં નિષ્ફળ',
+  },
+  validOtpRequired: {
+    en: 'Please enter a valid 6-digit OTP',
+    gu: 'કૃપા કરીને માન્ય 6-અંકનો OTP દાખલ કરો',
+  },
+  email: {
+    en: 'Email',
+    gu: 'ઈમેલ',
+  },
+
+
+  // Add to your translations object
+  generateReport: {
+    en: 'Generate Report',
+    gu: 'રિપોર્ટ બનાવો',
+  },
+  reportType: {
+    en: 'Report Type',
+    gu: 'રિપોર્ટનો પ્રકાર',
+  },
+  fullReport: {
+    en: 'Full Report',
+    gu: 'સંપૂર્ણ રિપોર્ટ',
+  },
+  fullReportDesc: {
+    en: 'Complete shop details with inventory',
+    gu: 'ઇન્વેન્ટરી સાથે સંપૂર્ણ દુકાન વિગતો',
+  },
+  inventoryReport: {
+    en: 'Inventory Report',
+    gu: 'ઇન્વેન્ટરી રિપોર્ટ',
+  },
+  inventoryReportDesc: {
+    en: 'Detailed list of all items',
+    gu: 'બધી વસ્તુઓની વિગતવાર યાદી',
+  },
+  summaryReport: {
+    en: 'Summary Report',
+    gu: 'સારાંશ રિપોર્ટ',
+  },
+  summaryReportDesc: {
+    en: 'Key statistics and overview',
+    gu: 'મુખ્ય આંકડાઓ અને ઝાંખી',
+  },
+  download: {
+    en: 'Download PDF',
+    gu: 'PDF ડાઉનલોડ કરો',
+  },
+  share: {
+    en: 'Share',
+    gu: 'શેર કરો',
+  },
+  pdfSaved: {
+    en: 'PDF saved to',
+    gu: 'PDF સાચવાઈ ગઈ',
+  },
+  pdfGenerationFailed: {
+    en: 'Failed to generate PDF',
+    gu: 'PDF બનાવવામાં નિષ્ફળ',
+  },
+  shareFailed: {
+    en: 'Failed to share PDF',
+    gu: 'PDF શેર કરવામાં નિષ્ફળ',
+  },
+  noDataToGenerate: {
+    en: 'No data to generate report',
+    gu: 'રિપોર્ટ બનાવવા માટે કોઈ ડેટા નથી',
+  },
+
+
+  // Add to your translations object
+  inventory: {
+    en: 'Inventory',
+    gu: 'ઇન્વેન્ટરી',
+  },
+  totalValue: {
+    en: 'Total Value',
+    gu: 'કુલ મૂલ્ય',
+  },
+  lowStock: {
+    en: 'Low Stock',
+    gu: 'ઓછો સ્ટોક',
+  },
+  outOfStock: {
+    en: 'Out of Stock',
+    gu: 'સ્ટોક ખતમ',
+  },
+  showLowStock: {
+    en: 'Show Low Stock',
+    gu: 'ઓછો સ્ટોક બતાવો',
+  },
+  searchItems: {
+    en: 'Search items...',
+    gu: 'વસ્તુઓ શોધો...',
+  },
+  item: {
+    en: 'Item',
+    gu: 'વસ્તુ',
+  },
+  price: {
+    en: 'Price',
+    gu: 'કિંમત',
+  },
+  stock: {
+    en: 'Stock',
+    gu: 'સ્ટોક',
+  },
+  value: {
+    en: 'Value',
+    gu: 'મૂલ્ય',
+  },
+  noItemsFound: {
+    en: 'No items found',
+    gu: 'કોઈ વસ્તુ મળી નથી',
+  },
+  clearFilters: {
+    en: 'Clear Filters',
+    gu: 'ફિલ્ટર સાફ કરો',
+  },
+  addFirstItem: {
+    en: 'Add First Item',
+    gu: 'પ્રથમ વસ્તુ ઉમેરો',
+  },
+  inStock: {
+    en: 'In Stock',
+    gu: 'સ્ટોકમાં',
+  },
 };
 
 export const LanguageProvider = ({ children }) => {

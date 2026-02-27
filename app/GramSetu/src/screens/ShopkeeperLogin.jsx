@@ -92,6 +92,10 @@ const ShopkeeperLogin = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleForgotPassword = async () => {
+    navigation.replace('ForgotPassword');
+  }
+
   const handleLogin = async () => {
     if (!validateForm()) return;
 
@@ -208,7 +212,7 @@ const ShopkeeperLogin = ({ navigation }) => {
           )}
 
           {/* Forgot Password */}
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
             <Text style={styles.forgotPasswordText}>{t('forgotPassword')}</Text>
           </TouchableOpacity>
 

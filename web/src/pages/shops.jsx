@@ -9,6 +9,7 @@ const Shops = () => {
   const [loading, setLoading] = useState(true);
   const [mapView, setMapView] = useState(false);
   const [documentImages, setDocumentImages] = useState({});
+  const [profileImages, setProfileImages] = useState({});
   const [documentViewer, setDocumentViewer] = useState(null);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
 
@@ -30,19 +31,27 @@ const Shops = () => {
     fetchShop();
   }, []);
 
-  // Fetch document images when a shop is selected
+  // Fetch document images and profile images when a shop is selected
   useEffect(() => {
-    const fetchDocumentImages = async () => {
+    const fetchShopImages = async () => {
       if (selectedShop?.id) {
         try {
           setLoadingDocuments(true);
-          console.log("Fetching documents for shop:", selectedShop.id);
+          console.log("Fetching images for shop:", selectedShop.id);
           const response = await fetch(`http://localhost:5000/get-shop-documents/${selectedShop.id}`);
           const result = await response.json();
           console.log("Document images response:", result);
           
           if (result.success) {
             setDocumentImages(result.data || {});
+            
+            // Extract profile image if available
+            if (result.data.profile) {
+              setProfileImages(prev => ({
+                ...prev,
+                [selectedShop.id]: result.data.profile.url
+              }));
+            }
           } else {
             setDocumentImages({});
           }
@@ -55,7 +64,7 @@ const Shops = () => {
       }
     };
 
-    fetchDocumentImages();
+    fetchShopImages();
   }, [selectedShop]);
 
   // Filter Data for Display
@@ -223,7 +232,8 @@ const Shops = () => {
       aadhaar: 'Aadhaar Card',
       pan: 'PAN Card',
       license: 'Shop License',
-      businessProof: 'Business Proof'
+      businessProof: 'Business Proof',
+      profile: 'Profile Image'
     };
     return types[docType] || docType.charAt(0).toUpperCase() + docType.slice(1);
   };
@@ -375,7 +385,7 @@ const Shops = () => {
                   <div className="shop-header">
                     <div className="shop-icon">{getCategoryIcon(shop.category)}</div>
                     <div className="shop-info">
-                      <h4 className="shop-name">{shop.shopName || 'N/A'}</h4>
+                      <h4 className="shop-name">{shop.shopName || shop.name || 'N/A'}</h4>
                       <p className="shop-owner">👤 {shop.ownerName || 'N/A'}</p>
                     </div>
                     <div
@@ -420,13 +430,28 @@ const Shops = () => {
             </div>
 
             <div className="shop-details-content">
-              {/* Shop Header */}
+              {/* Shop Header with Profile Image */}
               <div className="shop-header-details">
-                <div className="shop-avatar">
-                  {getCategoryIcon(selectedShop.category)}
+                <div className="shop-avatar-with-image">
+                  {profileImages[selectedShop.id] ? (
+                    <img 
+                      src={profileImages[selectedShop.id]} 
+                      alt={`${selectedShop.shopName || selectedShop.name} profile`}
+                      className="shop-profile-image"
+                      onError={(e) => {
+                        console.error("Error loading profile image");
+                        e.target.style.display = 'none';
+                        e.target.parentNode.innerHTML += '<div className="shop-avatar-fallback">' + getCategoryIcon(selectedShop.category) + '</div>';
+                      }}
+                    />
+                  ) : (
+                    <div className="shop-avatar-fallback">
+                      {getCategoryIcon(selectedShop.category)}
+                    </div>
+                  )}
                 </div>
                 <div className="shop-title">
-                  <h2>{selectedShop.shopName || "N/A"}</h2>
+                  <h2>{selectedShop.shopName || selectedShop.name || "N/A"}</h2>
                   <div className="shop-subtitle">
                     <span className="shop-id">ID: {selectedShop.id}</span>
                     <span
@@ -517,6 +542,37 @@ const Shops = () => {
                 </div>
               </div>
 
+              {/* Profile Image Display */}
+              {profileImages[selectedShop.id] && (
+                <div className="shop-details-section">
+                  <h4 className="shop-section-title">
+                    Profile Image
+                  </h4>
+                  <div className="shop-profile-image-container">
+                    <img 
+                      src={profileImages[selectedShop.id]} 
+                      alt="Shop Profile"
+                      className="shop-profile-large-image"
+                      onClick={() => handleViewDocument(profileImages[selectedShop.id], 'profile')}
+                    />
+                    <div className="shop-profile-image-actions">
+                      <button
+                        className="shop-doc-btn view"
+                        onClick={() => handleViewDocument(profileImages[selectedShop.id], 'profile')}
+                      >
+                        👁️ View Full Size
+                      </button>
+                      <button
+                        className="shop-doc-btn download"
+                        onClick={() => handleDownloadDocument(selectedShop.id, 'profile', `profile_${selectedShop.id}.jpg`)}
+                      >
+                        ⬇️ Download
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Document Images */}
               <div className="shop-details-section">
                 <h4 className="shop-section-title">
@@ -531,59 +587,61 @@ const Shops = () => {
                   <div className="shop-document-images-grid">
                     {Object.keys(documentImages).length > 0 ? (
                       Object.entries(documentImages).map(([docType, docData]) => (
-                        <div key={docType} className="shop-document-image-card">
-                          <div className="shop-document-image-header">
-                            <span className="shop-document-image-icon">📄</span>
-                            <span className="shop-document-image-name">
-                              {formatDocumentType(docType)}
-                            </span>
-                          </div>
-                          {docData.url ? (
-                            <>
-                              <img 
-                                src={docData.url} 
-                                alt={docType}
-                                className="shop-document-thumbnail"
-                                onClick={() => handleViewDocument(docData.url, docType)}
-                                onError={(e) => {
-                                  console.error("Error loading image:", docData.url);
-                                  e.target.style.display = 'none';
-                                  e.target.parentNode.innerHTML += '<div class="shop-image-error">Failed to load image</div>';
-                                }}
-                              />
-                              <div className="shop-document-image-actions">
-                                <button
-                                  className="shop-doc-btn view"
+                        docType !== 'profile' && (
+                          <div key={docType} className="shop-document-image-card">
+                            <div className="shop-document-image-header">
+                              <span className="shop-document-image-icon">📄</span>
+                              <span className="shop-document-image-name">
+                                {formatDocumentType(docType)}
+                              </span>
+                            </div>
+                            {docData.url ? (
+                              <>
+                                <img 
+                                  src={docData.url} 
+                                  alt={docType}
+                                  className="shop-document-thumbnail"
                                   onClick={() => handleViewDocument(docData.url, docType)}
-                                  title="View Document"
-                                >
-                                  👁️ View
-                                </button>
-                                <button
-                                  className="shop-doc-btn download"
-                                  onClick={() => handleDownloadDocument(selectedShop.id, docType, docData.fileName)}
-                                  title="Download Document"
-                                >
-                                  ⬇️ Download
-                                </button>
-                              </div>
-                              {docData.fileName && (
-                                <div className="shop-document-filename" title={docData.fileName}>
-                                  {docData.fileName.length > 20 
-                                    ? docData.fileName.substring(0, 17) + '...' 
-                                    : docData.fileName}
+                                  onError={(e) => {
+                                    console.error("Error loading image:", docData.url);
+                                    e.target.style.display = 'none';
+                                    e.target.parentNode.innerHTML += '<div class="shop-image-error">Failed to load image</div>';
+                                  }}
+                                />
+                                <div className="shop-document-image-actions">
+                                  <button
+                                    className="shop-doc-btn view"
+                                    onClick={() => handleViewDocument(docData.url, docType)}
+                                    title="View Document"
+                                  >
+                                    👁️ View
+                                  </button>
+                                  <button
+                                    className="shop-doc-btn download"
+                                    onClick={() => handleDownloadDocument(selectedShop.id, docType, docData.fileName)}
+                                    title="Download Document"
+                                  >
+                                    ⬇️ Download
+                                  </button>
                                 </div>
-                              )}
-                              {docData.uploadedAt && (
-                                <div className="shop-document-date">
-                                  Uploaded: {new Date(docData.uploadedAt).toLocaleDateString()}
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <div className="shop-no-image">No image available</div>
-                          )}
-                        </div>
+                                {docData.fileName && (
+                                  <div className="shop-document-filename" title={docData.fileName}>
+                                    {docData.fileName.length > 20 
+                                      ? docData.fileName.substring(0, 17) + '...' 
+                                      : docData.fileName}
+                                  </div>
+                                )}
+                                {docData.uploadedAt && (
+                                  <div className="shop-document-date">
+                                    Uploaded: {new Date(docData.uploadedAt).toLocaleDateString()}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="shop-no-image">No image available</div>
+                            )}
+                          </div>
+                        )
                       ))
                     ) : (
                       <div className="shop-no-documents">

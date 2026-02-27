@@ -110,12 +110,6 @@ const ShopkeeperDashboard = ({ navigation }) => {
     }
   };
 
-  const handleEditShop = () => {
-    if (shopData) {
-      navigation.navigate('EditShopDetails', { shopData, shopId });
-    }
-  };
-
   const handleAddItem = () => {
     if (shopData) {
       navigation.navigate('AddShopItem', { shopData, shopId });
@@ -126,10 +120,6 @@ const ShopkeeperDashboard = ({ navigation }) => {
     if (shopData) {
       navigation.navigate('ManageStock', { shopData, shopId });
     }
-  };
-
-  const handleViewReports = () => {
-    Alert.alert(t('info'), t('comingSoon'));
   };
 
   const handleViewAllItems = () => {
@@ -178,13 +168,6 @@ const ShopkeeperDashboard = ({ navigation }) => {
 
   const calculateTotalStock = () => {
     return items.reduce((sum, item) => sum + (item.stock || 0), 0) || 0;
-  };
-
-  const getRecentItems = () => {
-    // Sort items by createdAt date (newest first) and return top 3
-    return [...items]
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 3);
   };
 
   const getStockStatusColor = (stock) => {
@@ -344,8 +327,6 @@ const ShopkeeperDashboard = ({ navigation }) => {
   }
 
   // Approved Shop Dashboard
-  const recentItems = getRecentItems();
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
@@ -409,15 +390,8 @@ const ShopkeeperDashboard = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Action Grid */}
+        {/* Action Grid - Only 2 items now */}
         <View style={styles.actionGrid}>
-          <TouchableOpacity style={styles.actionCard} onPress={handleEditShop}>
-            <View style={[styles.actionIcon, { backgroundColor: '#eff6ff' }]}>
-              <Icon name="edit" size={30} color="#38bdf8" />
-            </View>
-            <Text style={styles.actionText}>{t('editShop')}</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity style={styles.actionCard} onPress={handleAddItem}>
             <View style={[styles.actionIcon, { backgroundColor: '#e6f7e6' }]}>
               <Icon name="add-box" size={30} color="#10b981" />
@@ -431,22 +405,12 @@ const ShopkeeperDashboard = ({ navigation }) => {
             </View>
             <Text style={styles.actionText}>{t('manageStock')}</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionCard} onPress={handleViewReports}>
-            <View style={[styles.actionIcon, { backgroundColor: '#fee2e2' }]}>
-              <Icon name="assessment" size={30} color="#ef4444" />
-            </View>
-            <Text style={styles.actionText}>{t('reports')}</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Shop Info Card */}
         <View style={styles.infoCard}>
           <View style={styles.infoHeader}>
             <Text style={styles.infoTitle}>{t('shopInformation')}</Text>
-            <TouchableOpacity onPress={handleEditShop}>
-              <Text style={styles.infoEdit}>{t('edit')}</Text>
-            </TouchableOpacity>
           </View>
 
           <View style={styles.infoRow}>
@@ -478,6 +442,52 @@ const ShopkeeperDashboard = ({ navigation }) => {
             <Text style={styles.infoLabel}>{t('email')}:</Text>
             <Text style={styles.infoValue}>{shopData?.email || 'N/A'}</Text>
           </View>
+        </View>
+
+        {/* Inventory Section - Now fills the bottom space */}
+        <View style={styles.inventorySection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('inventory')}</Text>
+            {items.length > 0 && (
+              <TouchableOpacity onPress={handleViewAllItems}>
+                <Text style={styles.seeAllText}>{t('viewAll')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {items.length > 0 ? (
+            items.map((item) => (
+              <TouchableOpacity 
+                key={item.id} 
+                style={styles.inventoryItem}
+                onPress={() => handleItemPress(item)}
+              >
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text style={styles.itemUnit}>{item.unit}</Text>
+                </View>
+                <View style={styles.itemDetails}>
+                  <Text style={styles.itemPrice}>₹{item.price}</Text>
+                  <View style={[styles.stockBadge, { backgroundColor: getStockStatusColor(item.stock) + '20' }]}>
+                    <Text style={[styles.stockText, { color: getStockStatusColor(item.stock) }]}>
+                      {item.stock || 0} {t('inStock')}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={styles.emptyInventory}>
+              <Icon name="inventory" size={60} color="#e2e8f0" />
+              <Text style={styles.emptyText}>{t('noItems')}</Text>
+              <TouchableOpacity 
+                style={styles.addFirstButton}
+                onPress={handleAddItem}
+              >
+                <Text style={styles.addFirstText}>{t('addFirstItem')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -677,12 +687,11 @@ const styles = StyleSheet.create({
   },
   actionGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 12,
     marginBottom: 20,
   },
   actionCard: {
-    width: (width - 56) / 2,
+    flex: 1,
     backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
@@ -723,20 +732,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   infoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 12,
   },
   infoTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1e293b',
-  },
-  infoEdit: {
-    fontSize: 13,
-    color: '#38bdf8',
-    fontWeight: '500',
   },
   infoRow: {
     flexDirection: 'row',
@@ -759,7 +760,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
-    marginBottom: 20,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     shadowColor: '#000',
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   stockBadge: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
   },
@@ -825,7 +825,7 @@ const styles = StyleSheet.create({
   },
   emptyInventory: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 40,
   },
   emptyText: {
     fontSize: 14,
