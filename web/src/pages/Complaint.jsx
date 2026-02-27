@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import '../stylesheets/Complaint.css';
 
 const Complaint = () => {
@@ -10,7 +10,55 @@ const Complaint = () => {
   const [showResolutionForm, setShowResolutionForm] = useState(false);
   const [resolutionText, setResolutionText] = useState('');
 
-  // Mock data - Replace with API call
+  const stats = {
+    total: complaints.length,
+    pending: complaints.filter(c => c.status === 'pending').length,
+    inProgress: complaints.filter(c => c.status === 'in-progress').length,
+    resolved: complaints.filter(c => c.status === 'resolved').length
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: '#f59e0b',
+      'in-progress': '#3b82f6',
+      resolved: '#10b981'
+    };
+    return colors[status] || '#64748b';
+  };
+
+  const getStatusIcon = (status) => {
+    const icons = {
+      pending: '⏳',
+      'in-progress': '⚙️',
+      resolved: '✅'
+    };
+    return icons[status] || '❓';
+  };
+
+  const getPriorityColor = (priority) => {
+    const colors = {
+      low: '#10b981',
+      medium: '#f59e0b',
+      high: '#ef4444',
+      urgent: '#dc2626'
+    };
+    return colors[priority] || '#64748b';
+  };
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      water: '💧',
+      road: '🛣️',
+      electricity: '💡',
+      sanitation: '🧹',
+      drainage: '🚰',
+      health: '🏥',
+      education: '🏫',
+      other: '📝'
+    };
+    return icons[category] || '📝';
+  };
+
   useEffect(() => {
     const fetchComplaints = async () => {
       try {
@@ -27,11 +75,9 @@ const Complaint = () => {
     fetchComplaints();
   }, []);
 
+  // Filtered Complaints
   const filteredComplaints = complaints.filter(complaint => {
-    // Filter by status
     if (filter !== 'all' && complaint.status !== filter) return false;
-
-    // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       return (
@@ -45,13 +91,7 @@ const Complaint = () => {
     return true;
   });
 
-  const stats = {
-    total: complaints.length,
-    pending: complaints.filter(c => c.status === 'pending').length,
-    inProgress: complaints.filter(c => c.status === 'in-progress').length,
-    resolved: complaints.filter(c => c.status === 'resolved').length
-  };
-
+  // Handle status change
   const handleStatusChange = async (complaintId, newStatus) => {
     if (!window.confirm(`Change status to ${newStatus}?`)) return;
 
@@ -91,46 +131,48 @@ const Complaint = () => {
     }
   };
 
+  // Handle update data
   const handleAssignTo = async (complaintId) => {
-  const team = prompt("Enter team/department:");
+    const team = prompt("Enter team/department:");
 
-  if (!team) return;
+    if (!team) return;
 
-  const updateData = {
-    assignedTo: team,
-    status: "in-progress",
-    lastUpdated: new Date().toLocaleString("en-IN", {
-      dateStyle: "short",
-      timeStyle: "short"
-    })
-  };
+    const updateData = {
+      assignedTo: team,
+      status: "in-progress",
+      lastUpdated: new Date().toLocaleString("en-IN", {
+        dateStyle: "short",
+        timeStyle: "short"
+      })
+    };
 
-  try {
-    const response = await fetch(
-      `http://localhost:5000/update-complaint-status/${complaintId}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updateData)
-      }
-    );
-
-    const result = await response.json();
-
-    if (result.success) {
-      setComplaints(prev =>
-        prev.map(c =>
-          c.id === complaintId ? { ...c, ...updateData } : c
-        )
+    try {
+      const response = await fetch(
+        `http://localhost:5000/update-complaint-status/${complaintId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updateData)
+        }
       );
 
-      alert(`Assigned to ${team}`);
-    }
-  } catch (error) {
-    console.error(error);
-  }
-};
+      const result = await response.json();
 
+      if (result.success) {
+        setComplaints(prev =>
+          prev.map(c =>
+            c.id === complaintId ? { ...c, ...updateData } : c
+          )
+        );
+
+        alert(`Assigned to ${team}`);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Handle Submistion
   const handleSubmitResolution = async () => {
     if (!resolutionText.trim()) {
       alert("Enter resolution details");
@@ -180,48 +222,7 @@ const Complaint = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: '#f59e0b',
-      'in-progress': '#3b82f6',
-      resolved: '#10b981'
-    };
-    return colors[status] || '#64748b';
-  };
-
-  const getStatusIcon = (status) => {
-    const icons = {
-      pending: '⏳',
-      'in-progress': '⚙️',
-      resolved: '✅'
-    };
-    return icons[status] || '❓';
-  };
-
-  const getPriorityColor = (priority) => {
-    const colors = {
-      low: '#10b981',
-      medium: '#f59e0b',
-      high: '#ef4444',
-      urgent: '#dc2626'
-    };
-    return colors[priority] || '#64748b';
-  };
-
-  const getCategoryIcon = (category) => {
-    const icons = {
-      water: '💧',
-      road: '🛣️',
-      electricity: '💡',
-      sanitation: '🧹',
-      drainage: '🚰',
-      health: '🏥',
-      education: '🏫',
-      other: '📝'
-    };
-    return icons[category] || '📝';
-  };
-
+  // Get Days Ago
   const getDaysAgo = (dateString) => {
     const date = new Date(dateString.split(' ')[0].split('-').reverse().join('-'));
     const today = new Date();
@@ -230,6 +231,7 @@ const Complaint = () => {
     return diffDays === 0 ? 'Today' : `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   };
 
+  // Loading
   if (loading) {
     return (
       <div className="complaint-loading-container">

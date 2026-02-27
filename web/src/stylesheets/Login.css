@@ -267,6 +267,7 @@
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -279,20 +280,20 @@
         padding: 50px 40px;
         max-width: 90%;
     }
-    
+
     .login-logo-text {
         font-size: 28px;
     }
-    
+
     .login-logo-icon {
         width: 36px;
         height: 36px;
     }
-    
+
     .login-welcome-text h1 {
         font-size: 32px;
     }
-    
+
     .login-welcome-text .subtitle {
         font-size: 15px;
     }
@@ -303,24 +304,24 @@
         padding: 40px 30px;
         max-width: 95%;
     }
-    
+
     .login-logo-text {
         font-size: 26px;
     }
-    
+
     .login-logo-icon {
         width: 32px;
         height: 32px;
     }
-    
+
     .login-welcome-text h1 {
         font-size: 28px;
     }
-    
+
     .login-form-control {
         padding: 14px 18px;
     }
-    
+
     .login-btn {
         padding: 16px;
         font-size: 16px;
@@ -332,33 +333,33 @@
         padding: 35px 25px;
         border-radius: 20px;
     }
-    
+
     .login-page {
         padding: 20px 15px;
     }
-    
+
     .login-logo-text {
         font-size: 24px;
     }
-    
+
     .login-logo-icon {
         width: 30px;
         height: 30px;
     }
-    
+
     .login-welcome-text h1 {
         font-size: 26px;
     }
-    
+
     .login-welcome-text .subtitle {
         font-size: 15px;
     }
-    
+
     .login-form-control {
         padding: 14px 16px;
         font-size: 15px;
     }
-    
+
     .login-btn {
         font-size: 15px;
     }

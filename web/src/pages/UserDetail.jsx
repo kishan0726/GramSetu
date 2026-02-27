@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import '../stylesheets/UserDetail.css';
 
@@ -7,12 +7,13 @@ const UserDetail = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('basic'); // 'basic', 'family', 'additional', 'gujarati'
+  const [activeTab, setActiveTab] = useState('basic');
 
   useEffect(() => {
     fetchUserDetails();
   }, [userId]);
 
+  // Fetch User Details
   const fetchUserDetails = async () => {
     try {
       const response = await fetch(`http://localhost:5000/get-user-detail/${userId}`);
@@ -32,6 +33,7 @@ const UserDetail = () => {
     }
   };
 
+  // Format Data
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -41,6 +43,7 @@ const UserDetail = () => {
     });
   };
 
+  // Calculate Age
   const calculateAge = (dob) => {
     if (!dob) return 'N/A';
     const birthDate = new Date(dob);
@@ -53,6 +56,7 @@ const UserDetail = () => {
     return age;
   };
 
+  // Status Badge
   const getStatusBadge = (status) => {
     if (status === 'expired') {
       return <span className="userdetail-badge expired">Expired</span>;
@@ -60,6 +64,7 @@ const UserDetail = () => {
     return <span className="userdetail-badge alive">Active</span>;
   };
 
+  // Loading
   if (loading) {
     return (
       <div className="userdetail-loading">

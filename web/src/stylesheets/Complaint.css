@@ -1061,7 +1061,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive */
@@ -1069,11 +1071,11 @@
   .main-content {
     flex-direction: column;
   }
-  
+
   .complaint-list.with-details {
     flex: 1;
   }
-  
+
   .complaint-details-panel,
   .complaint-resolution-form-panel {
     min-width: 100%;
@@ -1084,37 +1086,37 @@
   .complaint-management {
     padding: 20px;
   }
-  
+
   .complaint-management-header {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .complaint-header-right {
     justify-content: center;
   }
-  
+
   .complaint-controls-section {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .complaint-search-box {
     min-width: 100%;
   }
-  
+
   .complaint-info-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .complaint-stats-cards {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .complaint-status-buttons {
     flex-direction: column;
   }
-  
+
   .complaint-action-buttons-panel {
     grid-template-columns: 1fr;
   }

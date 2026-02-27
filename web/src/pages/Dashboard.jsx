@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import Sidebar from '../components/Sidebar';
 import Home from '../components/Home';
@@ -21,6 +21,7 @@ const Dashboard = () => {
     sectors: [],
     important_places: []
   });
+  
   useEffect(() => {
     const fetchVillageData = async () => {
       try {

@@ -323,7 +323,7 @@
     border-right: none;
     border-bottom: 1px solid #e2e8f0;
   }
-  
+
   .sidebar-links-grid {
     grid-template-columns: repeat(3, 1fr);
   }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
 import '../stylesheets/ForgotPassword.css';
@@ -13,14 +13,10 @@ const ForgotPassword = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-    // Validation states
     const [emailError, setEmailError] = useState('');
     const [codeError, setCodeError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
-
-    // UI states
     const [isLoading, setIsLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [timer, setTimer] = useState(60);
@@ -50,8 +46,6 @@ const ForgotPassword = () => {
         const newCode = [...verificationCode];
         newCode[index] = value;
         setVerificationCode(newCode);
-
-        // Auto-focus next input
         if (value && index < 5) {
             const nextInput = document.getElementById(`code-${index + 1}`);
             if (nextInput) nextInput.focus();
@@ -83,8 +77,6 @@ const ForgotPassword = () => {
 
         let isValid = true;
         setEmailError('');
-
-        // Email Validation
         if (!email.trim()) {
             setEmailError('Email is required');
             isValid = false;
@@ -92,8 +84,6 @@ const ForgotPassword = () => {
             setEmailError('Please enter a valid email address');
             isValid = false;
         }
-
-        // Send OTP Request to Backend
         if (isValid) {
             setIsLoading(true);
 
@@ -138,8 +128,6 @@ const ForgotPassword = () => {
         }
 
         setIsLoading(true);
-
-        // Send OTP Verification Request to Backend
         try {
             const response = await fetch("http://localhost:5000/verity-otp", {
                 method: "POST",
@@ -189,7 +177,6 @@ const ForgotPassword = () => {
         }
     };
 
-    // Handle resetting password
     const handleResetPassword = async (e) => {
         e.preventDefault();
 
@@ -197,7 +184,6 @@ const ForgotPassword = () => {
         setPasswordError('');
         setConfirmPasswordError('');
 
-        // Password validation
         if (!newPassword) {
             setPasswordError('New password is required');
             isValid = false;
@@ -206,7 +192,6 @@ const ForgotPassword = () => {
             isValid = false;
         }
 
-        // Confirm Password Validation
         if (!confirmPassword) {
             setConfirmPasswordError('Please confirm your password');
             isValid = false;
@@ -215,7 +200,6 @@ const ForgotPassword = () => {
             isValid = false;
         }
 
-        // Send Request to Backend for Password Change
         if (isValid) {
             setIsLoading(true);
 

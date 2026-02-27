@@ -1021,9 +1021,6 @@ setInterval(() => {
     });
 }, 60 * 1000);
 
-
-
-
 app.listen(5000, () => {
     console.log("Server Start on http://localhost:5000");
 })

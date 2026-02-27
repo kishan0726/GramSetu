@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from 'react';
 import '../stylesheets/Home.css';
-import villageMap from '../assets/icons/hide.png'; // You'll need to add this image
 
 const Home = ({ villageData }) => {
 

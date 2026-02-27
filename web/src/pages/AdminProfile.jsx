@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Camera, Mail, Phone, Calendar, Shield, Key, User, Building, Bell, Save, Edit2, X } from 'lucide-react';
 
 import '../stylesheets/AdminProfile.css';
@@ -291,7 +291,6 @@ const AdminProfilePage = () => {
           {/* Recent Activities */}
           <div className="admin-profile-activities-card">
             <h3>
-              <Bell size={20} />
               Recent Activities
             </h3>
 

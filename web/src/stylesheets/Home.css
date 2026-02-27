@@ -591,7 +591,7 @@
     grid-template-columns: 1fr;
     gap: 30px;
   }
-  
+
   .home-features-grid,
   .home-places-grid {
     grid-template-columns: 1fr;
@@ -604,34 +604,34 @@
     text-align: center;
     padding: 30px 20px;
   }
-  
+
   .home-hero-stats {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .home-hero-stat {
     width: 100%;
     justify-content: center;
   }
-  
+
   .home-info-card,
   .home-map-card,
   .home-live-data-card,
   .home-services-card {
     padding: 20px;
   }
-  
+
   .home-map-grid {
     width: 250px;
     height: 250px;
   }
-  
+
   .home-map-area {
     width: 100px;
     height: 100px;
   }
-  
+
   .home-map-legend {
     flex-direction: column;
     gap: 15px;
@@ -642,15 +642,15 @@
   .home-village-home {
     padding: 15px;
   }
-  
+
   .home-village-hero h1 {
     font-size: 28px;
   }
-  
+
   .home-card-title {
     font-size: 18px;
   }
-  
+
   .home-services-grid,
   .home-live-stats {
     grid-template-columns: 1fr;

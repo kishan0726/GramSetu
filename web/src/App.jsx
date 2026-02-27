@@ -96,7 +96,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="/users/:userId"
             element={

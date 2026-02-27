@@ -380,8 +380,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .admin-profile-section-header {
@@ -548,11 +555,11 @@
   .admin-profile-content {
     grid-template-columns: 1fr;
   }
-  
+
   .admin-profile-left-column {
     order: 2;
   }
-  
+
   .admin-profile-right-column {
     order: 1;
   }
@@ -562,39 +569,39 @@
   .admin-profile-page {
     padding: 16px;
   }
-  
+
   .admin-profile-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
-  
+
   .admin-profile-header-actions {
     width: 100%;
   }
-  
+
   .admin-profile-btn-edit,
   .admin-profile-btn-cancel,
   .admin-profile-btn-save {
     flex: 1;
     justify-content: center;
   }
-  
+
   .admin-profile-tabs {
     overflow-x: auto;
     flex-wrap: nowrap;
     padding: 0 16px;
   }
-  
+
   .admin-profile-tab-btn {
     padding: 12px 16px;
     white-space: nowrap;
   }
-  
+
   .admin-profile-form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .admin-profile-tab-content {
     padding: 20px;
     max-height: none;
@@ -602,7 +609,7 @@
 }
 
 @media (max-width: 480px) {
-  
+
   .admin-profile-stats {
     gap: 16px;
   }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import '../stylesheets/Shops.css';
 
 const Shops = () => {
@@ -13,7 +13,41 @@ const Shops = () => {
   const [documentViewer, setDocumentViewer] = useState(null);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
 
-  // Fetch Shops List from Backend
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: '#f59e0b',
+      approved: '#10b981',
+      rejected: '#ef4444'
+    };
+    return colors[status] || '#64748b';
+  };
+
+  const getStatusIcon = (status) => {
+    const icons = {
+      pending: '⏳',
+      approved: '✅',
+      rejected: '❌'
+    };
+    return icons[status] || '❓';
+  };
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      grocery: '🛒',
+      medical: '💊',
+      hardware: '🔧',
+      clothing: '👕',
+      electronics: '📱',
+      restaurant: '🍽️',
+      general: '🏪',
+      food: '🍲',
+      dairy: '🥛',
+      stationery: '✏️',
+      agriculture: '🌾'
+    };
+    return icons[category?.toLowerCase()] || '🏪';
+  };
+
   useEffect(() => {
     const fetchShop = async () => {
       try {
@@ -41,11 +75,10 @@ const Shops = () => {
           const response = await fetch(`http://localhost:5000/get-shop-documents/${selectedShop.id}`);
           const result = await response.json();
           console.log("Document images response:", result);
-          
+
           if (result.success) {
             setDocumentImages(result.data || {});
-            
-            // Extract profile image if available
+
             if (result.data.profile) {
               setProfileImages(prev => ({
                 ...prev,
@@ -99,7 +132,7 @@ const Shops = () => {
         if (result.success) {
           alert('Shop approved successfully!');
           // Update local state
-          setShops(shops.map(shop => 
+          setShops(shops.map(shop =>
             shop.id === id ? { ...shop, status: 'approved' } : shop
           ));
           if (selectedShop?.id === id) {
@@ -125,8 +158,7 @@ const Shops = () => {
         const result = await response.json();
         if (result.success) {
           alert('Shop rejected!');
-          // Update local state
-          setShops(shops.map(shop => 
+          setShops(shops.map(shop =>
             shop.id === id ? { ...shop, status: 'rejected' } : shop
           ));
           if (selectedShop?.id === id) {
@@ -192,41 +224,7 @@ const Shops = () => {
     });
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: '#f59e0b',
-      approved: '#10b981',
-      rejected: '#ef4444'
-    };
-    return colors[status] || '#64748b';
-  };
-
-  const getStatusIcon = (status) => {
-    const icons = {
-      pending: '⏳',
-      approved: '✅',
-      rejected: '❌'
-    };
-    return icons[status] || '❓';
-  };
-
-  const getCategoryIcon = (category) => {
-    const icons = {
-      grocery: '🛒',
-      medical: '💊',
-      hardware: '🔧',
-      clothing: '👕',
-      electronics: '📱',
-      restaurant: '🍽️',
-      general: '🏪',
-      food: '🍲',
-      dairy: '🥛',
-      stationery: '✏️',
-      agriculture: '🌾'
-    };
-    return icons[category?.toLowerCase()] || '🏪';
-  };
-
+  // Form Document Type
   const formatDocumentType = (docType) => {
     const types = {
       aadhaar: 'Aadhaar Card',
@@ -434,8 +432,8 @@ const Shops = () => {
               <div className="shop-header-details">
                 <div className="shop-avatar-with-image">
                   {profileImages[selectedShop.id] ? (
-                    <img 
-                      src={profileImages[selectedShop.id]} 
+                    <img
+                      src={profileImages[selectedShop.id]}
                       alt={`${selectedShop.shopName || selectedShop.name} profile`}
                       className="shop-profile-image"
                       onError={(e) => {
@@ -549,8 +547,8 @@ const Shops = () => {
                     Profile Image
                   </h4>
                   <div className="shop-profile-image-container">
-                    <img 
-                      src={profileImages[selectedShop.id]} 
+                    <img
+                      src={profileImages[selectedShop.id]}
                       alt="Shop Profile"
                       className="shop-profile-large-image"
                       onClick={() => handleViewDocument(profileImages[selectedShop.id], 'profile')}
@@ -597,8 +595,8 @@ const Shops = () => {
                             </div>
                             {docData.url ? (
                               <>
-                                <img 
-                                  src={docData.url} 
+                                <img
+                                  src={docData.url}
                                   alt={docType}
                                   className="shop-document-thumbnail"
                                   onClick={() => handleViewDocument(docData.url, docType)}
@@ -626,8 +624,8 @@ const Shops = () => {
                                 </div>
                                 {docData.fileName && (
                                   <div className="shop-document-filename" title={docData.fileName}>
-                                    {docData.fileName.length > 20 
-                                      ? docData.fileName.substring(0, 17) + '...' 
+                                    {docData.fileName.length > 20
+                                      ? docData.fileName.substring(0, 17) + '...'
                                       : docData.fileName}
                                   </div>
                                 )}

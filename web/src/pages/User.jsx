@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../stylesheets/User.css';
 
@@ -37,6 +37,23 @@ const User = () => {
         'Main Village', 'North Area', 'South Area', 'East Area',
         'West Area', 'Near Temple', 'Near School', 'Near River', 'Other'
     ];
+    
+    const getAgeGroup = (age) => {
+        if (age < 5) return 'Infant (0-4)';
+        if (age < 12) return 'Child (5-11)';
+        if (age < 18) return 'Teen (12-17)';
+        if (age < 35) return 'Youth (18-34)';
+        if (age < 60) return 'Adult (35-59)';
+        return 'Senior (60+)';
+    };
+        
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
 
     const [activeTab, setActiveTab] = useState('alive');
     const [users, setUsers] = useState([]);
@@ -50,8 +67,8 @@ const User = () => {
     const [userToExpire, setUserToExpire] = useState(null);
     const [userToRestore, setUserToRestore] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
 
-    // Form state for adding new user
     const [formData, setFormData] = useState({
         id: null,
         firstName: '',
@@ -86,13 +103,11 @@ const User = () => {
         status: 'alive'
     });
 
-    const [errors, setErrors] = useState({});
-
-    // Load data from localStorage on component mount
     useEffect(() => {
         fetchUsers();
     }, []);
 
+    // Fetch Users from Database
     const fetchUsers = async () => {
         const response = await fetch("http://localhost:5000/get-users");
         const result = await response.json();
@@ -106,6 +121,7 @@ const User = () => {
         }
     };
 
+    // Save Users
     const saveUsers = async (user) => {
         const firstName = user.firstName;
         const birthYear = new Date(user.dateOfBirth).getFullYear();
@@ -124,6 +140,7 @@ const User = () => {
             alert("Done")
     };
 
+    // Handle Input Change
     const handleInputChange = (e) => {
         const { name, value, type, checked, files } = e.target;
 
@@ -156,6 +173,7 @@ const User = () => {
         }
     };
 
+    // Validate Form
     const validateForm = () => {
         const newErrors = {};
 
@@ -215,6 +233,7 @@ const User = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    // Calculate Age
     const calculateAge = (dob) => {
         const birthDate = new Date(dob);
         const today = new Date();
@@ -226,15 +245,7 @@ const User = () => {
         return age;
     };
 
-    const getAgeGroup = (age) => {
-        if (age < 5) return 'Infant (0-4)';
-        if (age < 12) return 'Child (5-11)';
-        if (age < 18) return 'Teen (12-17)';
-        if (age < 35) return 'Youth (18-34)';
-        if (age < 60) return 'Adult (35-59)';
-        return 'Senior (60+)';
-    };
-
+    // Handle Add User
     const handleAddUser = async (e) => {
         e.preventDefault();
 
@@ -268,6 +279,7 @@ const User = () => {
         }
     };
 
+    // Reset Form
     const resetForm = () => {
         setFormData({
             id: null,
@@ -306,17 +318,20 @@ const User = () => {
         setSelectedUser(null);
     };
 
+    // Handle Edit User
     const handleEditUser = (user) => {
         setFormData(user);
         setSelectedUser(user);
         setActiveTab('add');
     };
 
+    // Handle Expire Users
     const handleExpireUser = (user) => {
         setUserToExpire(user);
         setShowExpireModal(true);
     };
 
+    // Confirmation of user Expire
     const confirmExpire = async () => {
         if (!userToExpire) return;
 
@@ -345,11 +360,13 @@ const User = () => {
         }
     };
 
+    // Handle Restore user from Expire
     const handleRestoreUser = (user) => {
         setUserToRestore(user);
         setShowRestoreModal(true);
     };
 
+    // Confirm Restore
     const confirmRestore = async () => {
         if (!userToRestore) return;
 
@@ -378,6 +395,7 @@ const User = () => {
         }
     };
 
+    // Filter Alive Users
     const getFilteredAliveUsers = () => {
         return users.filter(user => {
             const matchesSearch =
@@ -394,6 +412,7 @@ const User = () => {
         });
     };
 
+    // Filter Expire USers
     const getFilteredExpiredUsers = () => {
         return expiredUsers.filter(user => {
             const matchesSearch =
@@ -408,6 +427,7 @@ const User = () => {
         });
     };
 
+    // Total Count of users
     const getTotalCounts = () => {
         const maleCount = users.filter(u => u.gender === 'male').length;
         const femaleCount = users.filter(u => u.gender === 'female').length;
@@ -418,16 +438,7 @@ const User = () => {
 
         return { maleCount, femaleCount, childrenCount, seniorCount, voterCount, bplCount };
     };
-
     const counts = getTotalCounts();
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-IN', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-    };
 
     return (
         <div className="user-container">

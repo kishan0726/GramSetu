@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
 import '../stylesheets/Login.css';
@@ -35,7 +35,6 @@ const Login = () => {
     setPasswordError('');
     setSuccessMessage('');
 
-    // Validate admin ID
     if (!adminId.trim()) {
       setAdminIdError('Admin ID is required');
       isValid = false;
@@ -44,7 +43,6 @@ const Login = () => {
       isValid = false;
     }
 
-    // Validate password
     if (!password) {
       setPasswordError('Password is required');
       isValid = false;
@@ -53,7 +51,6 @@ const Login = () => {
       isValid = false;
     }
 
-    // Backend Login Process
     if (isValid) {
       setIsLoading(true);
 
