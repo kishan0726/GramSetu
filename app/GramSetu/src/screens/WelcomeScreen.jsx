@@ -1,5 +1,5 @@
 // WelcomeScreen.js
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,92 @@ import {
   StatusBar,
   Image
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
-import Logo from '../assets/logo.png';
-
 const WelcomeScreen = ({ navigation }) => {
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const checkSessionAndNavigate = async () => {
+      try {
+        const session = await AsyncStorage.getItem('shopSession');
+
+        if (!session) return;
+
+        const parsed = JSON.parse(session);
+        const shopId = parsed.shopId;
+
+        if (!shopId) {
+          await AsyncStorage.removeItem('shopSession');
+          return;
+        }
+
+        const snapshot = await db.ref(`shops_list/${shopId}`).once('value');
+
+        if (!snapshot.exists()) {
+          await AsyncStorage.removeItem('shopSession');
+          return;
+        }
+
+        const shopData = snapshot.val();
+
+        switch (shopData.status) {
+          case 'approved':
+            navigation.replace('ShopkeeperDashboard');
+            break;
+
+          case 'pending':
+            navigation.replace('ShopkeeperApprovalWait');
+            break;
+
+          case 'rejected':
+            navigation.replace('ShopkeeperApprovalWait');
+            break;
+
+          default:
+            navigation.replace('Welcome');
+        }
+
+      } catch (error) {
+        console.log('Navigation error:', error);
+      }
+    };
+
+    const checkUserSessionAndNavigate = async () => {
+      try {
+        const session = await AsyncStorage.getItem('userSession');
+
+        if (!session) return;
+
+        const parsed = JSON.parse(session);
+        const userId = parsed.userId;
+
+        if (!userId) {
+          alert("done")
+          await AsyncStorage.removeItem('userSession');
+          return;
+        }
+        
+        const snapshot = await db.ref(`user_data/${userId}`).once('value');
+        
+        if (!snapshot.exists()) {
+          await AsyncStorage.removeItem('userSession');
+          return;
+        }
+        navigation.replace('Dashboard');
+
+      } catch (error) {
+        console.log('Navigation error:', error);
+      }
+    };
+
+    checkSessionAndNavigate();
+    checkUserSessionAndNavigate();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -76,6 +155,7 @@ const WelcomeScreen = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

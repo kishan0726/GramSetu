@@ -316,7 +316,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
               await AsyncStorage.removeItem('shopSession');
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'ShopkeeperLogin' }],
+                routes: [{ name: 'Welcome' }],
               });
             } catch (error) {
               console.error('Logout error:', error);
@@ -1030,11 +1030,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
     textTransform: 'capitalize',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
   },
   passwordButton: {
     flex: 1,

@@ -25,6 +25,7 @@ import ShopInventory from './src/screens/ShopInventory';
 const Stack = createNativeStackNavigator();
 
 const App = () => {
+
   return (
     <LanguageProvider>
       <NavigationContainer>

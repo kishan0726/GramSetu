@@ -15,11 +15,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { db } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useLanguage } from '../context/LanguageContext';
 import * as ImagePicker from 'react-native-image-picker';
+
+import { db } from '../config/firebase';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
@@ -28,7 +29,7 @@ const CLOUDINARY_CLOUD_NAME = 'dmjwrm8sp';
 const CLOUDINARY_UPLOAD_PRESET = 'Documents';
 
 const ShopkeeperApprovalWait = ({ navigation, route }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { shopData: initialData } = route.params || {};
 
   const [shopData, setShopData] = useState(initialData || null);
@@ -57,6 +58,62 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [locationLoading, setLocationLoading] = useState(false);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved':
+        return '#10b981';
+      case 'pending':
+        return '#f59e0b';
+      case 'rejected':
+        return '#ef4444';
+      case 'uploaded':
+        return '#3b82f6';
+      default:
+        return '#64748b';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'approved':
+        return 'check-circle';
+      case 'pending':
+        return 'hourglass-empty';
+      case 'rejected':
+        return 'cancel';
+      case 'uploaded':
+        return 'cloud-done';
+      default:
+        return 'cloud-upload';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'approved':
+        return t('approved');
+      case 'pending':
+        return t('pending');
+      case 'rejected':
+        return t('rejected');
+      case 'uploaded':
+        return t('uploaded');
+      default:
+        return t('pending');
+    }
+  };
+  
+  const categories = [
+    { id: 'grocery', name: t('grocery'), icon: 'shopping-cart' },
+    { id: 'medical', name: t('medical'), icon: 'local-pharmacy' },
+    { id: 'hardware', name: t('hardware'), icon: 'hardware' },
+    { id: 'electronics', name: t('electronics'), icon: 'devices' },
+    { id: 'food', name: t('food'), icon: 'restaurant' },
+    { id: 'stationery', name: t('stationery'), icon: 'inventory' },
+    { id: 'dairy', name: t('dairy'), icon: 'local-cafe' },
+    { id: 'agriculture', name: t('agriculture'), icon: 'agriculture' },
+  ];
 
   useEffect(() => {
     const loadShopData = async () => {
@@ -253,6 +310,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
     }
   };
 
+  // Select Documents
   const handleSelectDocument = (docType) => {
     setSelectedDocType(docType);
     const options = {
@@ -317,6 +375,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
     });
   };
 
+  // Take Photo
   const handleTakePhoto = (docType) => {
     setSelectedDocType(docType);
     const options = {
@@ -386,9 +445,6 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
   const handleFetchLocation = () => {
     setLocationLoading(true);
 
-    // TODO: Implement actual location fetching
-    // This will use Geolocation API to get current coordinates
-
     // Mock location fetch for now
     setTimeout(() => {
       // Example coordinates (Village location)
@@ -406,56 +462,10 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
     }, 1500);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'approved':
-        return '#10b981';
-      case 'pending':
-        return '#f59e0b';
-      case 'rejected':
-        return '#ef4444';
-      case 'uploaded':
-        return '#3b82f6';
-      default:
-        return '#64748b';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'approved':
-        return 'check-circle';
-      case 'pending':
-        return 'hourglass-empty';
-      case 'rejected':
-        return 'cancel';
-      case 'uploaded':
-        return 'cloud-done';
-      default:
-        return 'cloud-upload';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'approved':
-        return t('approved');
-      case 'pending':
-        return t('pending');
-      case 'rejected':
-        return t('rejected');
-      case 'uploaded':
-        return t('uploaded');
-      default:
-        return t('pending');
-    }
-  };
-
   // Simplified validation - only check if fields are not empty when they are provided
   const validateForm = () => {
     const errors = {};
 
-    // Only validate if the field has a value (optional fields can be empty)
     if (formData.shopName && !formData.shopName.trim()) {
       errors.shopName = t('shopNameRequired');
     }
@@ -484,7 +494,6 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
   const getChangedFields = () => {
     const changes = {};
     
-    // Compare each field with original value
     Object.keys(formData).forEach(key => {
       if (formData[key] !== originalFormData[key]) {
         changes[key] = formData[key];
@@ -502,7 +511,6 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
 
     const changedFields = getChangedFields();
     
-    // Check if any fields were changed
     if (Object.keys(changedFields).length === 0) {
       Alert.alert(t('info'), t('noChangesDetected'));
       setUpdateModal(false);
@@ -512,10 +520,8 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
     setLoading(true);
 
     try {
-      // Prepare update object with only changed fields
       const updateData = {};
       
-      // Map form fields to database fields
       if (changedFields.shopName) updateData.name = changedFields.shopName;
       if (changedFields.email) updateData.email = changedFields.email;
       if (changedFields.phone) updateData.phone = changedFields.phone;
@@ -524,7 +530,6 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
       if (changedFields.description) updateData.description = changedFields.description;
       if (changedFields.businessProof) updateData.businessProof = changedFields.businessProof;
       
-      // Handle coordinates update
       if (changedFields.latitude || changedFields.longitude) {
         updateData.coordinates = {
           lat: parseFloat(changedFields.latitude !== undefined ? changedFields.latitude : originalFormData.latitude) || 0,
@@ -532,26 +537,21 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
         };
       }
       
-      // Always update lastUpdated
       updateData.lastUpdated = new Date().toISOString();
 
       console.log("Updating with changed fields:", updateData);
 
-      // Update shop data in Firebase with only changed fields
       await db.ref(`shops_list/${shopData.id}`).update(updateData);
 
-      // Update local data - merge with existing data
       setShopData({
         ...shopData,
         ...updateData,
-        // Ensure coordinates object is properly merged
         coordinates: {
           ...shopData.coordinates,
           ...(updateData.coordinates || {}),
         }
       });
 
-      // Update original form data with new values
       setOriginalFormData({
         ...originalFormData,
         ...formData
@@ -567,17 +567,6 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
       setLoading(false);
     }
   };
-
-  const categories = [
-    { id: 'grocery', name: t('grocery'), icon: 'shopping-cart' },
-    { id: 'medical', name: t('medical'), icon: 'local-pharmacy' },
-    { id: 'hardware', name: t('hardware'), icon: 'hardware' },
-    { id: 'electronics', name: t('electronics'), icon: 'devices' },
-    { id: 'food', name: t('food'), icon: 'restaurant' },
-    { id: 'stationery', name: t('stationery'), icon: 'inventory' },
-    { id: 'dairy', name: t('dairy'), icon: 'local-cafe' },
-    { id: 'agriculture', name: t('agriculture'), icon: 'agriculture' },
-  ];
 
   // Show loading state
   if (loading) {
@@ -1193,8 +1182,8 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
-  // ... (keep all existing styles)
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',

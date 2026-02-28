@@ -13,6 +13,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
 import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -26,8 +27,8 @@ const ShopInventory = ({ navigation, route }) => {
   const [filteredItems, setFilteredItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('name'); // 'name', 'price', 'stock'
-  const [sortOrder, setSortOrder] = useState('asc'); // 'asc', 'desc'
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [filterLowStock, setFilterLowStock] = useState(false);
   const [stats, setStats] = useState({
     totalItems: 0,
@@ -36,13 +37,6 @@ const ShopInventory = ({ navigation, route }) => {
     lowStockItems: 0,
     outOfStockItems: 0,
   });
-
-  useEffect(() => {
-    if (items.length > 0) {
-      calculateStats();
-      filterAndSortItems();
-    }
-  }, [items, searchQuery, sortBy, sortOrder, filterLowStock]);
 
   const calculateStats = () => {
     const totalItems = items.length;
@@ -60,10 +54,32 @@ const ShopInventory = ({ navigation, route }) => {
     });
   };
 
+  const getStockStatus = (stock) => {
+    if (stock <= 0) return { label: t('outOfStock'), color: '#ef4444', bgColor: '#fee2e2' };
+    if (stock < 10) return { label: t('lowStock'), color: '#f59e0b', bgColor: '#fef3c7' };
+    return { label: t('inStock'), color: '#10b981', bgColor: '#e6f7e6' };
+  };
+
+  const formatCurrency = (amount) => {
+    return `₹${parseFloat(amount || 0).toFixed(2)}`;
+  };
+
+  const getSortIcon = (type) => {
+    if (sortBy !== type) return 'unfold-more';
+    return sortOrder === 'asc' ? 'arrow-upward' : 'arrow-downward';
+  };
+
+  useEffect(() => {
+    if (items.length > 0) {
+      calculateStats();
+      filterAndSortItems();
+    }
+  }, [items, searchQuery, sortBy, sortOrder, filterLowStock]);
+
+  // Filter Item
   const filterAndSortItems = () => {
     let filtered = [...items];
 
-    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(item => 
@@ -73,12 +89,10 @@ const ShopInventory = ({ navigation, route }) => {
       );
     }
 
-    // Apply low stock filter
     if (filterLowStock) {
       filtered = filtered.filter(item => (item.stock || 0) < 10);
     }
 
-    // Apply sorting
     filtered.sort((a, b) => {
       let aVal, bVal;
       
@@ -114,20 +128,12 @@ const ShopInventory = ({ navigation, route }) => {
     setFilteredItems(filtered);
   };
 
-  const getStockStatus = (stock) => {
-    if (stock <= 0) return { label: t('outOfStock'), color: '#ef4444', bgColor: '#fee2e2' };
-    if (stock < 10) return { label: t('lowStock'), color: '#f59e0b', bgColor: '#fef3c7' };
-    return { label: t('inStock'), color: '#10b981', bgColor: '#e6f7e6' };
-  };
-
-  const formatCurrency = (amount) => {
-    return `₹${parseFloat(amount || 0).toFixed(2)}`;
-  };
-
+  // Navigate Item Details
   const handleItemPress = (item) => {
     navigation.navigate('ItemDetails', { item, shopId });
   };
 
+  // Navigate Add Shop Item
   const handleAddItem = () => {
     navigation.navigate('AddShopItem', { shopData, shopId });
   };
@@ -139,11 +145,6 @@ const ShopInventory = ({ navigation, route }) => {
       setSortBy(type);
       setSortOrder('asc');
     }
-  };
-
-  const getSortIcon = (type) => {
-    if (sortBy !== type) return 'unfold-more';
-    return sortOrder === 'asc' ? 'arrow-upward' : 'arrow-downward';
   };
 
   return (
@@ -349,6 +350,7 @@ const ShopInventory = ({ navigation, route }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

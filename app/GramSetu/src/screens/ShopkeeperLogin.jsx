@@ -13,10 +13,10 @@ import {
   ScrollView,
   StatusBar,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
-import LanguageSwitcher from '../components/LanguageSwitcher';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ShopkeeperLogin = ({ navigation }) => {
   const { t } = useLanguage();
@@ -77,6 +77,7 @@ const ShopkeeperLogin = ({ navigation }) => {
     checkSessionAndNavigate();
   }, []);
 
+  // Validate Form
   const validateForm = () => {
     const newErrors = {};
 
@@ -92,10 +93,12 @@ const ShopkeeperLogin = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Navigate to forgot Password
   const handleForgotPassword = async () => {
     navigation.replace('ForgotPassword');
   }
 
+  // Handle Login
   const handleLogin = async () => {
     if (!validateForm()) return;
 
@@ -145,6 +148,7 @@ const ShopkeeperLogin = ({ navigation }) => {
     }
   };
 
+  // Navigate to Welcome Page
   const handleBackToWelcome = () => {
     navigation.navigate('Welcome');
   };
@@ -251,6 +255,7 @@ const ShopkeeperLogin = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

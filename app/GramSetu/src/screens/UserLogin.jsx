@@ -1,5 +1,5 @@
 // UserLogin.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,9 @@ import {
   ScrollView,
   StatusBar,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
@@ -23,6 +26,39 @@ const UserLogin = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    const checkSessionAndNavigate = async () => {
+      try {
+        const session = await AsyncStorage.getItem('userSession');
+
+        if (!session) return;
+
+        const parsed = JSON.parse(session);
+        const userId = parsed.userId;
+
+        if (!userId) {
+          alert("done")
+          await AsyncStorage.removeItem('userSession');
+          return;
+        }
+        
+        // 🔥 ALWAYS fetch fresh data from DB
+        const snapshot = await db.ref(`user_data/${userId}`).once('value');
+        
+        if (!snapshot.exists()) {
+          await AsyncStorage.removeItem('userSession');
+          return;
+        }
+        navigation.replace('Dashboard');
+
+      } catch (error) {
+        console.log('Navigation error:', error);
+      }
+    };
+
+    checkSessionAndNavigate();
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -39,16 +75,23 @@ const UserLogin = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async() => {
     if (!validateForm()) return;
 
     setLoading(true);
-    
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert('Success', 'Login successful!');
+
+    await AsyncStorage.setItem(
+        'userSession',
+        JSON.stringify({
+          userId: userId,
+        })
+      );
       navigation.navigate('Dashboard')
-    }, 1500);
+    
+    // setTimeout(() => {
+    //   setLoading(false);
+    //   Alert.alert('Success', 'Login successful!');
+    // }, 1500);
   };
 
   const handleBackToWelcome = () => {

@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -87,6 +88,34 @@ const ProfileScreen = ({ navigation }) => {
   const handleCancel = () => {
     setEditing(false);
     setEditedData({ ...userData });
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      t('logout'),
+      t('logoutConfirmation'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('logout'),
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('userSession');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Welcome' }],
+              });
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   const handleSave = () => {
@@ -170,7 +199,7 @@ const ProfileScreen = ({ navigation }) => {
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
@@ -193,7 +222,7 @@ const ProfileScreen = ({ navigation }) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -201,14 +230,14 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('profile')}</Text>
         {!editing ? (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editButton}
             onPress={handleEdit}
           >
             <Icon name="edit" size={24} color="#ffffff" />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editButton}
             onPress={handleCancel}
           >
@@ -238,10 +267,10 @@ const ProfileScreen = ({ navigation }) => {
           style={[styles.tab, activeSection === 'personal' && styles.activeTab]}
           onPress={() => setActiveSection('personal')}
         >
-          <Icon 
-            name="person" 
-            size={20} 
-            color={activeSection === 'personal' ? '#38bdf8' : '#64748b'} 
+          <Icon
+            name="person"
+            size={20}
+            color={activeSection === 'personal' ? '#38bdf8' : '#64748b'}
           />
           <Text style={[styles.tabText, activeSection === 'personal' && styles.activeTabText]}>
             {t('personalInfo')}
@@ -252,10 +281,10 @@ const ProfileScreen = ({ navigation }) => {
           style={[styles.tab, activeSection === 'contact' && styles.activeTab]}
           onPress={() => setActiveSection('contact')}
         >
-          <Icon 
-            name="contact-phone" 
-            size={20} 
-            color={activeSection === 'contact' ? '#38bdf8' : '#64748b'} 
+          <Icon
+            name="contact-phone"
+            size={20}
+            color={activeSection === 'contact' ? '#38bdf8' : '#64748b'}
           />
           <Text style={[styles.tabText, activeSection === 'contact' && styles.activeTabText]}>
             {t('contactInfo')}
@@ -266,10 +295,10 @@ const ProfileScreen = ({ navigation }) => {
           style={[styles.tab, activeSection === 'documents' && styles.activeTab]}
           onPress={() => setActiveSection('documents')}
         >
-          <Icon 
-            name="description" 
-            size={20} 
-            color={activeSection === 'documents' ? '#38bdf8' : '#64748b'} 
+          <Icon
+            name="description"
+            size={20}
+            color={activeSection === 'documents' ? '#38bdf8' : '#64748b'}
           />
           <Text style={[styles.tabText, activeSection === 'documents' && styles.activeTabText]}>
             {t('documents')}
@@ -277,7 +306,7 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
       >
@@ -322,13 +351,13 @@ const ProfileScreen = ({ navigation }) => {
         {/* Action Buttons */}
         {editing ? (
           <View style={styles.actionButtons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionButton, styles.cancelButton]}
               onPress={handleCancel}
             >
               <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionButton, styles.saveButton]}
               onPress={handleSave}
               disabled={saving}
@@ -341,13 +370,23 @@ const ProfileScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity 
-            style={styles.passwordChangeButton}
-            onPress={() => setPasswordModal(true)}
-          >
-            <Icon name="lock" size={20} color="#38bdf8" />
-            <Text style={styles.passwordChangeText}>{t('changePassword')}</Text>
-          </TouchableOpacity>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.passwordChangeButton}
+              onPress={() => setPasswordModal(true)}
+            >
+              <Icon name="lock" size={20} color="#38bdf8" />
+              <Text style={styles.passwordChangeText}>{t('changePassword')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Icon name="logout" size={20} color="#ef4444" />
+              <Text style={styles.logoutButtonText}>{t('logout')}</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* Extra bottom padding */}
@@ -365,7 +404,7 @@ const ProfileScreen = ({ navigation }) => {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('changePassword')}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => {
                   setPasswordModal(false);
@@ -444,7 +483,7 @@ const ProfileScreen = ({ navigation }) => {
                 )}
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.changePasswordButton}
                 onPress={handleChangePassword}
               >
@@ -656,22 +695,44 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#ffffff',
   },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
   passwordChangeButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#eff6ff',
     paddingVertical: 14,
     borderRadius: 12,
-    marginTop: 16,
     gap: 8,
     borderWidth: 1,
+    backgroundColor: '#eff6ff',
     borderColor: '#38bdf8',
   },
   passwordChangeText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#38bdf8',
+  },
+  logoutButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fee2e2',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  logoutButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ef4444',
   },
   modalOverlay: {
     flex: 1,

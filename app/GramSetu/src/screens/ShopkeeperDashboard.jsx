@@ -12,24 +12,67 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { db } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
 const ShopkeeperDashboard = ({ navigation }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
+
   const [shopData, setShopData] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [shopId, setShopId] = useState(null);
 
+  const calculateTotalValue = () => {
+    return items.reduce((sum, item) => sum + (item.price * (item.stock || 0)), 0) || 0;
+  };
+
+  const calculateTotalStock = () => {
+    return items.reduce((sum, item) => sum + (item.stock || 0), 0) || 0;
+  };
+
+  const getStockStatusColor = (stock) => {
+    if (stock <= 0) return '#ef4444';
+    if (stock < 10) return '#f59e0b';
+    return '#10b981';
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved':
+        return '#10b981';
+      case 'pending':
+        return '#f59e0b';
+      case 'rejected':
+        return '#ef4444';
+      default:
+        return '#64748b';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'approved':
+        return 'check-circle';
+      case 'pending':
+        return 'hourglass-empty';
+      case 'rejected':
+        return 'cancel';
+      default:
+        return 'info';
+    }
+  };
+
   useEffect(() => {
     loadShopData();
   }, []);
 
+  // Fetch Data from Database
   const loadShopData = async () => {
     try {
       console.log("STEP 1: Loading shop data...");
@@ -104,36 +147,42 @@ const ShopkeeperDashboard = ({ navigation }) => {
     }
   };
 
+  // Navigate to Shopkeeper Profile
   const handleProfilePress = () => {
     if (shopData) {
       navigation.navigate('ShopkeeperProfile', { shopData, shopId });
     }
   };
 
+  // Navigate to Add Item Screen
   const handleAddItem = () => {
     if (shopData) {
       navigation.navigate('AddShopItem', { shopData, shopId });
     }
   };
 
+  // Navigate to Manage Stock
   const handleManageStock = () => {
     if (shopData) {
       navigation.navigate('ManageStock', { shopData, shopId });
     }
   };
 
+  // Navigate to Shop Inventory
   const handleViewAllItems = () => {
     if (shopData) {
       navigation.navigate('ShopInventory', { shopData, shopId, items });
     }
   };
 
+  // Navigate Item Details
   const handleItemPress = (item) => {
     if (shopData) {
       navigation.navigate('ItemDetails', { item, shopId });
     }
   };
 
+  // Handle Logout
   const handleLogout = async () => {
     Alert.alert(
       t('logout'),
@@ -162,59 +211,7 @@ const ShopkeeperDashboard = ({ navigation }) => {
     );
   };
 
-  const calculateTotalValue = () => {
-    return items.reduce((sum, item) => sum + (item.price * (item.stock || 0)), 0) || 0;
-  };
-
-  const calculateTotalStock = () => {
-    return items.reduce((sum, item) => sum + (item.stock || 0), 0) || 0;
-  };
-
-  const getStockStatusColor = (stock) => {
-    if (stock <= 0) return '#ef4444'; // Red - Out of stock
-    if (stock < 10) return '#f59e0b'; // Orange - Low stock
-    return '#10b981'; // Green - In stock
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'approved':
-        return '#10b981';
-      case 'pending':
-        return '#f59e0b';
-      case 'rejected':
-        return '#ef4444';
-      default:
-        return '#64748b';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'approved':
-        return 'check-circle';
-      case 'pending':
-        return 'hourglass-empty';
-      case 'rejected':
-        return 'cancel';
-      default:
-        return 'info';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'approved':
-        return t('approved');
-      case 'pending':
-        return t('pending');
-      case 'rejected':
-        return t('rejected');
-      default:
-        return status;
-    }
-  };
-
+  // Loading
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -237,6 +234,7 @@ const ShopkeeperDashboard = ({ navigation }) => {
     );
   }
 
+  // Error Screen
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
@@ -494,6 +492,7 @@ const ShopkeeperDashboard = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

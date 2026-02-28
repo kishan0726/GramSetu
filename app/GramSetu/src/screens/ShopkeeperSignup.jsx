@@ -13,8 +13,9 @@ import {
   StatusBar,
   SafeAreaView,
 } from 'react-native';
-import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const ShopkeeperSignup = ({ navigation }) => {
@@ -46,6 +47,7 @@ const ShopkeeperSignup = ({ navigation }) => {
     });
   }, []);
 
+  // Validate Form
   const validateForm = () => {
     const newErrors = {};
 
@@ -93,6 +95,7 @@ const ShopkeeperSignup = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle Register
   const handleRegister = async () => {
     if (!validateForm()) return;
 
@@ -303,6 +306,7 @@ const ShopkeeperSignup = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
