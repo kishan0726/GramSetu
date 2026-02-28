@@ -21,6 +21,7 @@ import * as ImagePicker from 'react-native-image-picker';
 
 import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const { width } = Dimensions.get('window');
 
@@ -103,7 +104,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
         return t('pending');
     }
   };
-  
+
   const categories = [
     { id: 'grocery', name: t('grocery'), icon: 'shopping-cart' },
     { id: 'medical', name: t('medical'), icon: 'local-pharmacy' },
@@ -163,34 +164,34 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
             latitude: data.coordinates?.lat?.toString() || '',
             longitude: data.coordinates?.lng?.toString() || '',
           };
-          
+
           setFormData(newFormData);
           setOriginalFormData(newFormData); // Store original values
 
           // Initialize documents - fetch from shops_list/shop_image path
           if (data.shop_image) {
             const updatedDocs = { ...documents };
-            
+
             // Check each document type in shop_image
             const docTypes = ['aadhaar', 'pan', 'license'];
             for (const docType of docTypes) {
               if (data.shop_image[docType]) {
-                updatedDocs[docType] = { 
-                  status: 'uploaded', 
-                  uri: null, 
+                updatedDocs[docType] = {
+                  status: 'uploaded',
+                  uri: null,
                   cloudinaryUrl: data.shop_image[docType].url,
                   fileName: data.shop_image[docType].fileName || null
                 };
               } else {
-                updatedDocs[docType] = { 
-                  status: data.documents?.[docType] || 'pending', 
-                  uri: null, 
+                updatedDocs[docType] = {
+                  status: data.documents?.[docType] || 'pending',
+                  uri: null,
                   cloudinaryUrl: null,
-                  fileName: null 
+                  fileName: null
                 };
               }
             }
-            
+
             setDocuments(updatedDocs);
           } else if (data.documents) {
             // Fallback to old documents structure
@@ -227,17 +228,17 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
     console.log("🔥 uploadToCloudinary CALLED");
     console.log("Cloud Name:", CLOUDINARY_CLOUD_NAME);
     console.log("Upload Preset:", CLOUDINARY_UPLOAD_PRESET);
-    
+
     const fileName = generateFileName(shopId, docType);
     console.log("Generated filename:", fileName);
-    
+
     const data = new FormData();
 
     // Get file extension and set proper mime type
     const fileExtension = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
-    const mimeType = fileExtension === 'png' ? 'image/png' : 
-                     fileExtension === 'jpg' || fileExtension === 'jpeg' ? 'image/jpeg' : 
-                     'image/jpeg';
+    const mimeType = fileExtension === 'png' ? 'image/png' :
+      fileExtension === 'jpg' || fileExtension === 'jpeg' ? 'image/jpeg' :
+        'image/jpeg';
 
     data.append("file", {
       uri: imageUri,
@@ -246,7 +247,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
     });
 
     data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-    
+
     // Optional: Add custom filename as public_id
     data.append("public_id", fileName);
 
@@ -296,18 +297,47 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
         status: 'uploaded',
         documentType: docType
       });
-      
+
       // Also update the document status in shops_list/documents for backward compatibility
       await db.ref(`shops_list/${shopId}/documents/${docType}`).set('uploaded');
-      
+
       // Update lastUpdated timestamp
       await db.ref(`shops_list/${shopId}/lastUpdated`).set(new Date().toISOString());
-      
+
       return true;
     } catch (error) {
       console.error('Error saving to Firebase:', error);
       throw error;
     }
+  };
+
+  // Handle Logout
+  const handleLogout = async () => {
+    Alert.alert(
+      t('logout'),
+      t('logoutConfirmation'),
+      [
+        {
+          text: t('cancel'),
+          style: 'cancel',
+        },
+        {
+          text: t('logout'),
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('shopSession');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Welcome' }],
+              });
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   // Select Documents
@@ -353,8 +383,8 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
         // Update local state
         setDocuments((prev) => ({
           ...prev,
-          [docType]: { 
-            status: 'uploaded', 
+          [docType]: {
+            status: 'uploaded',
             uri: imageUri,
             cloudinaryUrl: uploadResult.secure_url,
             fileName: uploadResult.fileName
@@ -366,7 +396,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
       } catch (error) {
         console.log(error);
         Alert.alert(
-          'Upload Failed', 
+          'Upload Failed',
           error.message || 'Failed to upload document. Please try again.'
         );
       } finally {
@@ -419,8 +449,8 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
         // Update local state
         setDocuments((prev) => ({
           ...prev,
-          [docType]: { 
-            status: 'uploaded', 
+          [docType]: {
+            status: 'uploaded',
             uri: imageUri,
             cloudinaryUrl: uploadResult.secure_url,
             fileName: uploadResult.fileName
@@ -432,7 +462,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
       } catch (error) {
         console.log(error);
         Alert.alert(
-          'Upload Failed', 
+          'Upload Failed',
           error.message || 'Failed to upload document. Please try again.'
         );
       } finally {
@@ -493,16 +523,17 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
   // Function to get only changed fields
   const getChangedFields = () => {
     const changes = {};
-    
+
     Object.keys(formData).forEach(key => {
       if (formData[key] !== originalFormData[key]) {
         changes[key] = formData[key];
       }
     });
-    
+
     return changes;
   };
 
+  // Save Details
   const handleSaveDetails = async () => {
     if (!validateForm()) {
       Alert.alert(t('error'), t('pleaseFixErrors'));
@@ -510,7 +541,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
     }
 
     const changedFields = getChangedFields();
-    
+
     if (Object.keys(changedFields).length === 0) {
       Alert.alert(t('info'), t('noChangesDetected'));
       setUpdateModal(false);
@@ -521,7 +552,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
 
     try {
       const updateData = {};
-      
+
       if (changedFields.shopName) updateData.name = changedFields.shopName;
       if (changedFields.email) updateData.email = changedFields.email;
       if (changedFields.phone) updateData.phone = changedFields.phone;
@@ -529,14 +560,14 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
       if (changedFields.category) updateData.category = changedFields.category;
       if (changedFields.description) updateData.description = changedFields.description;
       if (changedFields.businessProof) updateData.businessProof = changedFields.businessProof;
-      
+
       if (changedFields.latitude || changedFields.longitude) {
         updateData.coordinates = {
           lat: parseFloat(changedFields.latitude !== undefined ? changedFields.latitude : originalFormData.latitude) || 0,
           lng: parseFloat(changedFields.longitude !== undefined ? changedFields.longitude : originalFormData.longitude) || 0,
         };
       }
-      
+
       updateData.lastUpdated = new Date().toISOString();
 
       console.log("Updating with changed fields:", updateData);
@@ -628,9 +659,7 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
         >
-          <Icon name="arrow-back" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('applicationStatus')}</Text>
         <TouchableOpacity
@@ -864,6 +893,23 @@ const ShopkeeperApprovalWait = ({ navigation, route }) => {
           <Text style={styles.noteText}>
             {t('approvalNote')}
           </Text>
+        </View>
+
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Icon name="logout" size={20} color="#ef4444" />
+            <Text style={styles.logoutButtonText}>{t('logout')}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Language Switcher */}
+        <View>
+          <LanguageSwitcher />
         </View>
       </ScrollView>
 
@@ -1712,6 +1758,45 @@ const styles = StyleSheet.create({
   uploadingText: {
     fontSize: 14,
     color: '#1e293b',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  passwordButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eff6ff',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+  },
+  passwordButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#38bdf8',
+  },
+  logoutButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fee2e2',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  logoutButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ef4444',
   },
 });
 

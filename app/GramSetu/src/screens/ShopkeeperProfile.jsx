@@ -18,13 +18,15 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
 import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const { width } = Dimensions.get('window');
 
 const ShopkeeperProfile = ({ navigation, route }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { shopData: initialData, shopId: routeShopId } = route.params || {};
 
   const [shopData, setShopData] = useState(initialData || null);
@@ -52,46 +54,6 @@ const ShopkeeperProfile = ({ navigation, route }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState({});
   const [formErrors, setFormErrors] = useState({});
-
-  useEffect(() => {
-    if (!initialData && shopId) {
-      fetchShopData();
-    } else if (shopData) {
-      initializeForm();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (shopData) {
-      initializeForm();
-    }
-  }, [shopData]);
-
-  const fetchShopData = async () => {
-    setFetching(true);
-    try {
-      const shopRef = db.ref(`shops_list/${shopId}`);
-      const snapshot = await shopRef.once('value');
-
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        setShopData(data);
-      } else {
-        Alert.alert(t('error'), t('shopNotFound'));
-      }
-    } catch (error) {
-      console.error('Error fetching shop data:', error);
-      Alert.alert(t('error'), t('failedToLoad'));
-    } finally {
-      setFetching(false);
-    }
-  };
-
-  const handleEditShop = () => {
-    if (shopData) {
-      navigation.navigate('EditShopDetails', { shopData, shopId });
-    }
-  };
 
   const initializeForm = () => {
     setEditForm({
@@ -131,6 +93,49 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     }
   };
 
+  useEffect(() => {
+    if (!initialData && shopId) {
+      fetchShopData();
+    } else if (shopData) {
+      initializeForm();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (shopData) {
+      initializeForm();
+    }
+  }, [shopData]);
+
+  // Fetch Shop Data
+  const fetchShopData = async () => {
+    setFetching(true);
+    try {
+      const shopRef = db.ref(`shops_list/${shopId}`);
+      const snapshot = await shopRef.once('value');
+
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setShopData(data);
+      } else {
+        Alert.alert(t('error'), t('shopNotFound'));
+      }
+    } catch (error) {
+      console.error('Error fetching shop data:', error);
+      Alert.alert(t('error'), t('failedToLoad'));
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  // Navigate to Edit Shop details
+  const handleEditShop = () => {
+    if (shopData) {
+      navigation.navigate('EditShopDetails', { shopData, shopId });
+    }
+  };
+
+  // Validate Edit Form
   const validateEditForm = () => {
     const errors = {};
 
@@ -164,6 +169,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     return Object.keys(errors).length === 0;
   };
 
+  // Validate Password Form
   const validatePasswordForm = () => {
     const errors = {};
 
@@ -185,6 +191,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     return Object.keys(errors).length === 0;
   };
 
+  // Handle Save Profile
   const handleSaveProfile = async () => {
     if (!validateEditForm()) {
       Alert.alert(t('error'), t('pleaseFixErrors'));
@@ -195,7 +202,6 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     try {
       const shopRef = db.ref(`shops_list/${shopId}`);
 
-      // Prepare update data (only include fields that have changed)
       const updates = {};
 
       if (editForm.ownerName !== shopData.ownerName) {
@@ -217,12 +223,10 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         updates.category = editForm.category;
       }
 
-      // Only update if there are changes
       if (Object.keys(updates).length > 0) {
         updates.lastUpdated = new Date().toISOString().split('T')[0];
         await shopRef.update(updates);
 
-        // Update local state
         setShopData({
           ...shopData,
           ...updates
@@ -242,6 +246,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     }
   };
 
+  // Handle Change Password
   const handleChangePassword = async () => {
     if (!validatePasswordForm()) {
       return;
@@ -250,7 +255,6 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     setLoading(true);
 
     try {
-      // Get the current shop data to verify current password
       const shopRef = db.ref(`shops_list/${shopId}`);
       const snapshot = await shopRef.once('value');
 
@@ -262,7 +266,6 @@ const ShopkeeperProfile = ({ navigation, route }) => {
 
       const shopData = snapshot.val();
 
-      // Check if current password matches (considering both password and confirmPassword fields)
       const storedPassword = shopData.password || shopData.confirmPassword;
 
       if (!storedPassword) {
@@ -271,22 +274,18 @@ const ShopkeeperProfile = ({ navigation, route }) => {
         return;
       }
 
-      // Verify current password
       if (passwords.current !== storedPassword) {
         setPasswordErrors({ ...passwordErrors, current: t('incorrectCurrentPassword') });
         setLoading(false);
         return;
       }
 
-      // Update password in Firebase
-      // Update both password and confirmPassword fields to keep them in sync
       await shopRef.update({
         password: passwords.new,
         confirmPassword: passwords.new,
         lastUpdated: new Date().toISOString().split('T')[0]
       });
 
-      // Clear the form and close modal
       setPasswords({ current: '', new: '', confirm: '' });
       setPasswordModal(false);
 
@@ -300,6 +299,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     }
   };
 
+  // Handle Logout
   const handleLogout = async () => {
     Alert.alert(
       t('logout'),
@@ -328,6 +328,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     );
   };
 
+  // Format Data
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     try {
@@ -347,6 +348,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
     return shopData?.shopName?.charAt(0) || shopData?.name?.charAt(0) || 'S';
   };
 
+  // Loading
   if (fetching) {
     return (
       <SafeAreaView style={styles.container}>
@@ -609,6 +611,11 @@ const ShopkeeperProfile = ({ navigation, route }) => {
             <Text style={styles.logoutButtonText}>{t('logout')}</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Language Switcher */}
+        <View>
+          <LanguageSwitcher />
+        </View>
       </ScrollView>
 
       {/* Edit Profile Modal */}
@@ -837,6 +844,7 @@ const ShopkeeperProfile = ({ navigation, route }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1030,6 +1038,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
     textTransform: 'capitalize',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
   },
   passwordButton: {
     flex: 1,

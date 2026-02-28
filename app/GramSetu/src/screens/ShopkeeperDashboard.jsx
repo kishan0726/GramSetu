@@ -333,9 +333,7 @@ const ShopkeeperDashboard = ({ navigation }) => {
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
         >
-          <Icon name="arrow-back" size={24} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {shopData?.shopName || shopData?.name || t('shopkeeperDashboard')}
