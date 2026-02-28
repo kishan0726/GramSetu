@@ -356,7 +356,7 @@ const ComplaintsScreen = ({ navigation }) => {
       return;
     }
     if (!newComplaint.description.trim()) {
-      Alert.alert(t('error'), t('enterDescription'));
+      Alert.alert(t('error'), t('enterComplaintDescription'));
       return;
     }
     if (!newComplaint.category) {

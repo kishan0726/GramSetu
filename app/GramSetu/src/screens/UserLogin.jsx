@@ -142,7 +142,7 @@ const UserLogin = ({ navigation }) => {
           <View style={styles.helpContainer}>
             <Text style={styles.helpTitle}>{t('needHelp')}</Text>
             <Text style={styles.helpText}>{t('contactOfficer')}</Text>
-            <Text style={styles.helpPhone}>{t('contactNumber')}</Text>
+            <Text style={styles.helpPhone}>{t('contactNumberLogin')}</Text>
           </View>
         </View>
       </ScrollView>

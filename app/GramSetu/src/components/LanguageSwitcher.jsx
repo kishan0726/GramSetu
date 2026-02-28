@@ -1,4 +1,3 @@
-// LanguageSwitcher.js
 import React, { useEffect } from 'react';
 import {
   View,
@@ -13,11 +12,11 @@ import { useLanguage, languages } from '../context/LanguageContext';
 const LanguageSwitcher = () => {
   const { language, toggleLanguage, setLanguage } = useLanguage();
 
-  // Load saved language on component mount
   useEffect(() => {
     loadSavedLanguage();
   }, []);
 
+  // Load Saved Language
   const loadSavedLanguage = async () => {
     try {
       const savedLanguage = await AsyncStorage.getItem('userLanguage');
@@ -29,12 +28,11 @@ const LanguageSwitcher = () => {
     }
   };
 
+  // Handle Language Change
   const handleLanguageChange = async (selectedLanguage) => {
     try {
-      // Save to AsyncStorage
       await AsyncStorage.setItem('userLanguage', selectedLanguage);
-      
-      // Update context state
+
       if (setLanguage) {
         setLanguage(selectedLanguage);
       }
@@ -46,6 +44,7 @@ const LanguageSwitcher = () => {
 
   return (
     <View style={styles.container}>
+      {/* English Button */}
       <TouchableOpacity
         style={[
           styles.languageButton,
@@ -60,7 +59,8 @@ const LanguageSwitcher = () => {
           English
         </Text>
       </TouchableOpacity>
-      
+
+      {/* Gujarati Button */}
       <TouchableOpacity
         style={[
           styles.languageButton,
@@ -79,6 +79,7 @@ const LanguageSwitcher = () => {
   );
 };
 
+// Stylesheet
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',

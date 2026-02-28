@@ -10,7 +10,6 @@ export const languages = {
 };
 
 export const translations = {
-  // Welcome Screen
   welcome: {
     en: 'Welcome!',
     gu: 'સ્વાગત છે!',
@@ -43,8 +42,6 @@ export const translations = {
     en: 'New shopkeeper? Click on Shopkeeper login to register',
     gu: 'નવા દુકાનદાર? રજીસ્ટ્રેશન માટે દુકાનદાર લોગિન પર ક્લિક કરો',
   },
-
-  // Common
   back: {
     en: 'Back',
     gu: 'પાછળ',
@@ -73,16 +70,10 @@ export const translations = {
     en: 'Contact your village officer for assistance',
     gu: 'સહાય માટે તમારા ગ્રામ અધિકારીનો સંપર્ક કરો',
   },
-  contactNumber: {
-    en: '📞 1800-123-4567',
-    gu: '📞 ૧૮૦૦-૧૨૩-૪૫૬૭',
-  },
   allRightsReserved: {
     en: 'All rights reserved',
     gu: 'સર્વાધિકાર સુરક્ષિત',
   },
-
-  // User Login
   citizenLogin: {
     en: 'Citizen Login',
     gu: 'નાગરિક લોગિન',
@@ -107,8 +98,6 @@ export const translations = {
     en: 'New citizens need to register at the Gram Panchayat office to get a User ID.',
     gu: 'નવા નાગરિકોએ વપરાશકર્તા આઈડી મેળવવા ગ્રામ પંચાયત કચેરીમાં રજીસ્ટર કરાવવું જરૂરી છે.',
   },
-
-  // Shopkeeper Login
   shopkeeperLogin: {
     en: 'Shopkeeper Login',
     gu: 'દુકાનદાર લોગિન',
@@ -133,10 +122,6 @@ export const translations = {
     en: 'Register here',
     gu: 'અહીં રજીસ્ટર કરો',
   },
-  shopRegistration: {
-    en: 'Contact Gram Panchayat office for shop registration',
-    gu: 'દુકાન રજીસ્ટ્રેશન માટે ગ્રામ પંચાયત કચેરીનો સંપર્ક કરો',
-  },
   loginToManageShop: {
     en: 'Login to manage your shop',
     gu: 'તમારી દુકાન મેનેજ કરવા માટે લોગિન કરો',
@@ -153,15 +138,9 @@ export const translations = {
     en: 'Shopkeeper login successful!',
     gu: 'દુકાનદાર લોગિન સફળ!',
   },
-
-  // Shopkeeper Signup
   shopRegistration_title: {
     en: 'Shop Registration',
     gu: 'દુકાન રજીસ્ટ્રેશન',
-  },
-  registerYourShop: {
-    en: 'Register your shop with Gram Panchayat',
-    gu: 'ગ્રામ પંચાયત સાથે તમારી દુકાન રજીસ્ટર કરો',
   },
   shopName: {
     en: 'Shop Name',
@@ -180,12 +159,28 @@ export const translations = {
     gu: 'માલિકનું નામ',
   },
   enterOwnerName: {
-    en: "Enter owner's full name",
-    gu: 'માલિકનું પૂરું નામ દાખલ કરો',
+    en: 'Enter owner name',
+    gu: 'માલિકનું નામ દાખલ કરો',
   },
   ownerNameRequired: {
     en: 'Owner name is required',
     gu: 'માલિકનું નામ આવશ્યક છે',
+  },
+  emailRequired: {
+    en: 'Email is required',
+    gu: 'ઈમેલ આવશ્યક છે',
+  },
+  validEmail: {
+    en: 'Enter a valid email',
+    gu: 'માન્ય ઈમેલ દાખલ કરો',
+  },
+  mobileRequired: {
+    en: 'Mobile number is required',
+    gu: 'મોબાઈલ નંબર આવશ્યક છે',
+  },
+  validMobile: {
+    en: 'Enter a valid 10-digit mobile number',
+    gu: 'માન્ય ૧૦-અંકનો મોબાઈલ નંબર દાખલ કરો',
   },
   shopType: {
     en: 'Shop Type',
@@ -207,14 +202,6 @@ export const translations = {
     en: '10-digit mobile number',
     gu: '૧૦-અંકનો મોબાઈલ નંબર',
   },
-  mobileRequired: {
-    en: 'Mobile number is required',
-    gu: 'મોબાઈલ નંબર આવશ્યક છે',
-  },
-  validMobile: {
-    en: 'Enter valid 10-digit mobile number',
-    gu: 'માન્ય ૧૦-અંકનો મોબાઈલ નંબર દાખલ કરો',
-  },
   email: {
     en: 'Email (Optional)',
     gu: 'ઈમેલ (વૈકલ્પિક)',
@@ -223,13 +210,9 @@ export const translations = {
     en: 'Enter email address',
     gu: 'ઈમેલ સરનામું દાખલ કરો',
   },
-  validEmail: {
-    en: 'Enter valid email address',
-    gu: 'માન્ય ઈમેલ સરનામું દાખલ કરો',
-  },
   address: {
-    en: 'Shop Address',
-    gu: 'દુકાનનું સરનામું',
+    en: 'Address',
+    gu: 'સરનામું',
   },
   enterAddress: {
     en: 'Enter complete address',
@@ -287,8 +270,6 @@ export const translations = {
     en: 'Back to Login',
     gu: 'લોગિન પર પાછા જાઓ',
   },
-
-  // Dashboard Screen
   dashboard: {
     en: 'Dashboard',
     gu: 'ડેશબોર્ડ',
@@ -314,8 +295,8 @@ export const translations = {
     gu: 'દુકાનો',
   },
   publicServices: {
-    en: 'Services',
-    gu: 'સેવાઓ',
+    en: 'Public Services',
+    gu: 'જાહેર સેવાઓ',
   },
   announcements: {
     en: 'Announcements',
@@ -445,8 +426,6 @@ export const translations = {
     en: 'Calling Disaster Management...',
     gu: 'આપત્તિ વ્યવસ્થાપનને કૉલ કરી રહ્યા છે...',
   },
-
-  // announcement
   all: {
     en: 'All',
     gu: 'બધા',
@@ -531,10 +510,6 @@ export const translations = {
     en: 'All Announcements',
     gu: 'બધી જાહેરાતો',
   },
-  announcements: {
-    en: 'Announcements',
-    gu: 'જાહેરાતો',
-  },
   noAnnouncements: {
     en: 'No announcements found',
     gu: 'કોઈ જાહેરાત મળી નથી',
@@ -570,18 +545,6 @@ export const translations = {
   women: {
     en: 'Women',
     gu: 'મહિલાઓ',
-  },
-  all: {
-    en: 'All',
-    gu: 'બધા',
-  },
-
-
-
-  // complaints
-  complaints: {
-    en: 'Complaints',
-    gu: 'ફરિયાદો',
   },
   registerNewComplaint: {
     en: 'Register New Complaint',
@@ -619,10 +582,6 @@ export const translations = {
     en: 'Water',
     gu: 'પાણી',
   },
-  electricity: {
-    en: 'Electricity',
-    gu: 'વીજળી',
-  },
   road: {
     en: 'Road',
     gu: 'રોડ',
@@ -638,14 +597,6 @@ export const translations = {
   animal: {
     en: 'Animal',
     gu: 'પ્રાણી',
-  },
-  urgent: {
-    en: 'Urgent',
-    gu: 'તાકીદનું',
-  },
-  high: {
-    en: 'High',
-    gu: 'ઉચ્ચ',
   },
   medium: {
     en: 'Medium',
@@ -699,10 +650,6 @@ export const translations = {
     en: 'Describe your complaint in detail',
     gu: 'તમારી ફરિયાદ વિગતવાર વર્ણવો',
   },
-  enterAddress: {
-    en: 'Enter complete address',
-    gu: 'સંપૂર્ણ સરનામું દાખલ કરો',
-  },
   getCurrentLocation: {
     en: 'Get Current Location',
     gu: 'વર્તમાન સ્થાન મેળવો',
@@ -747,29 +694,13 @@ export const translations = {
     en: 'All Complaints',
     gu: 'બધી ફરિયાદો',
   },
-  showRecent: {
-    en: 'Show Recent',
-    gu: 'તાજેતરની બતાવો',
-  },
-  seeAll: {
-    en: 'See All',
-    gu: 'બધી જુઓ',
-  },
   enterTitle: {
     en: 'Please enter complaint title',
     gu: 'કૃપા કરીને ફરિયાદનું શીર્ષક દાખલ કરો',
   },
-  enterDescription: {
-    en: 'Please enter complaint description',
-    gu: 'કૃપા કરીને ફરિયાદનું વર્ણન દાખલ કરો',
-  },
   selectCategory: {
     en: 'Please select a category',
     gu: 'કૃપા કરીને શ્રેણી પસંદ કરો',
-  },
-  enterAddress: {
-    en: 'Please enter address',
-    gu: 'કૃપા કરીને સરનામું દાખલ કરો',
   },
   complaintSubmitted: {
     en: 'Your complaint has been submitted successfully!',
@@ -787,48 +718,9 @@ export const translations = {
     en: 'Error',
     gu: 'ભૂલ',
   },
-  success: {
-    en: 'Success',
-    gu: 'સફળતા',
-  },
-
-
-  // service
-  publicServices: {
-    en: 'Public Services',
-    gu: 'જાહેર સેવાઓ',
-  },
   totalServices: {
     en: 'Total Services',
     gu: 'કુલ સેવાઓ',
-  },
-  active: {
-    en: 'Active',
-    gu: 'સક્રિય',
-  },
-  maintenance: {
-    en: 'Maintenance',
-    gu: 'જાળવણી',
-  },
-  inactive: {
-    en: 'Inactive',
-    gu: 'નિષ્ક્રિય',
-  },
-  utility: {
-    en: 'Utility',
-    gu: 'ઉપયોગિતા',
-  },
-  infrastructure: {
-    en: 'Infrastructure',
-    gu: 'ઈન્ફ્રાસ્ટ્રક્ચર',
-  },
-  health: {
-    en: 'Health',
-    gu: 'આરોગ્ય',
-  },
-  education: {
-    en: 'Education',
-    gu: 'શિક્ષણ',
   },
   transport: {
     en: 'Transport',
@@ -842,17 +734,9 @@ export const translations = {
     en: 'Schedule',
     gu: 'સમયપત્રક',
   },
-  department: {
-    en: 'Department',
-    gu: 'વિભાગ',
-  },
   contact: {
     en: 'Contact',
     gu: 'સંપર્ક',
-  },
-  lastUpdated: {
-    en: 'Last Updated',
-    gu: 'છેલ્લે અપડેટ',
   },
   serviceDetails: {
     en: 'Service Details',
@@ -906,13 +790,6 @@ export const translations = {
     en: 'services',
     gu: 'સેવાઓ',
   },
-
-
-  // shop
-  shops: {
-    en: 'Shops',
-    gu: 'દુકાનો',
-  },
   grocery: {
     en: 'Grocery',
     gu: 'કરિયાણું',
@@ -940,10 +817,6 @@ export const translations = {
   dairy: {
     en: 'Dairy',
     gu: 'ડેરી',
-  },
-  agriculture: {
-    en: 'Agriculture',
-    gu: 'કૃષિ',
   },
   searchShops: {
     en: 'Search shops or items...',
@@ -992,10 +865,6 @@ export const translations = {
   phone: {
     en: 'Phone',
     gu: 'ફોન',
-  },
-  email: {
-    en: 'Email',
-    gu: 'ઈમેલ',
   },
   payment: {
     en: 'Payment',
@@ -1065,13 +934,6 @@ export const translations = {
     en: 'In Stock',
     gu: 'સ્ટોકમાં છે',
   },
-
-
-  // profile
-  profile: {
-    en: 'Profile',
-    gu: 'પ્રોફાઇલ',
-  },
   loadingProfile: {
     en: 'Loading profile...',
     gu: 'પ્રોફાઇલ લોડ થાય છે...',
@@ -1132,25 +994,9 @@ export const translations = {
     en: 'Marital Status',
     gu: 'વૈવાહિક સ્થિતિ',
   },
-  education: {
-    en: 'Education',
-    gu: 'શિક્ષણ',
-  },
   occupation: {
     en: 'Occupation',
     gu: 'વ્યવસાય',
-  },
-  address: {
-    en: 'Address',
-    gu: 'સરનામું',
-  },
-  contactNumber: {
-    en: 'Contact Number',
-    gu: 'સંપર્ક નંબર',
-  },
-  email: {
-    en: 'Email',
-    gu: 'ઈમેલ',
   },
   familyMembers: {
     en: 'Family Members',
@@ -1188,10 +1034,6 @@ export const translations = {
     en: 'New Password',
     gu: 'નવો પાસવર્ડ',
   },
-  confirmPassword: {
-    en: 'Confirm Password',
-    gu: 'પાસવર્ડની પુષ્ટિ કરો',
-  },
   enterCurrentPassword: {
     en: 'Enter current password',
     gu: 'વર્તમાન પાસવર્ડ દાખલ કરો',
@@ -1224,14 +1066,6 @@ export const translations = {
     en: 'Please confirm your password',
     gu: 'કૃપા કરીને તમારા પાસવર્ડની પુષ્ટિ કરો',
   },
-  passwordMinLength: {
-    en: 'Password must be at least 6 characters',
-    gu: 'પાસવર્ડ ઓછામાં ઓછા ૬ અક્ષરોનો હોવો જોઈએ',
-  },
-  passwordMismatch: {
-    en: 'Passwords do not match',
-    gu: 'પાસવર્ડ મેળ ખાતા નથી',
-  },
   save: {
     en: 'Save',
     gu: 'સાચવો',
@@ -1240,68 +1074,9 @@ export const translations = {
     en: 'Cancel',
     gu: 'રદ કરો',
   },
-
-
-
-
-
-
-
-
-
-
-  // shopkeeper
-  shopRegistration: {
-    en: 'Shop Registration',
-    gu: 'દુકાન નોંધણી',
-  },
-  registerYourShop: {
-    en: 'Register Your Shop',
-    gu: 'તમારી દુકાન નોંધાવો',
-  },
   basicDetails: {
     en: 'Enter basic details to get started',
     gu: 'શરૂ કરવા માટે મૂળભૂત વિગતો દાખલ કરો',
-  },
-  shopName: {
-    en: 'Shop Name',
-    gu: 'દુકાનનું નામ',
-  },
-  enterShopName: {
-    en: 'Enter shop name',
-    gu: 'દુકાનનું નામ દાખલ કરો',
-  },
-  shopNameRequired: {
-    en: 'Shop name is required',
-    gu: 'દુકાનનું નામ આવશ્યક છે',
-  },
-  ownerName: {
-    en: 'Owner Name',
-    gu: 'માલિકનું નામ',
-  },
-  enterOwnerName: {
-    en: 'Enter owner name',
-    gu: 'માલિકનું નામ દાખલ કરો',
-  },
-  ownerNameRequired: {
-    en: 'Owner name is required',
-    gu: 'માલિકનું નામ આવશ્યક છે',
-  },
-  emailRequired: {
-    en: 'Email is required',
-    gu: 'ઈમેલ આવશ્યક છે',
-  },
-  validEmail: {
-    en: 'Enter a valid email',
-    gu: 'માન્ય ઈમેલ દાખલ કરો',
-  },
-  mobileRequired: {
-    en: 'Mobile number is required',
-    gu: 'મોબાઈલ નંબર આવશ્યક છે',
-  },
-  validMobile: {
-    en: 'Enter a valid 10-digit mobile number',
-    gu: 'માન્ય ૧૦-અંકનો મોબાઈલ નંબર દાખલ કરો',
   },
   registrationNote: {
     en: 'After registration, you will receive a Shop ID. Your application will be reviewed by admin before approval.',
@@ -1346,14 +1121,6 @@ export const translations = {
   yourDetails: {
     en: 'Your Details',
     gu: 'તમારી વિગતો',
-  },
-  shopId: {
-    en: 'Shop ID',
-    gu: 'દુકાન ID',
-  },
-  category: {
-    en: 'Category',
-    gu: 'શ્રેણી',
   },
   registrationDate: {
     en: 'Registration Date',
@@ -1431,10 +1198,6 @@ export const translations = {
     en: 'Recent Items',
     gu: 'તાજેતરની વસ્તુઓ',
   },
-  inStock: {
-    en: 'in stock',
-    gu: 'સ્ટોકમાં',
-  },
   addNewItem: {
     en: 'Add New Item',
     gu: 'નવી વસ્તુ ઉમેરો',
@@ -1487,10 +1250,6 @@ export const translations = {
     en: 'Close',
     gu: 'બંધ કરો',
   },
-
-
-
-
   applicationStatus: {
     en: 'Application Status',
     gu: 'અરજી સ્થિતિ',
@@ -1523,17 +1282,9 @@ export const translations = {
     en: 'Update Shop Details',
     gu: 'દુકાનની વિગતો અપડેટ કરો',
   },
-  enterDescription: {
-    en: 'Enter shop description',
-    gu: 'દુકાનનું વર્ણન દાખલ કરો',
-  },
   enterBusinessProof: {
     en: 'Enter business proof type',
     gu: 'વ્યવસાય પુરાવાનો પ્રકાર દાખલ કરો',
-  },
-  uploadDocuments: {
-    en: 'Upload Documents',
-    gu: 'દસ્તાવેજો અપલોડ કરો',
   },
   saveChanges: {
     en: 'Save Changes',
@@ -1550,10 +1301,6 @@ export const translations = {
   chooseFromGallery: {
     en: 'Choose from Gallery',
     gu: 'ગેલેરીમાંથી પસંદ કરો',
-  },
-  addressRequired: {
-    en: 'Address is required',
-    gu: 'સરનામું આવશ્યક છે',
   },
   categoryRequired: {
     en: 'Category is required',
@@ -1591,155 +1338,18 @@ export const translations = {
     en: 'Final Approval',
     gu: 'અંતિમ મંજૂરી',
   },
-  inProgress: {
-    en: 'In Progress',
-    gu: 'પ્રગતિમાં',
-  },
   approvalNote: {
     en: 'Your application is being reviewed. You can update your information anytime. Once approved, you will get full access to the dashboard.',
     gu: 'તમારી અરજીની સમીક્ષા ચાલુ છે. તમે કોઈપણ સમયે તમારી માહિતી અપડેટ કરી શકો છો. મંજૂર થયા પછી, તમને ડેશબોર્ડનો સંપૂર્ણ ઍક્સેસ મળશે.',
-  },
-  welcomeBack: {
-    en: 'Welcome back,',
-    gu: 'પાછા સ્વાગત છે,',
-  },
-  active: {
-    en: 'Active',
-    gu: 'સક્રિય',
-  },
-  totalItems: {
-    en: 'Total Items',
-    gu: 'કુલ વસ્તુઓ',
-  },
-  totalStock: {
-    en: 'Total Stock',
-    gu: 'કુલ સ્ટોક',
-  },
-  inventoryValue: {
-    en: 'Inventory Value',
-    gu: 'ઇન્વેન્ટરી મૂલ્ય',
-  },
-  editShop: {
-    en: 'Edit Shop',
-    gu: 'દુકાન સંપાદિત કરો',
-  },
-  addItem: {
-    en: 'Add Item',
-    gu: 'વસ્તુ ઉમેરો',
-  },
-  manageStock: {
-    en: 'Manage Stock',
-    gu: 'સ્ટોક મેનેજ કરો',
-  },
-  reports: {
-    en: 'Reports',
-    gu: 'રિપોર્ટ્સ',
-  },
-  category: {
-    en: 'Category',
-    gu: 'શ્રેણી',
-  },
-  description: {
-    en: 'Description',
-    gu: 'વર્ણન',
-  },
-  address: {
-    en: 'Address',
-    gu: 'સરનામું',
-  },
-  contact: {
-    en: 'Contact',
-    gu: 'સંપર્ક',
-  },
-  recentItems: {
-    en: 'Recent Items',
-    gu: 'તાજેતરની વસ્તુઓ',
-  },
-  inStock: {
-    en: 'in stock',
-    gu: 'સ્ટોકમાં',
-  },
-  noItems: {
-    en: 'No items in inventory',
-    gu: 'ઇન્વેન્ટરીમાં કોઈ વસ્તુ નથી',
-  },
-  addFirstItem: {
-    en: 'Add First Item',
-    gu: 'પ્રથમ વસ્તુ ઉમેરો',
-  },
-  addNewItem: {
-    en: 'Add New Item',
-    gu: 'નવી વસ્તુ ઉમેરો',
-  },
-  itemName: {
-    en: 'Item Name',
-    gu: 'વસ્તુનું નામ',
-  },
-  enterItemName: {
-    en: 'Enter item name',
-    gu: 'વસ્તુનું નામ દાખલ કરો',
-  },
-  price: {
-    en: 'Price',
-    gu: 'કિંમત',
-  },
-  enterPrice: {
-    en: 'Enter price',
-    gu: 'કિંમત દાખલ કરો',
-  },
-  unit: {
-    en: 'Unit',
-    gu: 'એકમ',
-  },
-  enterUnit: {
-    en: 'Enter unit (kg, pcs, liter)',
-    gu: 'એકમ દાખલ કરો (કિગ્રા, પીસ, લિટર)',
-  },
-  stock: {
-    en: 'Stock',
-    gu: 'સ્ટોક',
-  },
-  enterStock: {
-    en: 'Enter stock quantity',
-    gu: 'સ્ટોક જથ્થો દાખલ કરો',
-  },
-  fillAllFields: {
-    en: 'Please fill all fields',
-    gu: 'કૃપા કરીને બધા ક્ષેત્રો ભરો',
-  },
-  itemAdded: {
-    en: 'Item added successfully',
-    gu: 'વસ્તુ સફળતાપૂર્વક ઉમેરાઈ',
-  },
-  shopUpdated: {
-    en: 'Shop details updated successfully',
-    gu: 'દુકાનની વિગતો સફળતાપૂર્વક અપડેટ થઈ',
   },
   comingSoon: {
     en: 'Coming Soon',
     gu: 'ટૂંક સમયમાં',
   },
-  error: {
-    en: 'Error',
-    gu: 'ભૂલ',
-  },
   success: {
     en: 'Success',
     gu: 'સફળતા',
   },
-  save: {
-    en: 'Save',
-    gu: 'સાચવો',
-  },
-  cancel: {
-    en: 'Cancel',
-    gu: 'રદ કરો',
-  },
-  seeAll: {
-    en: 'See All',
-    gu: 'બધા જુઓ',
-  },
-
   failedToLoad: {
     en: 'Failed to load shop data',
     gu: 'દુકાન ડેટા લોડ કરવામાં નિષ્ફળ',
@@ -1756,9 +1366,6 @@ export const translations = {
     en: 'Retry',
     gu: 'ફરી પ્રયાસ કરો',
   },
-
-
-
   addMultipleItems: {
     en: 'Add Multiple Items',
     gu: 'બહુવિધ વસ્તુઓ ઉમેરો',
@@ -1815,36 +1422,17 @@ export const translations = {
     en: 'Add Items',
     gu: 'વસ્તુઓ ઉમેરો',
   },
-
-
-  // admin profile
-  profile: {
-    en: 'Profile',
-    gu: 'પ્રોફાઇલ',
-  },
   ownerInformation: {
     en: 'Owner Information',
     gu: 'માલિકની માહિતી',
-  },
-  shopInformation: {
-    en: 'Shop Information',
-    gu: 'દુકાનની માહિતી',
   },
   registrationInfo: {
     en: 'Registration Information',
     gu: 'નોંધણી માહિતી',
   },
-  documentStatus: {
-    en: 'Document Status',
-    gu: 'દસ્તાવેજ સ્થિતિ',
-  },
   editProfile: {
     en: 'Edit Profile',
     gu: 'પ્રોફાઇલ એડિટ કરો',
-  },
-  profileUpdated: {
-    en: 'Profile updated successfully',
-    gu: 'પ્રોફાઇલ સફળતાપૂર્વક અપડેટ થઈ',
   },
   logout: {
     en: 'Logout',
@@ -1854,63 +1442,6 @@ export const translations = {
     en: 'Are you sure you want to logout?',
     gu: 'શું તમે લોગઆઉટ કરવા માંગો છો?',
   },
-  currentPassword: {
-    en: 'Current Password',
-    gu: 'વર્તમાન પાસવર્ડ',
-  },
-  newPassword: {
-    en: 'New Password',
-    gu: 'નવો પાસવર્ડ',
-  },
-  confirmPassword: {
-    en: 'Confirm Password',
-    gu: 'પાસવર્ડની પુષ્ટિ કરો',
-  },
-  enterCurrentPassword: {
-    en: 'Enter current password',
-    gu: 'વર્તમાન પાસવર્ડ દાખલ કરો',
-  },
-  enterNewPassword: {
-    en: 'Enter new password',
-    gu: 'નવો પાસવર્ડ દાખલ કરો',
-  },
-  confirmNewPassword: {
-    en: 'Confirm new password',
-    gu: 'નવા પાસવર્ડની પુષ્ટિ કરો',
-  },
-  updatePassword: {
-    en: 'Update Password',
-    gu: 'પાસવર્ડ અપડેટ કરો',
-  },
-  passwordChanged: {
-    en: 'Password changed successfully',
-    gu: 'પાસવર્ડ સફળતાપૂર્વક બદલાયો',
-  },
-  currentPasswordRequired: {
-    en: 'Current password is required',
-    gu: 'વર્તમાન પાસવર્ડ આવશ્યક છે',
-  },
-  newPasswordRequired: {
-    en: 'New password is required',
-    gu: 'નવો પાસવર્ડ આવશ્યક છે',
-  },
-  confirmPasswordRequired: {
-    en: 'Please confirm your password',
-    gu: 'કૃપા કરીને તમારા પાસવર્ડની પુષ્ટિ કરો',
-  },
-  passwordMinLength: {
-    en: 'Password must be at least 6 characters',
-    gu: 'પાસવર્ડ ઓછામાં ઓછા ૬ અક્ષરોનો હોવો જોઈએ',
-  },
-  passwordMismatch: {
-    en: 'Passwords do not match',
-    gu: 'પાસવર્ડ મેળ ખાતા નથી',
-  },
-  saveChanges: {
-    en: 'Save Changes',
-    gu: 'ફેરફારો સાચવો',
-  },
-
   shopLocation: {
     en: 'Shop Location',
     gu: 'દુકાનનું સ્થાન',
@@ -1923,12 +1454,10 @@ export const translations = {
     en: 'Location fetched successfully',
     gu: 'સ્થાન સફળતાપૂર્વક મેળવાયું',
   },
-
   uploading: {
     en: 'Uploading...',
     gu: 'અપલોડ થઈ રહ્યું છે...',
   },
-
   noChangesDetected: {
     en: 'No changes detected',
     gu: 'કોઈ ફેરફાર મળ્યો નથી',
@@ -1937,7 +1466,6 @@ export const translations = {
     en: 'Only fields you edit will be updated. Empty fields will keep their original values.',
     gu: 'તમે જે ફીલ્ડ્સ એડિટ કરશો તે જ અપડેટ થશે. ખાલી ફીલ્ડ્સ તેમના મૂળ મૂલ્યો જાળવી રાખશે.',
   },
-
   noSessionFound: {
     en: 'No session found. Please login again.',
     gu: 'કોઈ સત્ર મળ્યું નથી. કૃપા કરીને ફરીથી લોગિન કરો.',
@@ -1966,21 +1494,6 @@ export const translations = {
     en: 'Approved',
     gu: 'મંજૂર',
   },
-  pending: {
-    en: 'Pending',
-    gu: 'બાકી',
-  },
-  rejected: {
-    en: 'Rejected',
-    gu: 'નામંજૂર',
-  },
-  logoutConfirmation: {
-    en: 'Are you sure you want to logout?',
-    gu: 'શું તમે લોગઆઉટ કરવા માંગો છો?',
-  },
-
-
-  // Add to your translations object
   saving: {
     en: 'Saving...',
     gu: 'સેવ થઈ રહ્યું છે...',
@@ -1993,37 +1506,14 @@ export const translations = {
     en: 'Enter phone number',
     gu: 'ફોન નંબર દાખલ કરો',
   },
-  shopLocation: {
-    en: 'Shop Location',
-    gu: 'દુકાનનું સ્થાન',
-  },
-  partialUpdateNote: {
-    en: 'Only changed fields will be updated. Leave fields empty to keep existing values.',
-    gu: 'ફક્ત બદલાયેલ ફીલ્ડ્સ અપડેટ થશે. હાલની કિંમતો રાખવા માટે ફીલ્ડ્સ ખાલી રાખો.',
-  },
-  noChangesDetected: {
-    en: 'No changes detected',
-    gu: 'કોઈ ફેરફાર મળ્યો નથી',
-  },
   saveFailed: {
     en: 'Failed to save changes',
     gu: 'ફેરફારો સેવ કરવામાં નિષ્ફળ',
   },
-  fetchCurrentLocation: {
-    en: 'Get Current Location',
-    gu: 'વર્તમાન સ્થાન મેળવો',
-  },
-  locationFetched: {
-    en: 'Location fetched successfully',
-    gu: 'સ્થાન સફળતાપૂર્વક મેળવાયું',
-  },
-
   addItemsFailed: {
     en: 'Failed to add items. Please try again.',
     gu: 'વસ્તુઓ ઉમેરવામાં નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો.',
   },
-
-  // Add to your translations object
   noStockChanges: {
     en: 'No stock changes detected',
     gu: 'કોઈ સ્ટોક ફેરફાર મળ્યો નથી',
@@ -2040,10 +1530,6 @@ export const translations = {
     en: 'No items found to manage',
     gu: 'મેનેજ કરવા માટે કોઈ વસ્તુઓ મળી નથી',
   },
-  addItems: {
-    en: 'Add Items',
-    gu: 'વસ્તુઓ ઉમેરો',
-  },
   changesSummary: {
     en: 'Changes Summary',
     gu: 'ફેરફારોનો સારાંશ',
@@ -2052,16 +1538,6 @@ export const translations = {
     en: 'items will be updated',
     gu: 'વસ્તુઓ અપડેટ થશે',
   },
-  saving: {
-    en: 'Saving...',
-    gu: 'સેવ થઈ રહ્યું છે...',
-  },
-  updating: {
-    en: 'Updating...',
-    gu: 'અપડેટ થઈ રહ્યું છે...',
-  },
-
-  // Add to your translations object
   shopDataNotFound: {
     en: 'Shop data not found',
     gu: 'દુકાનનો ડેટા મળ્યો નથી',
@@ -2074,8 +1550,6 @@ export const translations = {
     en: 'Go Back',
     gu: 'પાછા જાઓ',
   },
-
-  // Add these missing translations to your translations object
   loading: {
     en: 'Loading...',
     gu: 'લોડ થઈ રહ્યું છે...',
@@ -2088,12 +1562,6 @@ export const translations = {
     en: 'Unnamed Item',
     gu: 'નામ વગરની વસ્તુ',
   },
-  unit: {
-    en: 'unit',
-    gu: 'એકમ',
-  },
-
-  // Add to your translations object
   modified: {
     en: 'Modified',
     gu: 'સંશોધિત',
@@ -2102,33 +1570,9 @@ export const translations = {
     en: 'Failed to update items',
     gu: 'વસ્તુઓ અપડેટ કરવામાં નિષ્ફળ',
   },
-  unnamedItem: {
-    en: 'Unnamed Item',
-    gu: 'નામ વગરની વસ્તુ',
-  },
-
-  // Add these to your translations object in LanguageContext.js
-
-  // Add after the addMultipleItems translations
-  manageStock: {
-    en: 'Manage Stock',
-    gu: 'સ્ટોક મેનેજ કરો',
-  },
-  searchItems: {
-    en: 'Search items...',
-    gu: 'વસ્તુઓ શોધો...',
-  },
   lowStock: {
     en: 'Low Stock',
     gu: 'ઓછો સ્ટોક',
-  },
-  outOfStock: {
-    en: 'Out of Stock',
-    gu: 'સ્ટોક નથી',
-  },
-  inStock: {
-    en: 'In Stock',
-    gu: 'સ્ટોકમાં છે',
   },
   currentStock: {
     en: 'Current Stock',
@@ -2150,10 +1594,6 @@ export const translations = {
     en: 'Update',
     gu: 'અપડેટ કરો',
   },
-  lastUpdated: {
-    en: 'Last Updated',
-    gu: 'છેલ્લે અપડેટ',
-  },
   never: {
     en: 'Never',
     gu: 'ક્યારેય નહીં',
@@ -2161,10 +1601,6 @@ export const translations = {
   loadingItems: {
     en: 'Loading items...',
     gu: 'વસ્તુઓ લોડ થાય છે...',
-  },
-  noItemsFound: {
-    en: 'No items found',
-    gu: 'કોઈ વસ્તુ મળી નથી',
   },
   noItemsInShop: {
     en: 'No items in this shop',
@@ -2214,7 +1650,6 @@ export const translations = {
     en: 'Insufficient stock',
     gu: 'અપૂરતો સ્ટોક',
   },
-
   priceMustBePositive: {
     en: 'Price must be greater than 0',
     gu: 'કિંમત ૦ કરતાં વધુ હોવી જોઈએ',
@@ -2255,7 +1690,6 @@ export const translations = {
     en: 'Last Price Update',
     gu: 'છેલ્લો કિંમત અપડેટ',
   },
-
   shopImage: {
     en: 'Shop Image',
     gu: 'દુકાનનું ચિત્ર',
@@ -2268,11 +1702,6 @@ export const translations = {
     en: 'Upload Image',
     gu: 'ચિત્ર અપલોડ કરો',
   },
-  uploading: {
-    en: 'Uploading...',
-    gu: 'અપલોડ થઈ રહ્યું છે...',
-  },
-
   incorrectCurrentPassword: {
     en: 'Current password is incorrect',
     gu: 'વર્તમાન પાસવર્ડ ખોટો છે',
@@ -2284,12 +1713,6 @@ export const translations = {
   passwordChangeFailed: {
     en: 'Failed to change password',
     gu: 'પાસવર્ડ બદલવામાં નિષ્ફળ',
-  },
-
-  // Add to your translations object
-  forgotPassword: {
-    en: 'Forgot Password',
-    gu: 'પાસવર્ડ ભૂલી ગયા',
   },
   enterEmailForReset: {
     en: 'Enter your email address to receive OTP',
@@ -2322,14 +1745,6 @@ export const translations = {
   resetPassword: {
     en: 'Reset Password',
     gu: 'પાસવર્ડ રીસેટ કરો',
-  },
-  enterNewPassword: {
-    en: 'Enter new password',
-    gu: 'નવો પાસવર્ડ દાખલ કરો',
-  },
-  confirmNewPassword: {
-    en: 'Confirm new password',
-    gu: 'નવા પાસવર્ડની પુષ્ટિ કરો',
   },
   verify: {
     en: 'Verify',
@@ -2367,13 +1782,6 @@ export const translations = {
     en: 'Please enter a valid 6-digit OTP',
     gu: 'કૃપા કરીને માન્ય 6-અંકનો OTP દાખલ કરો',
   },
-  email: {
-    en: 'Email',
-    gu: 'ઈમેલ',
-  },
-
-
-  // Add to your translations object
   generateReport: {
     en: 'Generate Report',
     gu: 'રિપોર્ટ બનાવો',
@@ -2430,9 +1838,6 @@ export const translations = {
     en: 'No data to generate report',
     gu: 'રિપોર્ટ બનાવવા માટે કોઈ ડેટા નથી',
   },
-
-
-  // Add to your translations object
   inventory: {
     en: 'Inventory',
     gu: 'ઇન્વેન્ટરી',
@@ -2441,41 +1846,13 @@ export const translations = {
     en: 'Total Value',
     gu: 'કુલ મૂલ્ય',
   },
-  lowStock: {
-    en: 'Low Stock',
-    gu: 'ઓછો સ્ટોક',
-  },
-  outOfStock: {
-    en: 'Out of Stock',
-    gu: 'સ્ટોક ખતમ',
-  },
   showLowStock: {
     en: 'Show Low Stock',
     gu: 'ઓછો સ્ટોક બતાવો',
   },
-  searchItems: {
-    en: 'Search items...',
-    gu: 'વસ્તુઓ શોધો...',
-  },
-  item: {
-    en: 'Item',
-    gu: 'વસ્તુ',
-  },
-  price: {
-    en: 'Price',
-    gu: 'કિંમત',
-  },
-  stock: {
-    en: 'Stock',
-    gu: 'સ્ટોક',
-  },
   value: {
     en: 'Value',
     gu: 'મૂલ્ય',
-  },
-  noItemsFound: {
-    en: 'No items found',
-    gu: 'કોઈ વસ્તુ મળી નથી',
   },
   clearFilters: {
     en: 'Clear Filters',
@@ -2485,9 +1862,33 @@ export const translations = {
     en: 'Add First Item',
     gu: 'પ્રથમ વસ્તુ ઉમેરો',
   },
-  inStock: {
-    en: 'In Stock',
-    gu: 'સ્ટોકમાં',
+  contactNumberLogin: {
+    en: '📞 1800-123-4567',
+    gu: '📞 ૧૮૦૦-૧૨૩-૪૫૬૭',
+  },
+  contactNumber: {
+    en: 'Contact Number',
+    gu: 'સંપર્ક નંબર',
+  },
+  shopRegistrationLogin: {
+    en: 'Contact Gram Panchayat office for shop registration',
+    gu: 'દુકાન રજીસ્ટ્રેશન માટે ગ્રામ પંચાયત કચેરીનો સંપર્ક કરો',
+  },
+  shopRegistration: {
+    en: 'Shop Registration',
+    gu: 'દુકાન નોંધણી',
+  },
+  registerYourShop: {
+    en: 'Register Your Shop',
+    gu: 'તમારી દુકાન નોંધાવો',
+  },
+  enterComplaintDescription: {
+    en: 'Please enter complaint description',
+    gu: 'કૃપા કરીને ફરિયાદનું વર્ણન દાખલ કરો',
+  },
+  enterDescription: {
+    en: 'Enter shop description',
+    gu: 'દુકાનનું વર્ણન દાખલ કરો',
   },
 };
 
@@ -2495,7 +1896,6 @@ export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(languages.ENGLISH);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load saved language on mount
   useEffect(() => {
     loadSavedLanguage();
   }, []);
@@ -2516,10 +1916,8 @@ export const LanguageProvider = ({ children }) => {
   const toggleLanguage = async () => {
     const newLanguage = language === languages.ENGLISH ? languages.GUJARATI : languages.ENGLISH;
 
-    // Update state
     setLanguage(newLanguage);
 
-    // Save to AsyncStorage
     try {
       await AsyncStorage.setItem('userLanguage', newLanguage);
     } catch (error) {
@@ -2530,10 +1928,8 @@ export const LanguageProvider = ({ children }) => {
   const setLanguageDirect = async (newLanguage) => {
     if (newLanguage === language) return;
 
-    // Update state
     setLanguage(newLanguage);
 
-    // Save to AsyncStorage
     try {
       await AsyncStorage.setItem('userLanguage', newLanguage);
     } catch (error) {
@@ -2546,7 +1942,7 @@ export const LanguageProvider = ({ children }) => {
   };
 
   if (isLoading) {
-    return null; // Or return a loading spinner if you want
+    return null;
   }
 
   return (

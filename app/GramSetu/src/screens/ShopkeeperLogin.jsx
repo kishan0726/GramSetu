@@ -241,9 +241,9 @@ const ShopkeeperLogin = ({ navigation }) => {
           <View style={styles.helpContainer}>
             <Text style={styles.helpTitle}>{t('needHelp')}</Text>
             <Text style={styles.helpText}>
-              {t('shopRegistration')}
+              {t('shopRegistrationLogin')}
             </Text>
-            <Text style={styles.helpPhone}>{t('contactNumber')}</Text>
+            <Text style={styles.helpPhone}>{t('contactNumberLogin')}</Text>
           </View>
         </View>
       </ScrollView>
