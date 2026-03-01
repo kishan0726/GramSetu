@@ -37,7 +37,7 @@ const User = () => {
         'Main Village', 'North Area', 'South Area', 'East Area',
         'West Area', 'Near Temple', 'Near School', 'Near River', 'Other'
     ];
-    
+
     const getAgeGroup = (age) => {
         if (age < 5) return 'Infant (0-4)';
         if (age < 12) return 'Child (5-11)';
@@ -46,7 +46,7 @@ const User = () => {
         if (age < 60) return 'Adult (35-59)';
         return 'Senior (60+)';
     };
-        
+
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-IN', {
             day: 'numeric',
@@ -126,7 +126,7 @@ const User = () => {
         const firstName = user.firstName;
         const birthYear = new Date(user.dateOfBirth).getFullYear();
         const password = firstName + birthYear;
-        const updatedData = {...user, password}
+        const updatedData = { ...user, password }
 
         const response = await fetch(`http://localhost:5000/update-user/${user.id}`, {
             method: "PUT",
@@ -136,8 +136,19 @@ const User = () => {
             body: JSON.stringify(updatedData)
         })
         const result = await response.json();
-        if (result.success)
+        if (result.success) {
+            await fetch("http://localhost:5000/admin-recent-activity", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    action: "User",
+                    description: "Add New User",
+                })
+            });
             alert("Done")
+        }
     };
 
     // Handle Input Change

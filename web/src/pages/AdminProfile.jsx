@@ -75,6 +75,37 @@ const AdminProfilePage = () => {
     fetchAdmin();
   }, []);
 
+  // Time Formate for Activity
+  const formatTimeAgo = (timestamp) => {
+    const now = new Date();
+    const activityDate = new Date(timestamp);
+
+    const diffMs = now - activityDate;
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMinutes < 1) {
+      return "Just now";
+    }
+
+    if (diffMinutes < 60) {
+      return `${diffMinutes} min ago`;
+    }
+
+    if (diffHours < 24) {
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    }
+
+    if (diffDays === 1) {
+      return "Yesterday";
+    }
+
+    // After yesterday → show only date
+    return activityDate.toLocaleDateString("en-IN");
+  };
+
+  // Upload Addmin Profile Image
   const uploadProfileImage = async (file) => {
     setIsProfileChange(true);
     const formData = new FormData();
@@ -118,6 +149,16 @@ const AdminProfilePage = () => {
         },
         body: JSON.stringify(updateData)
       })
+      await fetch("http://localhost:5000/admin-recent-activity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "Edit Profile",
+          description: `Edit Admin Profile`,
+        })
+      });
       setAdminData(formData);
       setIsEditing(false);
       console.log('Profile saved:', formData);
@@ -152,6 +193,18 @@ const AdminProfilePage = () => {
       })
     });
     const data = await response.json();
+    if (data.success) {
+      await fetch("http://localhost:5000/admin-recent-activity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "Password Change",
+          description: `Admin Change Password`,
+        })
+      });
+    }
     data.success ? alert("Password Change Successfully") : alert("Invalid Credentials");
 
     setPasswordData({
@@ -160,30 +213,6 @@ const AdminProfilePage = () => {
       confirmPassword: ''
     });
 
-  };
-
-  // Handle file upload simulation
-  const handleFileUpload = (fileType) => {
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-
-          if (fileType === 'avatar') {
-            setFormData(prev => ({
-              ...prev,
-              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(prev.personal_information.name)}&background=10b981&color=fff&size=256`
-            }));
-          }
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
   };
 
   // Loading 
@@ -220,7 +249,7 @@ const AdminProfilePage = () => {
               {isProfileChange ?
                 <button className="admin-profile-btn-save" onClick={handleSaveProfile} disabled={profileURL === null ? true : false}>
                   <Save size={18} />
-                  {profileURL === null ? "Loading..." : "Save Changes"} 
+                  {profileURL === null ? "Loading..." : "Save Changes"}
                 </button> :
                 <button className="admin-profile-btn-save" onClick={handleSaveProfile}>
                   <Save size={18} />
@@ -288,25 +317,25 @@ const AdminProfilePage = () => {
             </div>
           </div>
 
-          {/* Recent Activities */}
           <div className="admin-profile-activities-card">
-            <h3>
-              Recent Activities
-            </h3>
+            <h3>Recent Activities</h3>
 
             <div className="admin-profile-activities-list">
-              {adminData.recentActivity.map(activity => (
-                <div key={activity.id} className="admin-profile-activity-item">
-                  <div className="admin-profile-activity-content">
-                    <h4>{activity.action}</h4>
-                    <p>{activity.description}</p>
-                    <span className="admin-profile-activity-time">{activity.timestamp}</span>
-                  </div>
-                </div>
-              ))}
+              {Array.isArray(adminData.recentActivity) &&
+                adminData.recentActivity
+                  .slice(0, 5)
+                  .map((activity) => (
+                    <div key={activity.id} className="admin-profile-activity-item">
+                      <div className="admin-profile-activity-content">
+                        <h4>{activity.action}</h4>
+                        <p>{activity.description}</p>
+                        <span className="admin-profile-activity-time">
+                          {formatTimeAgo(activity.timestamp)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
             </div>
-
-            <button className="admin-profile-btn-view-all">View All Activities →</button>
           </div>
         </div>
 

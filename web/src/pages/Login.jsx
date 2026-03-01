@@ -5,7 +5,7 @@ import '../stylesheets/Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
-  
+
   const [adminId, setAdminId] = useState('');
   const [password, setPassword] = useState('');
   const [adminType, setAdminType] = useState('');
@@ -74,6 +74,16 @@ const Login = () => {
           alert("Invalid Credentials");
         }
         else {
+          await fetch("http://localhost:5000/admin-recent-activity", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              action: "Login",
+              description: "Logged in from web dashboard",
+            })
+          });
           navigate('/dashboard');
           setIsLoading(false);
           sessionStorage.setItem("isLoggedIn", "true");

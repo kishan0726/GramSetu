@@ -120,6 +120,16 @@ const Complaint = () => {
       const result = await response.json();
 
       if (result.success) {
+        await fetch("http://localhost:5000/admin-recent-activity", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "Complaint status",
+            description: `${complaintId} : ${newStatus}`,
+          })
+        });
         setComplaints(prev =>
           prev.map(c =>
             c.id === complaintId ? { ...c, ...updatedData } : c

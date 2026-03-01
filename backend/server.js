@@ -406,24 +406,55 @@ app.post('/adminLogin', async (req, res) => {
 app.get('/get-admin/:id', async (req, res) => {
     try {
         const { id } = req.params;
+
         const snapshot = await db.ref(`admin/${id}`).once("value");
         const snapshot2 = await db.ref("admin_recent_activity").once("value");
+
         const adminData = snapshot.val();
-        const recentActivity = snapshot2.val();
+        const activityObj = snapshot2.val() || {};
+
+        const recentActivity = Object.keys(activityObj).map(key => ({
+            id: key,
+            ...activityObj[key]
+        }));
+
+        recentActivity.sort((a, b) => b.timestamp - a.timestamp);
+
         const { admin_pass, ...safeData } = adminData;
-        const Data = { ...safeData, recentActivity };
-        res.json(Data);
+
+        res.json({
+            ...safeData,
+            recentActivity
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: "server error" });
     }
-    catch (error) {
-        res.json({ message: "server error" });
-    }
-})
+});
 
 app.put('/update-admin/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
         await db.ref(`admin/${id}`).update(updateData);
+        res.json({ success: true });
+    }
+    catch (error) {
+        res.json({ success: false });
+    }
+})
+
+app.post('/admin-recent-activity', async (req, res) => {
+    try {
+        const { action, description } = req.body;
+
+        const newActivity = {
+            action,
+            description,
+            timestamp: Date.now()
+        };
+
+        await db.ref("admin_recent_activity").push(newActivity);
         res.json({ success: true });
     }
     catch (error) {

@@ -222,15 +222,4 @@ const Home = ({ villageData }) => {
   );
 };
 
-// Helper function for area icons
-const getAreaIcon = (direction) => {
-  const icons = {
-    'North': '🏔️',
-    'South': '🌾',
-    'East': '🏘️',
-    'West': '🏭'
-  };
-  return icons[direction] || '📍';
-};
-
 export default Home;

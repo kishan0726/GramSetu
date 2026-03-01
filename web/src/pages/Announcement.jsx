@@ -177,7 +177,22 @@ const Announcement = () => {
       })
       const data = await response.json();
 
-      data.success ? alert('Announcement published successfully!') : alert('Server Error');
+      if (data.success) {
+        alert('Announcement published successfully!')
+        await fetch("http://localhost:5000/admin-recent-activity", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "Announcement",
+            description: `Publish Announement, ${formData.title}`,
+          })
+        });
+      }
+      else{
+        alert('Server Error')
+      }
 
       // Reset form
       handleClearForm();

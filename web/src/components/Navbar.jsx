@@ -19,7 +19,17 @@ const Navbar = () => {
   ];
 
   // Handle Logout Request
-  const handleLogout = () => {
+  const handleLogout = async() => {
+    await fetch("http://localhost:5000/admin-recent-activity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          action: "Logout",
+          description: `Admin Logout`,
+        })
+      });
     sessionStorage.clear();
     navigate("/login");
   };

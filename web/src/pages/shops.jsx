@@ -131,7 +131,16 @@ const Shops = () => {
         const result = await response.json();
         if (result.success) {
           alert('Shop approved successfully!');
-          // Update local state
+          await fetch("http://localhost:5000/admin-recent-activity", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              action: "Shop Approval",
+              description: `approve ${id} by Admin`,
+            })
+          });
           setShops(shops.map(shop =>
             shop.id === id ? { ...shop, status: 'approved' } : shop
           ));
@@ -158,6 +167,16 @@ const Shops = () => {
         const result = await response.json();
         if (result.success) {
           alert('Shop rejected!');
+          await fetch("http://localhost:5000/admin-recent-activity", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              action: "Shop Rejection",
+              description: `Reject ${id} by Admin`,
+            })
+          });
           setShops(shops.map(shop =>
             shop.id === id ? { ...shop, status: 'rejected' } : shop
           ));
@@ -168,27 +187,6 @@ const Shops = () => {
       } catch (error) {
         console.error("Error rejecting shop:", error);
         alert('Failed to reject shop');
-      }
-    }
-  };
-
-  // Remove shops from database
-  const handleRemove = async (id) => {
-    if (window.confirm('Are you sure you want to permanently remove this shop?')) {
-      try {
-        const response = await fetch(`http://localhost:5000/delete-shop/${id}`, { method: "DELETE" });
-        const result = await response.json();
-        if (result.success) {
-          alert('Shop removed from system!');
-          setShops(shops.filter(shop => shop.id !== id));
-          if (selectedShop?.id === id) {
-            setSelectedShop(null);
-            setDocumentImages({});
-          }
-        }
-      } catch (error) {
-        console.error("Error removing shop:", error);
-        alert('Failed to remove shop');
       }
     }
   };

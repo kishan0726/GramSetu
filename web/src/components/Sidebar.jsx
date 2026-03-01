@@ -66,21 +66,6 @@ const Sidebar = ({villageData}) => {
           ))}
         </div>
       </div>
-
-      {/* Recent Activities */}
-      <div className="sidebar-recent-activities">
-        <h3>Recent Activities</h3>
-        <div className="sidebar-activities-list">
-          {villageData?.recentActivity?.map((activity, index) => (
-            <div key={index} className="sidebar-activity-item">
-              <div className="sidebar-activity-content">
-                <p className="sidebar-activity-text">{activity.action}</p>
-                <span className="sidebar-activity-time">{activity.time}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </aside>
   );
 };
