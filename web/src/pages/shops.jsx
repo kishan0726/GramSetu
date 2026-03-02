@@ -261,11 +261,6 @@ const Shops = () => {
           </h1>
           <p className="shop-header-subtitle">Manage and approve shop registrations in your village</p>
         </div>
-        <div className="shop-header-right">
-          <button className="shop-btn btn-primary" onClick={() => alert('Export feature coming soon!')}>
-            Export Report
-          </button>
-        </div>
       </div>
 
       {/* Stats Cards */}

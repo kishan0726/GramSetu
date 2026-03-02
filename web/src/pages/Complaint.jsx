@@ -261,11 +261,6 @@ const Complaint = () => {
           </h1>
           <p className="complaint-header-subtitle">Manage and track user complaints in your village</p>
         </div>
-        <div className="complaint-header-right">
-          <button className="complaint-btn btn-primary" onClick={() => alert('Export feature coming soon!')}>
-            Export Report
-          </button>
-        </div>
       </div>
 
       {/* Stats Cards */}

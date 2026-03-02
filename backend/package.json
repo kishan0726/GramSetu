@@ -18,10 +18,12 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "firebase-admin": "^13.6.1",
+    "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "nodemailer": "^8.0.1",
     "otp-generator": "^4.0.1",
+    "pdfkit": "^0.17.2",
     "streamifier": "^0.1.1"
   }
 }

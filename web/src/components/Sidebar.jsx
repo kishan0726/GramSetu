@@ -1,12 +1,14 @@
+import { useNavigate } from 'react-router-dom';
 import '../stylesheets/Sidebar.css';
 
-const Sidebar = ({villageData}) => {
+const Sidebar = ({ villageData }) => {
+  const navigate = useNavigate();
 
-  const recentActivities = [
-    { time: '10:30 AM', action: 'New shop registered - "Ram Kirana Store"'},
-    { time: '9:45 AM', action: 'Complaint resolved - Water supply issue'},
-    { time: 'Yesterday', action: 'New scheme "Digital Farmer" launched'},
-    { time: '2 days ago', action: 'Gram Sabha meeting conducted'}
+  const quick_links = [
+    { name: "Village Reports", path: "/", color: "#38bdf8", icon: "📊" },
+    { name: "Shop Directory", path: "/shops", color: "#f59e0b", icon: "🏪" },
+    { name: "Complaint Log", path: "/complaint", color: "#ef4444", icon: "📋" },
+    { name: "Announcements", path: "/announcement", color: "#ec4899", icon: "📢" }
   ];
 
   return (
@@ -58,8 +60,13 @@ const Sidebar = ({villageData}) => {
       <div className="sidebar-quick-links">
         <h3>Quick Actions</h3>
         <div className="sidebar-links-grid">
-          {villageData?.quickLinks?.map((link, index) => (
-            <button key={index} className="sidebar-quick-link-btn" style={{ '--link-color': link.color }}>
+          {quick_links.map((link, index) => (
+            <button
+              key={index}
+              className="sidebar-quick-link-btn"
+              style={{ '--link-color': link.color }}
+              onClick={() => navigate(link.path)}
+            >
               <span className="sidebar-link-icon">{link.icon}</span>
               <span className="sidebar-link-text">{link.name}</span>
             </button>

@@ -21,7 +21,8 @@ const Dashboard = () => {
     sectors: [],
     important_places: []
   });
-  
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchVillageData = async () => {
       try {
@@ -32,15 +33,26 @@ const Dashboard = () => {
       } catch (error) {
         console.error("Error fetching data:", error);
       }
+      finally {
+        setLoading(false);
+      }
     };
 
     fetchVillageData();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        Loading village data...
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-main">
-        <Sidebar villageData={villageData}/>
+        <Sidebar villageData={villageData} />
         <div className="dashboard-content">
           <Home villageData={villageData} />
         </div>

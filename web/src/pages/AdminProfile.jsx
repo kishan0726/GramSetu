@@ -138,7 +138,7 @@ const AdminProfilePage = () => {
       const updateData = {
         admin_id: formData.admin_id,
         admin_type: formData.admin_type,
-        admin_profile_image: profileURL,
+        admin_profile_image: profileURL || adminData.admin_profile_image,
         personal_information: formData.personal_information,
         professional_information: formData.professional_information
       };
