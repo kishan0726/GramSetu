@@ -606,31 +606,6 @@ const Announcement = () => {
                       ))}
                     </div>
                   </div>
-
-                  {/* Attachment */}
-                  <div className="announcement-form-group attachment-group">
-                    <label className="announcement-form-label">Attachment (Optional)</label>
-                    <div className="announcement-file-upload">
-                      <input
-                        type="file"
-                        id="attachment"
-                        name="attachment"
-                        onChange={handleInputChange}
-                        className="announcement-file-input"
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      />
-                      <label htmlFor="attachment" className="announcement-file-label">
-                        <span className="announcement-file-icon">📎</span>
-                        <span className="announcement-file-text">
-                          {formData.attachmentName || 'Choose file (PDF, Word, Images)'}
-                        </span>
-                        <span className="announcement-file-button">Browse</span>
-                      </label>
-                    </div>
-                    <div className="announcement-file-info">
-                      Max file size: 5MB • Supported formats: PDF, DOC, JPG, PNG
-                    </div>
-                  </div>
                 </div>
               </div>
 

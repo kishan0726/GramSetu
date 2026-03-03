@@ -9,6 +9,7 @@ import {
     Dimensions,
     Alert,
 } from 'react-native';
+import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -158,7 +159,7 @@ const DashboardScreen = ({ navigation }) => {
         const now = new Date();
         const diffTime = Math.abs(now - date);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays === 0) {
             return t('today');
         } else if (diffDays === 1) {
@@ -174,6 +175,24 @@ const DashboardScreen = ({ navigation }) => {
         }
     };
 
+    const getWeatherDetails = (code) => {
+        if (code === 0) {
+            return { condition: "Clear Sky", icon: "☀️" };
+        } else if (code >= 1 && code <= 3) {
+            return { condition: "Partly Cloudy", icon: "⛅" };
+        } else if (code >= 45 && code <= 48) {
+            return { condition: "Fog", icon: "🌫️" };
+        } else if (code >= 51 && code <= 67) {
+            return { condition: "Rain", icon: "🌧️" };
+        } else if (code >= 71 && code <= 77) {
+            return { condition: "Snow", icon: "❄️" };
+        } else if (code >= 80 && code <= 99) {
+            return { condition: "Heavy Rain", icon: "⛈️" };
+        } else {
+            return { condition: "Unknown", icon: "🌤️" };
+        }
+    };
+
     const getCategoryColor = (categoryId) => {
         const category = categories.find(c => c.id === categoryId);
         return category?.color || '#64748b';
@@ -183,6 +202,10 @@ const DashboardScreen = ({ navigation }) => {
         const category = categories.find(c => c.id === categoryId);
         return category?.icon || 'info';
     };
+
+    useEffect(() => {
+        getWeather();
+    }, []);
 
     const handleChatPress = () => {
         navigation.navigate('Chat');
@@ -206,6 +229,26 @@ const DashboardScreen = ({ navigation }) => {
 
     const handleAnnouncementPress = (announcement) => {
         navigation.navigate('AnnouncementsScreen', { announcementId: announcement.id });
+    };
+
+    const getWeather = async () => {
+        try {
+            const url =
+                "https://api.open-meteo.com/v1/forecast?latitude=21.6417&longitude=69.6292&current_weather=true&temperature_unit=celsius";
+            const response = await axios.get(url);
+            const data = response.data.current_weather;
+
+            const weatherInfo = getWeatherDetails(data.weathercode);
+
+            setWeather({
+                temp: `${Math.round(data.temperature)}°C`,
+                condition: weatherInfo.condition,
+                icon: weatherInfo.icon,
+            });
+
+        } catch (error) {
+            console.log(error);
+        }
     };
 
     return (
@@ -283,7 +326,7 @@ const DashboardScreen = ({ navigation }) => {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>{t('recentAnnouncements')}</Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={styles.moreButton}
                             onPress={handleViewAllAnnouncements}
                         >
@@ -294,7 +337,7 @@ const DashboardScreen = ({ navigation }) => {
 
                     {SAMPLE_ANNOUNCEMENTS.map((item, index) => {
                         const categoryColor = getCategoryColor(item.category);
-                        
+
                         return (
                             <TouchableOpacity
                                 key={item.id}
@@ -306,25 +349,25 @@ const DashboardScreen = ({ navigation }) => {
                                 activeOpacity={0.7}
                             >
                                 <View style={[styles.priorityStrip, { backgroundColor: getPriorityColor(item.priority) }]} />
-                                
+
                                 <View style={styles.cardContent}>
                                     <View style={styles.cardHeader}>
                                         <View style={[styles.categoryBadge, { backgroundColor: categoryColor + '15' }]}>
-                                            <Icon 
-                                                name={getCategoryIcon(item.category)} 
-                                                size={12} 
-                                                color={categoryColor} 
+                                            <Icon
+                                                name={getCategoryIcon(item.category)}
+                                                size={12}
+                                                color={categoryColor}
                                             />
                                             <Text style={[styles.categoryText, { color: categoryColor }]}>
                                                 {language === 'gu' ? t(item.category) : item.category}
                                             </Text>
                                         </View>
-                                        
+
                                         <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(item.priority) + '15' }]}>
-                                            <Icon 
-                                                name={getPriorityIcon(item.priority)} 
-                                                size={12} 
-                                                color={getPriorityColor(item.priority)} 
+                                            <Icon
+                                                name={getPriorityIcon(item.priority)}
+                                                size={12}
+                                                color={getPriorityColor(item.priority)}
                                             />
                                             <Text style={[styles.priorityText, { color: getPriorityColor(item.priority) }]}>
                                                 {language === 'gu' ? t(item.priority) : item.priority}
@@ -335,7 +378,7 @@ const DashboardScreen = ({ navigation }) => {
                                     <Text style={styles.announcementTitle} numberOfLines={1}>
                                         {language === 'gu' ? item.titleGuj || item.title : item.title}
                                     </Text>
-                                    
+
                                     <Text style={styles.announcementDescription} numberOfLines={1}>
                                         {language === 'gu' ? item.descriptionGuj || item.description : item.description}
                                     </Text>
@@ -345,13 +388,13 @@ const DashboardScreen = ({ navigation }) => {
                                             <Icon name="calendar-today" size={12} color="#94a3b8" />
                                             <Text style={styles.dateText}>{formatDate(item.publishDate)}</Text>
                                         </View>
-                                        
+
                                         {item.attachmentName && (
                                             <View style={styles.attachmentBadge}>
                                                 <Icon name="attachment" size={12} color="#38bdf8" />
                                                 <Text style={styles.attachmentText} numberOfLines={1}>
-                                                    {item.attachmentName.length > 8 
-                                                        ? item.attachmentName.substring(0, 8) + '...' 
+                                                    {item.attachmentName.length > 8
+                                                        ? item.attachmentName.substring(0, 8) + '...'
                                                         : item.attachmentName}
                                                 </Text>
                                             </View>
@@ -371,7 +414,7 @@ const DashboardScreen = ({ navigation }) => {
                         showsHorizontalScrollIndicator={false}
                         style={styles.emergencyScroll}
                     >
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.emergencyCard, { backgroundColor: '#ef4444' }]}
                             onPress={() => Alert.alert(t('emergency'), t('callPolice'))}
                         >
@@ -380,7 +423,7 @@ const DashboardScreen = ({ navigation }) => {
                             <Text style={styles.emergencyNumber}>100</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.emergencyCard, { backgroundColor: '#10b981' }]}
                             onPress={() => Alert.alert(t('emergency'), t('callAmbulance'))}
                         >
@@ -389,7 +432,7 @@ const DashboardScreen = ({ navigation }) => {
                             <Text style={styles.emergencyNumber}>108</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.emergencyCard, { backgroundColor: '#f59e0b' }]}
                             onPress={() => Alert.alert(t('emergency'), t('callFire'))}
                         >
@@ -398,7 +441,7 @@ const DashboardScreen = ({ navigation }) => {
                             <Text style={styles.emergencyNumber}>101</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.emergencyCard, { backgroundColor: '#3b82f6' }]}
                             onPress={() => Alert.alert(t('emergency'), t('callElectricity'))}
                         >
@@ -407,7 +450,7 @@ const DashboardScreen = ({ navigation }) => {
                             <Text style={styles.emergencyNumber}>1912</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             style={[styles.emergencyCard, { backgroundColor: '#8b5cf6' }]}
                             onPress={() => Alert.alert(t('emergency'), t('callDisaster'))}
                         >

@@ -1,15 +1,26 @@
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import AdminReportGenerator from './AdminReportGenerator';
 import '../stylesheets/Sidebar.css';
 
 const Sidebar = ({ villageData }) => {
   const navigate = useNavigate();
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const quick_links = [
-    { name: "Village Reports", path: "/", color: "#38bdf8", icon: "📊" },
-    { name: "Shop Directory", path: "/shops", color: "#f59e0b", icon: "🏪" },
-    { name: "Complaint Log", path: "/complaint", color: "#ef4444", icon: "📋" },
-    { name: "Announcements", path: "/announcement", color: "#ec4899", icon: "📢" }
+    { name: "Village Reports", path: "/", color: "#38bdf8", icon: "📊", action: "modal" },
+    { name: "Shop Directory", path: "/shops", color: "#f59e0b", icon: "🏪", action: "navigate" },
+    { name: "Complaint Log", path: "/complaint", color: "#ef4444", icon: "📋", action: "navigate" },
+    { name: "Announcements", path: "/announcement", color: "#ec4899", icon: "📢", action: "navigate" }
   ];
+
+  const handleQuickLinkClick = (link) => {
+    if (link.action === 'modal') {
+      setShowReportModal(true);
+    } else {
+      navigate(link.path);
+    }
+  };
 
   return (
     <aside className="sidebar-village-sidebar">
@@ -65,7 +76,7 @@ const Sidebar = ({ villageData }) => {
               key={index}
               className="sidebar-quick-link-btn"
               style={{ '--link-color': link.color }}
-              onClick={() => navigate(link.path)}
+              onClick={() => handleQuickLinkClick(link)}
             >
               <span className="sidebar-link-icon">{link.icon}</span>
               <span className="sidebar-link-text">{link.name}</span>
@@ -73,6 +84,21 @@ const Sidebar = ({ villageData }) => {
           ))}
         </div>
       </div>
+
+      {/* Report Generator Modal */}
+      {showReportModal && (
+        <div className="sidebar-modal-overlay" onClick={() => setShowReportModal(false)}>
+          <div className="sidebar-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="sidebar-modal-header">
+              <h2>Generate Village Report</h2>
+              <button className="sidebar-modal-close" onClick={() => setShowReportModal(false)}>✕</button>
+            </div>
+            <div className="sidebar-modal-body">
+              <AdminReportGenerator />
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

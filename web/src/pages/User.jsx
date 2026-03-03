@@ -75,6 +75,7 @@ const User = () => {
         lastName: '',
         firstNameGuj: '',
         lastNameGuj: '',
+        email: '',  // Email field
         gender: 'male',
         dateOfBirth: '',
         placeOfBirth: '',
@@ -200,6 +201,10 @@ const User = () => {
         if (!formData.lastNameGuj.trim()) {
             newErrors.lastNameGuj = 'Gujarati last name is required';
         }
+        // Email validation (optional but if provided must be valid)
+        if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = 'Enter a valid email address';
+        }
         if (!formData.dateOfBirth) {
             newErrors.dateOfBirth = 'Date of birth is required';
         }
@@ -298,6 +303,7 @@ const User = () => {
             lastName: '',
             firstNameGuj: '',
             lastNameGuj: '',
+            email: '',  // Reset email field
             gender: 'male',
             dateOfBirth: '',
             placeOfBirth: '',
@@ -414,7 +420,8 @@ const User = () => {
                 user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.firstNameGuj.includes(searchTerm) ||
                 user.fatherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.contactNumber.includes(searchTerm);
+                user.contactNumber.includes(searchTerm) ||
+                (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
             const matchesGender = filterGender === 'all' || user.gender === filterGender;
             const matchesAgeGroup = filterAgeGroup === 'all' || user.ageGroup === filterAgeGroup;
@@ -423,14 +430,15 @@ const User = () => {
         });
     };
 
-    // Filter Expire USers
+    // Filter Expire Users
     const getFilteredExpiredUsers = () => {
         return expiredUsers.filter(user => {
             const matchesSearch =
                 user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.firstNameGuj.includes(searchTerm) ||
-                user.fatherName.toLowerCase().includes(searchTerm.toLowerCase());
+                user.fatherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
             const matchesGender = filterGender === 'all' || user.gender === filterGender;
 
@@ -569,7 +577,7 @@ const User = () => {
                         <div className="user-search-box">
                             <input
                                 type="text"
-                                placeholder="Search by name, father's name, mobile..."
+                                placeholder="Search by name, father's name, mobile, email..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="user-search-input"
@@ -659,6 +667,12 @@ const User = () => {
                                                 <span className="user-detail-label">Area:</span>
                                                 <span className="user-detail-value">{user.villageArea}</span>
                                             </div>
+                                            {user.email && (
+                                                <div className="user-detail-item">
+                                                    <span className="user-detail-label">Email:</span>
+                                                    <span className="user-detail-value">{user.email}</span>
+                                                </div>
+                                            )}
                                             {user.occupation && (
                                                 <div className="user-detail-item">
                                                     <span className="user-detail-label">Occupation:</span>
@@ -779,6 +793,12 @@ const User = () => {
                                                 <span className="user-detail-label">Area:</span>
                                                 <span className="user-detail-value">{user.villageArea}</span>
                                             </div>
+                                            {user.email && (
+                                                <div className="user-detail-item">
+                                                    <span className="user-detail-label">Email:</span>
+                                                    <span className="user-detail-value">{user.email}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -1083,7 +1103,7 @@ const User = () => {
                             </div>
                         </div>
 
-                        {/* Additional Details Section */}
+                        {/* Additional Details Section - Email moved here */}
                         <div className="user-details-section">
                             <h3 className="user-section-title">Additional Details</h3>
 
@@ -1118,6 +1138,22 @@ const User = () => {
                                             </label>
                                         ))}
                                     </div>
+                                </div>
+
+                                {/* Email Field - Now in Additional Details */}
+                                <div className="user-form-group">
+                                    <label className="user-form-label">
+                                        Email Address
+                                    </label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        placeholder="Enter email address"
+                                        className={`user-form-input ${errors.email ? 'error' : ''}`}
+                                    />
+                                    {errors.email && <span className="user-error-message">{errors.email}</span>}
                                 </div>
 
                                 <div className="user-form-group">

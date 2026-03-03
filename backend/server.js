@@ -750,7 +750,7 @@ app.post("/profile/upload", upload.single("image"), async (req, res) => {
 });
 
 
-// Forgot password - send OTP to shopkeeper email
+// Forgot password - send OTP to email
 router.post("/shopkeeper-forgot-password", async (req, res) => {
     const { email } = req.body;
 
@@ -957,6 +957,173 @@ router.post("/reset-password", async (req, res) => {
     }
 });
 
+// Forgot password - USER
+router.post("/user-forgot-password", async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const snapshot = await db.ref('user_data')
+            .orderByChild('email')
+            .equalTo(email)
+            .once('value');
+
+        if (!snapshot.exists()) {
+            return res.json({
+                success: false,
+                message: "No user found with this email"
+            });
+        }
+
+        let userData = null;
+        let userId = null;
+
+        snapshot.forEach((child) => {
+            userData = child.val();
+            userId = child.key;
+        });
+
+        const otp = otpGenerator.generate(6, {
+            digits: true,
+            lowerCaseAlphabets: false,
+            upperCaseAlphabets: false,
+            specialChars: false
+        });
+
+        otpStore[email] = {
+            otp,
+            userId,
+            userData,
+            expires: Date.now() + 5 * 60 * 1000,
+            purpose: 'user-forgot-password'
+        };
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Password Reset OTP - User Account",
+            html: `
+                <h2>Password Reset Request</h2>
+                <p>Hello ${userData.name || "User"},</p>
+                <h1>${otp}</h1>
+                <p>This OTP is valid for 5 minutes.</p>
+            `
+        });
+
+        res.json({
+            success: true,
+            message: "OTP sent to your email"
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.json({
+            success: false,
+            message: "Failed to process request"
+        });
+    }
+});
+
+router.post("/verify-user-reset-otp", async (req, res) => {
+    const { email, otp } = req.body;
+    const record = otpStore[email];
+
+    if (!record || record.purpose !== 'user-forgot-password') {
+        return res.json({
+            success: false,
+            message: "No OTP request found"
+        });
+    }
+
+    if (Date.now() > record.expires) {
+        delete otpStore[email];
+        return res.json({
+            success: false,
+            message: "OTP expired"
+        });
+    }
+
+    if (record.otp != otp) {
+        return res.json({
+            success: false,
+            message: "Invalid OTP"
+        });
+    }
+
+    const resetToken = otpGenerator.generate(20, {
+        digits: true,
+        lowerCaseAlphabets: true,
+        upperCaseAlphabets: true,
+        specialChars: false
+    });
+
+    otpStore[email] = {
+        ...record,
+        resetToken,
+        otpVerified: true,
+        expires: Date.now() + 15 * 60 * 1000
+    };
+
+    res.json({
+        success: true,
+        resetToken
+    });
+});
+
+router.post("/reset-user-password", async (req, res) => {
+    const { email, resetToken, newPassword, confirmPassword } = req.body;
+
+    if (newPassword !== confirmPassword) {
+        return res.json({
+            success: false,
+            message: "Passwords do not match"
+        });
+    }
+
+    if (newPassword.length < 6) {
+        return res.json({
+            success: false,
+            message: "Password must be at least 6 characters"
+        });
+    }
+
+    const record = otpStore[email];
+
+    if (!record || record.purpose !== 'user-forgot-password') {
+        return res.json({
+            success: false,
+            message: "Invalid reset request"
+        });
+    }
+
+    if (!record.otpVerified || record.resetToken !== resetToken) {
+        return res.json({
+            success: false,
+            message: "Invalid reset token"
+        });
+    }
+
+    try {
+        await db.ref(`user_data/${record.userId}`).update({
+            password: newPassword,
+            lastUpdated: new Date().toISOString().split('T')[0]
+        });
+
+        delete otpStore[email];
+
+        res.json({
+            success: true,
+            message: "Password reset successfully"
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.json({
+            success: false,
+            message: "Failed to reset password"
+        });
+    }
+});
+
 // Resend OTP for forgot password
 router.post("/resend-reset-otp", async (req, res) => {
     const { email } = req.body;
@@ -1038,6 +1205,223 @@ router.post("/get-shop-by-email", async (req, res) => {
         res.json({
             success: false,
             message: "Failed to fetch shop data"
+        });
+    }
+});
+
+// Report generation
+router.get('/get-full-report-data', async (req, res) => {
+    try {
+        console.log("📊 Fetching complete data for full report generation...");
+
+        // Fetch ALL data from Firebase in parallel for better performance
+        const [
+            villageSnapshot,
+            shopsSnapshot,
+            complaintsSnapshot,
+            usersSnapshot,
+            announcementsSnapshot,
+            adminActivitySnapshot,
+            liveDataSnapshot,
+            quickLinksSnapshot,
+            recentActivitySnapshot,
+            recentUpdatesSnapshot,
+            shopImagesSnapshot,
+            adminSnapshot
+        ] = await Promise.all([
+            db.ref("village_data").once("value"),
+            db.ref("shops_list").once("value"),
+            db.ref("complaints_list").once("value"),
+            db.ref("user_data").once("value"),
+            db.ref("published_announcement").once("value"),
+            db.ref("admin_recent_activity").once("value"),
+            db.ref("live_data").once("value"),
+            db.ref("quick_links").once("value"),
+            db.ref("recent_activity").once("value"),
+            db.ref("recent_updates").once("value"),
+            db.ref("shop_image").once("value"),
+            db.ref("admin").once("value")
+        ]);
+
+        // Get admin personal information
+        const adminData = adminSnapshot.val();
+        let adminName = "Admin";
+        let adminPhone = "+91 1234567890";
+
+        if (adminData && adminData.admin1 && adminData.admin1.personal_information) {
+            adminName = adminData.admin1.personal_information.name || "Admin";
+            adminPhone = adminData.admin1.personal_information.phone1 || "+91 1234567890";
+        }
+
+        // Structure the complete response with ALL data
+        const responseData = {
+            success: true,
+            // Village Details (complete)
+            village_data: villageSnapshot.val() || {
+                details: {
+                    name: "Visavada",
+                    code: "360579",
+                    population: 3470,
+                    households: 787,
+                    area: "27.17 sq km",
+                    literacyRate: "67.9%",
+                    facilities: ["Health Center", "School", "Bank", "Post Office", "Market"],
+                    description: "Visavada is leading the digital transformation of rural governance with GramSetu platform."
+                },
+                important_places: [
+                    { icon: "🏛️", name: "Gram Panchayat Office", type: "Government" },
+                    { icon: "🏥", name: "Primary Health Center", type: "Healthcare" },
+                    { icon: "🏫", name: "Primary School", type: "Education" },
+                    { icon: "🏫", name: "High School", type: "Education" },
+                    { icon: "🏦", name: "Bank", type: "Finance" },
+                    { icon: "🛒", name: "Market Area", type: "Commercial" },
+                    { icon: "🛕", name: "Mul Dwarka Temple", type: "Religious" },
+                    { icon: "🏖️", name: "Visavada Beach", type: "Tourism" },
+                    { icon: "🚌", name: "Bus Stand", type: "Transport" },
+                    { icon: "💧", name: "Water Tank", type: "Utility" }
+                ],
+                sectors: [
+                    { color: "#10b981", icon: "🌾", name: "Agriculture", value: "55%" },
+                    { color: "#f59e0b", icon: "🏪", name: "Small Business", value: "20%" },
+                    { color: "#38bdf8", icon: "💼", name: "Services", value: "15%" },
+                    { color: "#8b5cf6", icon: "📊", name: "Others", value: "10%" }
+                ],
+                stat: [
+                    { icon: "🏪", label: "Registered Shops", value: "42" },
+                    { icon: "💰", label: "Active Schemes", value: "8" },
+                    { icon: "⏳", label: "Pending Tasks", value: "12" },
+                    { icon: "📱", label: "App Users", value: "3,245" }
+                ]
+            },
+
+            // Admin Information (complete)
+            admin: adminSnapshot.val() || {
+                admin1: {
+                    admin_id: "admin",
+                    admin_type: "chief admin",
+                    personal_information: {
+                        name: adminName,
+                        phone1: adminPhone,
+                        email: "admin@visavada.gov.in",
+                        DOB: "2005-08-03",
+                        gender: "male"
+                    },
+                    professional_information: {
+                        department: "Village Administration",
+                        designation: "Chief Administrator",
+                        office_address: "Gram Panchayat Office, Visavada",
+                        office_email: "admin-office@visavada.gov.in",
+                        office_phone: "+91 1234567890"
+                    }
+                }
+            },
+
+            // Shops Data (complete with all items)
+            shops_list: shopsSnapshot.val() || {},
+
+            // Complaints Data (complete)
+            complaints_list: complaintsSnapshot.val() || {},
+
+            // User/Citizen Data (complete)
+            user_data: usersSnapshot.val() || {},
+
+            // Announcements (complete)
+            published_announcement: announcementsSnapshot.val() || {},
+
+            // Admin Activity Log (complete)
+            admin_recent_activity: adminActivitySnapshot.val() || {},
+
+            // Live Dashboard Data (complete)
+            live_data: liveDataSnapshot.val() || [
+                { label: "Online Now", value: "245" },
+                { label: "App Users", value: "3245" },
+                { label: "Today's Complaints", value: "5" },
+                { label: "Resolution Rate", value: "98%" }
+            ],
+
+            // Quick Links (complete)
+            quick_links: quickLinksSnapshot.val() || [
+                { color: "#38bdf8", icon: "📊", name: "Village Reports" },
+                { color: "#f59e0b", icon: "🏪", name: "Shop Directory" },
+                { color: "#ef4444", icon: "📋", name: "Complaint Log" },
+                { color: "#ec4899", icon: "📢", name: "Announcements" }
+            ],
+
+            // Recent Activity (complete)
+            recent_activity: recentActivitySnapshot.val() || [
+                { action: "New shop registered - Ram Kirana Store", time: "10:30 AM" },
+                { action: "Complaint resolved - Water supply issue", time: "9:45 AM" },
+                { action: "New scheme - Digital Farmer launched", time: "Yesterday" },
+                { action: "Gram Sabha meeting conducted", time: "2 days ago" }
+            ],
+
+            // Recent Updates (complete)
+            recent_updates: recentUpdatesSnapshot.val() || [
+                { message: "Water supply restored in North Zone", type: "success" },
+                { message: "Gram Sabha meeting at 4 PM today", type: "info" },
+                { message: "Road repair work in progress", type: "warning" }
+            ],
+
+            // Shop Images (complete)
+            shop_image: shopImagesSnapshot.val() || {}
+        };
+
+        console.log("✅ Complete report data fetched successfully");
+        console.log(`📦 Data summary:
+            - Village: ${responseData.village_data.details?.name || 'N/A'}
+            - Shops: ${Object.keys(responseData.shops_list).length}
+            - Complaints: ${Object.keys(responseData.complaints_list).length}
+            - Users: ${Object.keys(responseData.user_data).length}
+            - Announcements: ${Object.keys(responseData.published_announcement).length}
+        `);
+
+        res.json(responseData);
+
+    } catch (error) {
+        console.error("❌ Error fetching complete report data:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch complete report data",
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+router.get('/check-report-data', async (req, res) => {
+    try {
+        console.log("🔍 Checking report data availability...");
+
+        const [
+            shopsCount,
+            complaintsCount,
+            usersCount,
+            announcementsCount
+        ] = await Promise.all([
+            db.ref("shops_list").once("value").then(s => Object.keys(s.val() || {}).length),
+            db.ref("complaints_list").once("value").then(s => Object.keys(s.val() || {}).length),
+            db.ref("user_data").once("value").then(s => Object.keys(s.val() || {}).length),
+            db.ref("published_announcement").once("value").then(s => Object.keys(s.val() || {}).length)
+        ]);
+
+        res.json({
+            success: true,
+            counts: {
+                shops: shopsCount,
+                complaints: complaintsCount,
+                users: usersCount,
+                announcements: announcementsCount
+            },
+            message: "Data availability check complete",
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error("❌ Error checking data availability:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to check data availability",
+            error: error.message
         });
     }
 });

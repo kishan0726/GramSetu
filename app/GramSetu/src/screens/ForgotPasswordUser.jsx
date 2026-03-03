@@ -95,7 +95,7 @@ const ForgotPassword = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/shopkeeper-forgot-password`, { email });
+      const response = await axios.post(`${API_BASE_URL}/user-forgot-password`, { email });
       
       if (response.data.success) {
         setStep(2);
@@ -123,7 +123,7 @@ const ForgotPassword = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/verify-reset-otp`, { email, otp });
+      const response = await axios.post(`${API_BASE_URL}/verify-user-reset-otp`, { email, otp });
       
       if (response.data.success) {
         setResetToken(response.data.resetToken);
@@ -142,7 +142,7 @@ const ForgotPassword = ({ navigation }) => {
   const handleResendOtp = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/resend-reset-otp`, { email });
+      const response = await axios.post(`${API_BASE_URL}/reset-user-password`, { email });
       
       if (response.data.success) {
         startTimer();
@@ -163,7 +163,7 @@ const ForgotPassword = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/reset-password`, {
+      const response = await axios.post(`${API_BASE_URL}/reset-user-password`, {
         email,
         resetToken,
         newPassword,
@@ -177,7 +177,7 @@ const ForgotPassword = ({ navigation }) => {
           [
             {
               text: t('ok'),
-              onPress: () => navigation.navigate('ShopkeeperLogin')
+              onPress: () => navigation.navigate('UserLogin')
             }
           ]
         );

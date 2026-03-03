@@ -38,7 +38,6 @@ const UserLogin = ({ navigation }) => {
         const userId = parsed.userId;
 
         if (!userId) {
-          alert("done")
           await AsyncStorage.removeItem('userSession');
           return;
         }
@@ -88,15 +87,16 @@ const UserLogin = ({ navigation }) => {
       );
       navigation.navigate('Dashboard')
     
-    // setTimeout(() => {
-    //   setLoading(false);
-    //   Alert.alert('Success', 'Login successful!');
-    // }, 1500);
   };
 
   const handleBackToWelcome = () => {
     navigation.navigate('Welcome');
   };
+
+  // Navigate to forgot Password
+  const handleForgotPassword = async () => {
+    navigation.replace('ForgotPasswordUser');
+  }
 
   return (
     <KeyboardAvoidingView 
@@ -164,7 +164,7 @@ const UserLogin = ({ navigation }) => {
           </View>
 
           {/* Forgot Password */}
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
             <Text style={styles.forgotPasswordText}>{t('forgotPassword')}</Text>
           </TouchableOpacity>
 
