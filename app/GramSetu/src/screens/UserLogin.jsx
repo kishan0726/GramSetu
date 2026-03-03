@@ -41,10 +41,10 @@ const UserLogin = ({ navigation }) => {
           await AsyncStorage.removeItem('userSession');
           return;
         }
-        
+
         // 🔥 ALWAYS fetch fresh data from DB
         const snapshot = await db.ref(`user_data/${userId}`).once('value');
-        
+
         if (!snapshot.exists()) {
           await AsyncStorage.removeItem('userSession');
           return;
@@ -74,19 +74,19 @@ const UserLogin = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogin = async() => {
+  const handleLogin = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
 
     await AsyncStorage.setItem(
-        'userSession',
-        JSON.stringify({
-          userId: userId,
-        })
-      );
-      navigation.navigate('Dashboard')
-    
+      'userSession',
+      JSON.stringify({
+        userId: userId,
+      })
+    );
+    navigation.navigate('Dashboard')
+
   };
 
   const handleBackToWelcome = () => {
@@ -99,22 +99,22 @@ const UserLogin = ({ navigation }) => {
   }
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar backgroundColor="#f8fafc" barStyle="dark-content" />
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+
         {/* Back Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={handleBackToWelcome}
           style={styles.backButton}
         >
           <Text style={styles.backButtonText}>← {t('backToWelcome')}</Text>
         </TouchableOpacity>
-        
+
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
@@ -146,7 +146,7 @@ const UserLogin = ({ navigation }) => {
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
               style={styles.eyeButton}
             >
@@ -169,7 +169,7 @@ const UserLogin = ({ navigation }) => {
           </TouchableOpacity>
 
           {/* Login Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.loginButton, loading && styles.loginButtonDisabled]}
             onPress={handleLogin}
             disabled={loading}

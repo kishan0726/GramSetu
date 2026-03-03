@@ -16,192 +16,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
+import { db } from '../config/firebase'
 
 const { width, height } = Dimensions.get('window');
-
-// Sample announcement data based on your DB structure
-const SAMPLE_ANNOUNCEMENTS = [
-  {
-    id: "180226191309",
-    title: "Gram Sabha Meeting on 25th March",
-    titleGuj: "૨૫ માર્ચે ગ્રામ સભાની બેઠક",
-    description: "Monthly gram sabha meeting will be held at community hall. All villagers are requested to attend.",
-    descriptionGuj: "માસિક ગ્રામ સભાની બેઠક સામુદાયિક હોલમાં યોજાશે. તમામ ગ્રામજનોને હાજર રહેવા વિનંતી.",
-    category: "general",
-    publishDate: "2026-02-21T19:13",
-    expiryDate: "2026-02-21T19:13",
-    priority: "high",
-    status: "published",
-    targetAudience: ["all"],
-    attachmentName: "",
-    createdAt: "210226104229"
-  },
-  {
-    id: "180226191310",
-    title: "Water Supply Schedule Change",
-    titleGuj: "પાણી પુરવઠાના સમયમાં ફેરફાર",
-    description: "Due to maintenance work, water supply timing will be changed. New schedule will be from 7 AM to 9 AM.",
-    descriptionGuj: "જાળવણી કાર્યને કારણે, પાણી પુરવઠાના સમયમાં ફેરફાર કરવામાં આવ્યો છે. નવો સમય સવારે ૭ થી ૯ વાગ્યા સુધીનો રહેશે.",
-    category: "utility",
-    publishDate: "2026-02-20T10:30",
-    expiryDate: "2026-02-28T23:59",
-    priority: "normal",
-    status: "published",
-    targetAudience: ["all"],
-    attachmentName: "",
-    createdAt: "210226104230"
-  },
-  {
-    id: "180226191311",
-    title: "Vaccination Camp for Cattle",
-    titleGuj: "પશુઓ માટે રસીકરણ શિબિર",
-    description: "Free vaccination camp for cattle will be organized at veterinary hospital on Sunday.",
-    descriptionGuj: "રવિવારે પશુ દવાખાને પશુઓ માટે મફત રસીકરણ શિબિરનું આયોજન કરવામાં આવ્યું છે.",
-    category: "health",
-    publishDate: "2026-02-19T09:15",
-    expiryDate: "2026-02-26T18:00",
-    priority: "high",
-    status: "published",
-    targetAudience: ["farmers"],
-    attachmentName: "camp_details.pdf",
-    createdAt: "210226104231"
-  },
-  {
-    id: "180226191312",
-    title: "Electricity Maintenance Alert",
-    titleGuj: "વીજળી જાળવણી એલર્ટ",
-    description: "Power supply will be interrupted for 4 hours tomorrow for maintenance work.",
-    descriptionGuj: "કાલે જાળવણી કાર્ય માટે ૪ કલાક વીજ પુરવઠો બંધ રહેશે.",
-    category: "utility",
-    publishDate: "2026-02-18T14:20",
-    expiryDate: "2026-02-22T23:59",
-    priority: "urgent",
-    status: "published",
-    targetAudience: ["all"],
-    attachmentName: "",
-    createdAt: "210226104232"
-  },
-  {
-    id: "180226191313",
-    title: "Free Health Checkup Camp",
-    titleGuj: "મફત આરોગ્ય તપાસ શિબિર",
-    description: "Free health checkup camp for senior citizens at primary health center.",
-    descriptionGuj: "પ્રાથમિક આરોગ્ય કેન્દ્ર ખાતે વરિષ્ઠ નાગરિકો માટે મફત આરોગ્ય તપાસ શિબિર.",
-    category: "health",
-    publishDate: "2026-02-17T11:45",
-    expiryDate: "2026-02-25T17:00",
-    priority: "normal",
-    status: "published",
-    targetAudience: ["senior_citizens"],
-    attachmentName: "",
-    createdAt: "210226104233"
-  },
-  {
-    id: "180226191314",
-    title: "Road Construction Update",
-    titleGuj: "રોડ નિર્માણ અપડેટ",
-    description: "Main road construction work will start from next week. Alternative routes suggested.",
-    descriptionGuj: "મુખ્ય માર્ગનું નિર્માણ કાર્ય આવતા અઠવાડિયેથી શરૂ થશે. વૈકલ્પિક માર્ગો સૂચવ્યા.",
-    category: "infrastructure",
-    publishDate: "2026-02-16T08:30",
-    expiryDate: "2026-03-15T23:59",
-    priority: "normal",
-    status: "published",
-    targetAudience: ["all"],
-    attachmentName: "road_map.pdf",
-    createdAt: "210226104234"
-  },
-  {
-    id: "180226191315",
-    title: "Farmers Training Program",
-    titleGuj: "ખેડૂત તાલીમ કાર્યક્રમ",
-    description: "Training program on modern farming techniques at agriculture office.",
-    descriptionGuj: "કૃષિ કચેરી ખાતે આધુનિક ખેતી તકનીકો પર તાલીમ કાર્યક્રમ.",
-    category: "agriculture",
-    publishDate: "2026-02-15T13:00",
-    expiryDate: "2026-02-28T18:00",
-    priority: "normal",
-    status: "published",
-    targetAudience: ["farmers"],
-    attachmentName: "",
-    createdAt: "210226104235"
-  },
-  {
-    id: "180226191316",
-    title: "Plastic Free Village Initiative",
-    titleGuj: "પ્લાસ્ટિક મુક્ત ગામ પહેલ",
-    description: "Join the campaign to make our village plastic free. Meeting at village square.",
-    descriptionGuj: "અમારા ગામને પ્લાસ્ટિક મુક્ત બનાવવાના અભિયાનમાં જોડાઓ. ગામના ચોકમાં બેઠક.",
-    category: "environment",
-    publishDate: "2026-02-14T10:00",
-    expiryDate: "2026-03-01T23:59",
-    priority: "high",
-    status: "published",
-    targetAudience: ["all"],
-    attachmentName: "",
-    createdAt: "210226104236"
-  },
-  {
-    id: "180226191317",
-    title: "Banking Correspondent Visit",
-    titleGuj: "બેંકિંગ કોરસ્પોન્ડન્ટ મુલાકાત",
-    description: "Banking correspondent will visit village for financial services on Friday.",
-    descriptionGuj: "શુક્રવારે નાણાકીય સેવાઓ માટે બેંકિંગ કોરસ્પોન્ડન્ટ ગામની મુલાકાત લેશે.",
-    category: "finance",
-    publishDate: "2026-02-13T09:45",
-    expiryDate: "2026-02-20T17:00",
-    priority: "normal",
-    status: "published",
-    targetAudience: ["all"],
-    attachmentName: "",
-    createdAt: "210226104237"
-  },
-  {
-    id: "180226191318",
-    title: "Youth Sports Tournament",
-    titleGuj: "યુવા રમત સ્પર્ધા",
-    description: "Annual sports tournament registration open until 28th February.",
-    descriptionGuj: "વાર્ષિક રમત સ્પર્ધા માટે રજીસ્ટ્રેશન ૨૮ ફેબ્રુઆરી સુધી ખુલ્લું.",
-    category: "sports",
-    publishDate: "2026-02-12T15:30",
-    expiryDate: "2026-02-28T23:59",
-    priority: "normal",
-    status: "published",
-    targetAudience: ["youth"],
-    attachmentName: "tournament_rules.pdf",
-    createdAt: "210226104238"
-  },
-  {
-    id: "180226191319",
-    title: "COVID-19 Vaccination Camp",
-    titleGuj: "કોવિડ-૧૯ રસીકરણ શિબિર",
-    description: "Special vaccination camp for 18+ at primary health center this weekend.",
-    descriptionGuj: "આ સપ્તાહમાં પ્રાથમિક આરોગ્ય કેન્દ્ર ખાતે ૧૮+ માટે ખાસ રસીકરણ શિબિર.",
-    category: "health",
-    publishDate: "2026-02-11T12:15",
-    expiryDate: "2026-02-22T18:00",
-    priority: "urgent",
-    status: "published",
-    targetAudience: ["all"],
-    attachmentName: "",
-    createdAt: "210226104239"
-  },
-  {
-    id: "180226191320",
-    title: "Digital Payment Training",
-    titleGuj: "ડિજિટલ ચુકવણી તાલીમ",
-    description: "Learn how to use digital payment apps for daily transactions.",
-    descriptionGuj: "રોજિંદા વ્યવહારો માટે ડિજિટલ ચુકવણી એપ્સનો ઉપયોગ કેવી રીતે કરવો તે શીખો.",
-    category: "education",
-    publishDate: "2026-02-10T16:00",
-    expiryDate: "2026-02-25T17:30",
-    priority: "normal",
-    status: "published",
-    targetAudience: ["senior_citizens", "women"],
-    attachmentName: "",
-    createdAt: "210226104240"
-  }
-];
 
 const AnnouncementsScreen = ({ navigation }) => {
   const { t, language } = useLanguage();
@@ -215,34 +32,58 @@ const AnnouncementsScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const categories = [
-    { id: 'all', name: t('all'), icon: 'apps', color: '#64748b' },
-    { id: 'general', name: t('general'), icon: 'info', color: '#3b82f6' },
-    { id: 'health', name: t('health'), icon: 'local-hospital', color: '#ef4444' },
-    { id: 'utility', name: t('utility'), icon: 'power', color: '#f59e0b' },
-    { id: 'agriculture', name: t('agriculture'), icon: 'agriculture', color: '#10b981' },
-    { id: 'environment', name: t('environment'), icon: 'nature', color: '#10b981' },
-    { id: 'infrastructure', name: t('infrastructure'), icon: 'construction', color: '#64748b' },
-    { id: 'education', name: t('education'), icon: 'school', color: '#8b5cf6' },
-    { id: 'sports', name: t('sports'), icon: 'sports', color: '#ec4899' },
-    { id: 'finance', name: t('finance'), icon: 'account-balance', color: '#64748b' },
-  ];
+  { id: 'all', name: t('all'), icon: 'apps', color: '#64748b' },
+  { id: 'general', name: t('general'), icon: 'info', color: '#3b82f6' },
+  { id: 'emergency', name: t('emergency'), icon: 'warning', color: '#ef4444' },
+  { id: 'scheme', name: t('scheme'), icon: 'account-balance-wallet', color: '#10b981' },
+  { id: 'event', name: t('event'), icon: 'event', color: '#8b5cf6' },
+  { id: 'maintenance', name: t('maintenance'), icon: 'build', color: '#f59e0b' },
+  { id: 'holiday', name: t('holiday'), icon: 'celebration', color: '#ec4899' },
+  { id: 'meeting', name: t('meeting'), icon: 'groups', color: '#6366f1' },
+  { id: 'important', name: t('important'), icon: 'priority-high', color: '#ef4444' },
+];
 
   useEffect(() => {
-    fetchAnnouncements();
+    const unsubscribe = fetchAnnouncements();
+    return unsubscribe;
   }, []);
 
   const fetchAnnouncements = () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      // Sort by publish date (newest first)
-      const sorted = [...SAMPLE_ANNOUNCEMENTS].sort((a, b) => 
-        new Date(b.publishDate) - new Date(a.publishDate)
-      );
-      setAnnouncements(sorted);
+
+    const reference = db.ref('published_announcement');
+
+    reference.on('value', snapshot => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+
+        // Convert object → array
+        const announcementsArray = Object.values(data);
+
+        const now = new Date();
+
+        // Filter expired announcements
+        const filtered = announcementsArray.filter(item => {
+          if (!item.expiryDate) return true;
+          return new Date(item.expiryDate) >= now;
+        });
+
+        // Sort newest first
+        const sorted = filtered.sort((a, b) =>
+          new Date(b.publishDate) - new Date(a.publishDate)
+        );
+
+        setAnnouncements(sorted);
+      } else {
+        setAnnouncements([]);
+      }
+
       setLoading(false);
       setRefreshing(false);
-    }, 1000);
+    });
+
+    // Cleanup listener
+    return () => reference.off();
   };
 
   const onRefresh = () => {
@@ -252,28 +93,28 @@ const AnnouncementsScreen = ({ navigation }) => {
 
   const getFilteredAnnouncements = () => {
     let filtered = announcements;
-    
+
     // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
-    
+
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         item.title.toLowerCase().includes(query) ||
         item.titleGuj?.includes(query) ||
         item.description.toLowerCase().includes(query) ||
         item.descriptionGuj?.includes(query)
       );
     }
-    
+
     // Limit to 10 if not showing all
     if (!showAll) {
       filtered = filtered.slice(0, 10);
     }
-    
+
     return filtered;
   };
 
@@ -308,7 +149,7 @@ const AnnouncementsScreen = ({ navigation }) => {
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return t('today');
     } else if (diffDays === 1) {
@@ -331,7 +172,7 @@ const AnnouncementsScreen = ({ navigation }) => {
 
   const renderAnnouncementItem = ({ item, index }) => {
     const categoryColor = getCategoryColor(item.category);
-    
+
     return (
       <TouchableOpacity
         style={[
@@ -345,27 +186,27 @@ const AnnouncementsScreen = ({ navigation }) => {
         activeOpacity={0.7}
       >
         <View style={[styles.priorityStrip, { backgroundColor: getPriorityColor(item.priority) }]} />
-        
+
         <View style={styles.cardContent}>
           <View style={styles.cardHeader}>
             <View style={[styles.categoryBadge, { backgroundColor: categoryColor + '15' }]}>
-              <Icon 
-                name={categories.find(c => c.id === item.category)?.icon || 'info'} 
-                size={12} 
-                color={categoryColor} 
+              <Icon
+                name={categories.find(c => c.id === item.category)?.icon || 'info'}
+                size={12}
+                color={categoryColor}
               />
               <Text style={[styles.categoryText, { color: categoryColor }]}>
-                {language === 'gu' ? 
-                  categories.find(c => c.id === item.category)?.name || item.category : 
+                {language === 'gu' ?
+                  categories.find(c => c.id === item.category)?.name || item.category :
                   item.category}
               </Text>
             </View>
-            
+
             <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(item.priority) + '15' }]}>
-              <Icon 
-                name={getPriorityIcon(item.priority)} 
-                size={12} 
-                color={getPriorityColor(item.priority)} 
+              <Icon
+                name={getPriorityIcon(item.priority)}
+                size={12}
+                color={getPriorityColor(item.priority)}
               />
               <Text style={[styles.priorityText, { color: getPriorityColor(item.priority) }]}>
                 {language === 'gu' ? t(item.priority) : item.priority}
@@ -376,7 +217,7 @@ const AnnouncementsScreen = ({ navigation }) => {
           <Text style={styles.announcementTitle} numberOfLines={2}>
             {language === 'gu' ? item.titleGuj || item.title : item.title}
           </Text>
-          
+
           <Text style={styles.announcementDescription} numberOfLines={2}>
             {language === 'gu' ? item.descriptionGuj || item.description : item.description}
           </Text>
@@ -386,13 +227,13 @@ const AnnouncementsScreen = ({ navigation }) => {
               <Icon name="calendar-today" size={12} color="#94a3b8" />
               <Text style={styles.dateText}>{formatDate(item.publishDate)}</Text>
             </View>
-            
+
             {item.attachmentName && (
               <View style={styles.attachmentBadge}>
                 <Icon name="attachment" size={12} color="#38bdf8" />
                 <Text style={styles.attachmentText} numberOfLines={1}>
-                  {item.attachmentName.length > 10 
-                    ? item.attachmentName.substring(0, 10) + '...' 
+                  {item.attachmentName.length > 10
+                    ? item.attachmentName.substring(0, 10) + '...'
                     : item.attachmentName}
                 </Text>
               </View>
@@ -412,24 +253,24 @@ const AnnouncementsScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Icon name="arrow-back" size={24} color="#ffffff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('announcements')}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
               styles.viewToggleButton,
               showAll && styles.viewToggleButtonActive
             ]}
             onPress={() => setShowAll(!showAll)}
           >
-            <Icon 
-              name={showAll ? 'format-list-bulleted' : 'star'} 
-              size={20} 
-              color="#ffffff" 
+            <Icon
+              name={showAll ? 'format-list-bulleted' : 'star'}
+              size={20}
+              color="#ffffff"
             />
           </TouchableOpacity>
         </View>
@@ -454,8 +295,8 @@ const AnnouncementsScreen = ({ navigation }) => {
 
       {/* Category Filter */}
       <View style={styles.categorySection}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryContainer}
         >
@@ -469,10 +310,10 @@ const AnnouncementsScreen = ({ navigation }) => {
               ]}
               onPress={() => setSelectedCategory(category.id)}
             >
-              <Icon 
-                name={category.icon} 
-                size={16} 
-                color={selectedCategory === category.id ? '#ffffff' : category.color} 
+              <Icon
+                name={category.icon}
+                size={16}
+                color={selectedCategory === category.id ? '#ffffff' : category.color}
               />
               <Text style={[
                 styles.categoryChipText,
@@ -498,8 +339,8 @@ const AnnouncementsScreen = ({ navigation }) => {
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
+            <RefreshControl
+              refreshing={refreshing}
               onRefresh={onRefresh}
               colors={['#38bdf8']}
               tintColor="#38bdf8"
@@ -540,7 +381,7 @@ const AnnouncementsScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setModalVisible(false)}
               >
@@ -549,22 +390,22 @@ const AnnouncementsScreen = ({ navigation }) => {
             </View>
 
             {selectedAnnouncement && (
-              <ScrollView 
+              <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.modalScrollContent}
               >
                 <View style={styles.modalPriority}>
                   <View style={[
-                    styles.modalPriorityBadge, 
+                    styles.modalPriorityBadge,
                     { backgroundColor: getPriorityColor(selectedAnnouncement.priority) + '15' }
                   ]}>
-                    <Icon 
-                      name={getPriorityIcon(selectedAnnouncement.priority)} 
-                      size={16} 
-                      color={getPriorityColor(selectedAnnouncement.priority)} 
+                    <Icon
+                      name={getPriorityIcon(selectedAnnouncement.priority)}
+                      size={16}
+                      color={getPriorityColor(selectedAnnouncement.priority)}
                     />
                     <Text style={[
-                      styles.modalPriorityText, 
+                      styles.modalPriorityText,
                       { color: getPriorityColor(selectedAnnouncement.priority) }
                     ]}>
                       {language === 'gu' ? t(selectedAnnouncement.priority) : selectedAnnouncement.priority} {t('priority')}
@@ -581,12 +422,12 @@ const AnnouncementsScreen = ({ navigation }) => {
                     <Icon name="category" size={16} color="#64748b" />
                     <Text style={styles.modalMetaLabel}>{t('category')}</Text>
                     <Text style={styles.modalMetaValue}>
-                      {language === 'gu' ? 
-                        categories.find(c => c.id === selectedAnnouncement.category)?.name || selectedAnnouncement.category : 
+                      {language === 'gu' ?
+                        categories.find(c => c.id === selectedAnnouncement.category)?.name || selectedAnnouncement.category :
                         selectedAnnouncement.category}
                     </Text>
                   </View>
-                  
+
                   <View style={styles.modalMetaItem}>
                     <Icon name="calendar-today" size={16} color="#64748b" />
                     <Text style={styles.modalMetaLabel}>{t('published')}</Text>
@@ -604,7 +445,11 @@ const AnnouncementsScreen = ({ navigation }) => {
                       <Icon name="event" size={16} color="#64748b" />
                       <Text style={styles.modalMetaLabel}>{t('expires')}</Text>
                       <Text style={styles.modalMetaValue}>
-                        {new Date(selectedAnnouncement.expiryDate).toLocaleDateString()}
+                        {new Date(selectedAnnouncement.expiryDate).toLocaleDateString(language === 'gu' ? 'gu-IN' : 'en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
                       </Text>
                     </View>
                   )}

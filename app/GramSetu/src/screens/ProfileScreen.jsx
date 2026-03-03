@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { db } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
@@ -70,14 +71,50 @@ const ProfileScreen = ({ navigation }) => {
     fetchUserData();
   }, []);
 
-  const fetchUserData = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setUserData(SAMPLE_USER_DATA);
-      setEditedData(SAMPLE_USER_DATA);
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+
+      const session = await AsyncStorage.getItem('userSession');
+      console.log("SESSION:", session);
+
+      if (!session) {
+        setLoading(false);
+        return;
+      }
+
+      const parsedSession = JSON.parse(session);
+
+      // ✅ FIXED HERE
+      const userId = parsedSession.userId;
+
+      console.log("User ID:", userId);
+
+      const snapshot = await db
+        .ref(`user_data/${userId}`)
+        .once('value');
+
+      console.log("Snapshot:", snapshot.val());
+
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+
+        const formattedData = {
+          ...data,
+          name: `${data.firstName} ${data.lastName}`,
+          nameGuj: `${data.firstNameGuj} ${data.lastNameGuj}`,
+        };
+
+        setUserData(formattedData);
+        setEditedData(formattedData);
+      }
+
       setLoading(false);
-    }, 1000);
+
+    } catch (error) {
+      console.log("Profile Fetch Error:", error);
+      setLoading(false);
+    }
   };
 
   const handleEdit = () => {
@@ -118,15 +155,45 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
 
-  const handleSave = () => {
-    setSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      setUserData({ ...editedData });
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+
+      if (!userData?.id) {
+        Alert.alert("Error", "User ID missing");
+        setSaving(false);
+        return;
+      }
+
+      console.log("Updating user:", userData.id);
+      console.log("Edited Data:", editedData);
+
+      await db
+        .ref(`user_data/${userData.id}`)
+        .update({
+          bloodGroup: editedData.bloodGroup || "",
+          maritalStatus: editedData.maritalStatus || "",
+          education: editedData.education || "",
+          occupation: editedData.occupation || "",
+          address: editedData.address || "",
+          contactNumber: editedData.contactNumber || "",
+          email: editedData.email || "",
+          familyMembers: editedData.familyMembers || "",
+        });
+
+      // Refresh from Firebase
+      await fetchUserData();
+
       setEditing(false);
       setSaving(false);
-      Alert.alert(t('success'), t('profileUpdated'));
-    }, 1500);
+
+      Alert.alert("Success", "Profile updated successfully");
+
+    } catch (error) {
+      console.log("Update Error:", error);
+      setSaving(false);
+      Alert.alert("Error", "Update failed");
+    }
   };
 
   const handleChangePassword = () => {

@@ -10,75 +10,18 @@ import {
     Alert,
 } from 'react-native';
 import axios from 'axios';
+import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
 
-// Sample announcement data matching your DB structure
-const SAMPLE_ANNOUNCEMENTS = [
-    {
-        id: "180226191309",
-        title: "Gram Sabha Meeting on 25th March",
-        titleGuj: "૨૫ માર્ચે ગ્રામ સભાની બેઠક",
-        description: "Monthly gram sabha meeting will be held at community hall. All villagers are requested to attend.",
-        descriptionGuj: "માસિક ગ્રામ સભાની બેઠક સામુદાયિક હોલમાં યોજાશે. તમામ ગ્રામજનોને હાજર રહેવા વિનંતી.",
-        category: "general",
-        publishDate: "2026-02-21T19:13",
-        priority: "high",
-        attachmentName: "",
-    },
-    {
-        id: "180226191310",
-        title: "Water Supply Schedule Change",
-        titleGuj: "પાણી પુરવઠાના સમયમાં ફેરફાર",
-        description: "Due to maintenance work, water supply timing will be changed. New schedule will be from 7 AM to 9 AM.",
-        descriptionGuj: "જાળવણી કાર્યને કારણે, પાણી પુરવઠાના સમયમાં ફેરફાર કરવામાં આવ્યો છે. નવો સમય સવારે ૭ થી ૯ વાગ્યા સુધીનો રહેશે.",
-        category: "utility",
-        publishDate: "2026-02-20T10:30",
-        priority: "normal",
-        attachmentName: "",
-    },
-    {
-        id: "180226191311",
-        title: "Vaccination Camp for Cattle",
-        titleGuj: "પશુઓ માટે રસીકરણ શિબિર",
-        description: "Free vaccination camp for cattle will be organized at veterinary hospital on Sunday.",
-        descriptionGuj: "રવિવારે પશુ દવાખાને પશુઓ માટે મફત રસીકરણ શિબિરનું આયોજન કરવામાં આવ્યું છે.",
-        category: "health",
-        publishDate: "2026-02-19T09:15",
-        priority: "high",
-        attachmentName: "camp_details.pdf",
-    },
-    {
-        id: "180226191312",
-        title: "Electricity Maintenance Alert",
-        titleGuj: "વીજળી જાળવણી એલર્ટ",
-        description: "Power supply will be interrupted for 4 hours tomorrow for maintenance work.",
-        descriptionGuj: "કાલે જાળવણી કાર્ય માટે ૪ કલાક વીજ પુરવઠો બંધ રહેશે.",
-        category: "utility",
-        publishDate: "2026-02-18T14:20",
-        priority: "urgent",
-        attachmentName: "",
-    },
-    {
-        id: "180226191313",
-        title: "Free Health Checkup Camp",
-        titleGuj: "મફત આરોગ્ય તપાસ શિબિર",
-        description: "Free health checkup camp for senior citizens at primary health center.",
-        descriptionGuj: "પ્રાથમિક આરોગ્ય કેન્દ્ર ખાતે વરિષ્ઠ નાગરિકો માટે મફત આરોગ્ય તપાસ શિબિર.",
-        category: "health",
-        publishDate: "2026-02-17T11:45",
-        priority: "normal",
-        attachmentName: "",
-    },
-];
-
 const DashboardScreen = ({ navigation }) => {
     const { t, language } = useLanguage();
     const [userName, setUserName] = useState('Kishan Shingrakhiya');
-    const [announcementCount, setAnnouncementCount] = useState(5);
+    const [announcementCount, setAnnouncementCount] = useState(0);
+    const [dashboardAnnouncements, setDashboardAnnouncements] = useState([]);
     const [weather, setWeather] = useState({
         temp: '32°C',
         condition: 'Sunny',
@@ -205,6 +148,8 @@ const DashboardScreen = ({ navigation }) => {
 
     useEffect(() => {
         getWeather();
+        const unsubscribe = fetchAnnouncements();
+        return unsubscribe;
     }, []);
 
     const handleChatPress = () => {
@@ -251,6 +196,48 @@ const DashboardScreen = ({ navigation }) => {
         }
     };
 
+    const fetchAnnouncements = () => {
+        const reference = db.ref('published_announcement');
+
+        reference.on('value', snapshot => {
+            if (!snapshot.exists()) {
+                setAnnouncementCount(0);
+                setDashboardAnnouncements([]);
+                return;
+            }
+
+            const data = Object.values(snapshot.val());
+            const now = new Date();
+            const userType = "all"; // Replace with real user role
+
+            const activeAnnouncements = data.filter(item => {
+
+                const notExpired =
+                    !item.expiryDate ||
+                    item.expiryDate === "" ||
+                    new Date(item.expiryDate) >= now;
+
+                const audienceMatch =
+                    item.targetAudience?.includes("all") ||
+                    item.targetAudience?.includes(userType);
+
+                return notExpired && audienceMatch;
+            });
+
+            // Sort newest first
+            const sorted = activeAnnouncements.sort(
+                (a, b) => new Date(b.publishDate) - new Date(a.publishDate)
+            );
+
+            setAnnouncementCount(sorted.length);
+
+            // Only show latest 3 on dashboard
+            setDashboardAnnouncements(sorted.slice(0, 5));
+        });
+
+        return () => reference.off();
+    };
+
     return (
         <View style={styles.container}>
             <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
@@ -278,6 +265,7 @@ const DashboardScreen = ({ navigation }) => {
                             onPress={handleNotificationPress}
                         >
                             <Icon name="notifications" size={24} color="#ffffff" />
+
                             {announcementCount > 0 && (
                                 <View style={styles.badge}>
                                     <Text style={styles.badgeText}>
@@ -335,7 +323,7 @@ const DashboardScreen = ({ navigation }) => {
                         </TouchableOpacity>
                     </View>
 
-                    {SAMPLE_ANNOUNCEMENTS.map((item, index) => {
+                    {dashboardAnnouncements.map((item, index) => {
                         const categoryColor = getCategoryColor(item.category);
 
                         return (
