@@ -642,24 +642,29 @@ app.put('/update-complaint-status/:id', async (req, res) => {
         const { id } = req.params;
         const updateData = req.body;
 
-        await db.ref(`complaints_list/${id.toLowerCase()}`).update(updateData);
+        await db.ref(`complaints_list/${id}`).update(updateData);
+
         res.json({ success: true });
-    }
-    catch (error) {
+
+    } catch (error) {
+        console.error(error);
         res.json({ success: false });
     }
-})
+});
 
 app.delete('/delete-complaint/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        await db.ref(`complaints_list/${id.toLowerCase()}`).remove();
+
+        await db.ref(`complaints_list/${id}`).remove();
+
         res.json({ success: true });
-    }
-    catch (error) {
+
+    } catch (error) {
+        console.error(error);
         res.json({ success: false });
     }
-})
+});
 
 // User components
 app.put('/update-user/:id', async (req, res) => {

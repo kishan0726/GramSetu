@@ -16,6 +16,9 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { db } from '../config/firebase';   // adjust path if needed
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Geolocation from '@react-native-community/geolocation';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -212,46 +215,107 @@ const ComplaintsScreen = ({ navigation }) => {
   ];
 
   useEffect(() => {
-    fetchComplaints();
+    let ref;
+
+    const loadComplaints = async () => {
+      try {
+        setLoading(true);
+
+        const session = await AsyncStorage.getItem('userSession');
+        if (!session) {
+          setComplaints([]);
+          setLoading(false);
+          return;
+        }
+
+        const parsed = JSON.parse(session);
+        const userId = parsed?.userId;
+
+        if (!userId) {
+          setComplaints([]);
+          setLoading(false);
+          return;
+        }
+
+        ref = db.ref('complaints_list');
+
+        ref.on('value', snapshot => {
+          if (snapshot.exists()) {
+            const allData = Object.values(snapshot.val());
+
+            const sorted = allData.sort(
+              (a, b) =>
+                new Date(b.submittedDate) - new Date(a.submittedDate)
+            );
+
+            setComplaints(sorted);
+          } else {
+            setComplaints([]);
+          }
+
+          setLoading(false);
+          setRefreshing(false);
+        });
+
+      } catch (error) {
+        console.log("Fetch Error:", error);
+        setLoading(false);
+      }
+    };
+
+    loadComplaints();
+
+    return () => {
+      if (ref) ref.off();
+    };
+
   }, []);
 
-  const fetchComplaints = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      // Sort by submitted date (newest first)
-      const sorted = [...SAMPLE_COMPLAINTS].sort((a, b) => 
-        new Date(b.submittedDate) - new Date(a.submittedDate)
-      );
-      setComplaints(sorted);
-      setLoading(false);
-      setRefreshing(false);
-    }, 1000);
+  const handleGetCurrentLocation = () => {
+    Geolocation.getCurrentPosition(
+      position => {
+        const { latitude, longitude } = position.coords;
+
+        setNewComplaint({
+          ...newComplaint,
+          location: {
+            lat: latitude,
+            lng: longitude,
+          }
+        });
+
+        Alert.alert("Success", "Location captured");
+      },
+      error => {
+        Alert.alert("Error", "Location permission denied");
+        console.log(error);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
   };
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchComplaints();
   };
 
   const getFilteredComplaints = () => {
     let filtered = complaints;
-    
+
     // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
-    
+
     // Filter by status
     if (selectedStatus !== 'all') {
       filtered = filtered.filter(item => item.status === selectedStatus);
     }
-    
+
     // Limit to 10 if not showing all
     if (!showAll) {
       filtered = filtered.slice(0, 10);
     }
-    
+
     return filtered;
   };
 
@@ -305,7 +369,7 @@ const ComplaintsScreen = ({ navigation }) => {
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return t('today');
     } else if (diffDays === 1) {
@@ -331,72 +395,106 @@ const ComplaintsScreen = ({ navigation }) => {
     return category?.icon || 'info';
   };
 
-  const handleGetCurrentLocation = () => {
-    // Simulate getting location (will be implemented with actual GPS later)
-    Alert.alert(
-      t('location'),
-      t('locationFeatureComing'),
-      [{ text: t('ok') }]
-    );
-    
-    // Mock location data
-    setNewComplaint({
-      ...newComplaint,
-      location: {
-        lat: 23.0225,
-        lng: 72.5714
+  const handleSubmitComplaint = async () => {
+    try {
+      if (!newComplaint.title.trim()) {
+        Alert.alert("Error", "Enter title");
+        return;
       }
-    });
-  };
 
-  const handleSubmitComplaint = () => {
-    // Validate form
-    if (!newComplaint.title.trim()) {
-      Alert.alert(t('error'), t('enterTitle'));
-      return;
-    }
-    if (!newComplaint.description.trim()) {
-      Alert.alert(t('error'), t('enterComplaintDescription'));
-      return;
-    }
-    if (!newComplaint.category) {
-      Alert.alert(t('error'), t('selectCategory'));
-      return;
-    }
-    if (!newComplaint.address.trim()) {
-      Alert.alert(t('error'), t('enterAddress'));
-      return;
-    }
+      if (!newComplaint.category) {
+        Alert.alert("Error", "Select category");
+        return;
+      }
 
-    // Show success message
-    Alert.alert(
-      t('success'),
-      t('complaintSubmitted'),
-      [
-        {
-          text: t('ok'),
-          onPress: () => {
-            setShowNewComplaintModal(false);
-            // Reset form
-            setNewComplaint({
-              title: '',
-              description: '',
-              category: '',
-              priority: 'medium',
-              location: null,
-              address: '',
-              images: []
-            });
-          }
-        }
-      ]
-    );
+      if (!newComplaint.description.trim()) {
+        Alert.alert("Error", "Enter description");
+        return;
+      }
+
+      const session = await AsyncStorage.getItem('userSession');
+      const parsed = JSON.parse(session);
+      const userId = parsed?.userId;
+
+      if (!userId) {
+        Alert.alert("Error", "User not logged in");
+        return;
+      }
+
+      // 🔥 Fetch user data from user_data node
+      const userSnapshot = await db.ref(`user_data/${userId}`).once("value");
+      const userData = userSnapshot.val();
+
+      if (!userData) {
+        Alert.alert("Error", "User data not found");
+        return;
+      }
+
+      const complaintsRef = db.ref('complaints_list');
+
+      // Get existing complaints
+      const snapshot = await complaintsRef.once('value');
+
+      let nextNumber = 1;
+
+      if (snapshot.exists()) {
+        nextNumber = Object.keys(snapshot.val()).length + 1;
+      }
+
+      // Generate ID like COMP001
+      const formattedId = `COMP${String(nextNumber).padStart(3, '0')}`;
+
+      const fullName = `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
+
+      const complaintData = {
+        id: formattedId,
+        userId: userId,
+
+        // 🔥 IDENTIFICATION DATA
+        userName: fullName || "Unknown",
+        userPhone: userData.contactNumber || "-",
+        userAddress: userData.address || "-",
+
+        title: newComplaint.title,
+        description: newComplaint.description,
+        category: newComplaint.category,
+        priority: newComplaint.priority,
+        status: "pending",
+        submittedDate: new Date().toISOString(),
+        lastUpdated: new Date().toLocaleString("en-IN"),
+        location: newComplaint.location || null,
+        assignedTo: "",
+        department: "",
+        images: [],
+      };
+
+      // 🔥 Save using ID as key
+      await db.ref(`complaints_list/${formattedId}`).set(complaintData);
+
+      Alert.alert("Success", "Complaint submitted");
+
+      setShowNewComplaintModal(false);
+
+      setNewComplaint({
+        title: '',
+        description: '',
+        category: '',
+        priority: 'medium',
+        location: null,
+        address: '',
+        images: []
+      });
+
+    } catch (error) {
+      console.log("Submit Error:", error);
+      Alert.alert("Error", "Something went wrong");
+    }
   };
 
   const renderComplaintItem = ({ item, index }) => {
     const categoryColor = getCategoryColor(item.category);
     const statusColor = getStatusColor(item.status);
-    
+
     return (
       <TouchableOpacity
         style={[
@@ -410,25 +508,25 @@ const ComplaintsScreen = ({ navigation }) => {
         activeOpacity={0.7}
       >
         <View style={[styles.priorityStrip, { backgroundColor: getPriorityColor(item.priority) }]} />
-        
+
         <View style={styles.cardContent}>
           <View style={styles.cardHeader}>
             <View style={[styles.categoryBadge, { backgroundColor: categoryColor + '15' }]}>
-              <Icon 
-                name={getCategoryIcon(item.category)} 
-                size={12} 
-                color={categoryColor} 
+              <Icon
+                name={getCategoryIcon(item.category)}
+                size={12}
+                color={categoryColor}
               />
               <Text style={[styles.categoryText, { color: categoryColor }]}>
                 {t(item.category)}
               </Text>
             </View>
-            
+
             <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
-              <Icon 
-                name={getStatusIcon(item.status)} 
-                size={12} 
-                color={statusColor} 
+              <Icon
+                name={getStatusIcon(item.status)}
+                size={12}
+                color={statusColor}
               />
               <Text style={[styles.statusText, { color: statusColor }]}>
                 {t(item.status)}
@@ -439,7 +537,7 @@ const ComplaintsScreen = ({ navigation }) => {
           <Text style={styles.complaintTitle} numberOfLines={2}>
             {item.title}
           </Text>
-          
+
           <Text style={styles.complaintDescription} numberOfLines={2}>
             {item.description}
           </Text>
@@ -449,7 +547,7 @@ const ComplaintsScreen = ({ navigation }) => {
               <Icon name="calendar-today" size={12} color="#94a3b8" />
               <Text style={styles.dateText}>{formatDate(item.submittedDate)}</Text>
             </View>
-            
+
             {item.images && item.images.length > 0 && (
               <View style={styles.imageBadge}>
                 <Icon name="image" size={12} color="#38bdf8" />
@@ -458,10 +556,10 @@ const ComplaintsScreen = ({ navigation }) => {
             )}
 
             <View style={styles.priorityBadge}>
-              <Icon 
-                name="priority-high" 
-                size={12} 
-                color={getPriorityColor(item.priority)} 
+              <Icon
+                name="priority-high"
+                size={12}
+                color={getPriorityColor(item.priority)}
               />
               <Text style={[styles.priorityText, { color: getPriorityColor(item.priority) }]}>
                 {t(item.priority)}
@@ -491,14 +589,14 @@ const ComplaintsScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Icon name="arrow-back" size={24} color="#ffffff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('complaints')}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.newComplaintButton}
             onPress={() => setShowNewComplaintModal(true)}
           >
@@ -535,16 +633,16 @@ const ComplaintsScreen = ({ navigation }) => {
 
       {/* Filters */}
       <View style={styles.filtersSection}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filtersContainer}
         >
           {/* Category Filter */}
           <View style={styles.filterGroup}>
             <Text style={styles.filterLabel}>{t('category')}:</Text>
-            <ScrollView 
-              horizontal 
+            <ScrollView
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.filterChips}
             >
@@ -558,10 +656,10 @@ const ComplaintsScreen = ({ navigation }) => {
                   ]}
                   onPress={() => setSelectedCategory(category.id)}
                 >
-                  <Icon 
-                    name={category.icon} 
-                    size={14} 
-                    color={selectedCategory === category.id ? '#ffffff' : category.color} 
+                  <Icon
+                    name={category.icon}
+                    size={14}
+                    color={selectedCategory === category.id ? '#ffffff' : category.color}
                   />
                   <Text style={[
                     styles.filterChipText,
@@ -577,8 +675,8 @@ const ComplaintsScreen = ({ navigation }) => {
           {/* Status Filter */}
           <View style={styles.filterGroup}>
             <Text style={styles.filterLabel}>{t('status')}:</Text>
-            <ScrollView 
-              horizontal 
+            <ScrollView
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.filterChips}
             >
@@ -605,7 +703,7 @@ const ComplaintsScreen = ({ navigation }) => {
         </ScrollView>
 
         {/* View Toggle */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.viewToggle}
           onPress={() => setShowAll(!showAll)}
         >
@@ -628,8 +726,8 @@ const ComplaintsScreen = ({ navigation }) => {
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
+            <RefreshControl
+              refreshing={refreshing}
               onRefresh={onRefresh}
               colors={['#38bdf8']}
               tintColor="#38bdf8"
@@ -642,7 +740,7 @@ const ComplaintsScreen = ({ navigation }) => {
               <Text style={styles.emptySubText}>
                 {t('beFirstToComplain')}
               </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.emptyButton}
                 onPress={() => setShowNewComplaintModal(true)}
               >
@@ -676,7 +774,7 @@ const ComplaintsScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setModalVisible(false)}
               >
@@ -685,22 +783,22 @@ const ComplaintsScreen = ({ navigation }) => {
             </View>
 
             {selectedComplaint && (
-              <ScrollView 
+              <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.modalScrollContent}
               >
                 <View style={styles.modalStatus}>
                   <View style={[
-                    styles.modalStatusBadge, 
+                    styles.modalStatusBadge,
                     { backgroundColor: getStatusColor(selectedComplaint.status) + '15' }
                   ]}>
-                    <Icon 
-                      name={getStatusIcon(selectedComplaint.status)} 
-                      size={16} 
-                      color={getStatusColor(selectedComplaint.status)} 
+                    <Icon
+                      name={getStatusIcon(selectedComplaint.status)}
+                      size={16}
+                      color={getStatusColor(selectedComplaint.status)}
                     />
                     <Text style={[
-                      styles.modalStatusText, 
+                      styles.modalStatusText,
                       { color: getStatusColor(selectedComplaint.status) }
                     ]}>
                       {t(selectedComplaint.status)}
@@ -830,7 +928,7 @@ const ComplaintsScreen = ({ navigation }) => {
           <View style={[styles.modalContent, styles.newComplaintModal]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalHeaderTitle}>{t('registerNewComplaint')}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowNewComplaintModal(false)}
               >
@@ -838,7 +936,7 @@ const ComplaintsScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView 
+            <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.newComplaintForm}
             >
@@ -849,7 +947,7 @@ const ComplaintsScreen = ({ navigation }) => {
                   style={styles.formInput}
                   placeholder={t('enterComplaintTitle')}
                   value={newComplaint.title}
-                  onChangeText={(text) => setNewComplaint({...newComplaint, title: text})}
+                  onChangeText={(text) => setNewComplaint({ ...newComplaint, title: text })}
                 />
               </View>
 
@@ -866,12 +964,12 @@ const ComplaintsScreen = ({ navigation }) => {
                           newComplaint.category === category.id && styles.selectedCategoryOption,
                           newComplaint.category === category.id && { backgroundColor: category.color }
                         ]}
-                        onPress={() => setNewComplaint({...newComplaint, category: category.id})}
+                        onPress={() => setNewComplaint({ ...newComplaint, category: category.id })}
                       >
-                        <Icon 
-                          name={category.icon} 
-                          size={16} 
-                          color={newComplaint.category === category.id ? '#ffffff' : category.color} 
+                        <Icon
+                          name={category.icon}
+                          size={16}
+                          color={newComplaint.category === category.id ? '#ffffff' : category.color}
                         />
                         <Text style={[
                           styles.categoryOptionText,
@@ -897,7 +995,7 @@ const ComplaintsScreen = ({ navigation }) => {
                         newComplaint.priority === priority && styles.selectedPriorityOption,
                         newComplaint.priority === priority && { backgroundColor: getPriorityColor(priority) }
                       ]}
-                      onPress={() => setNewComplaint({...newComplaint, priority})}
+                      onPress={() => setNewComplaint({ ...newComplaint, priority })}
                     >
                       <Text style={[
                         styles.priorityOptionText,
@@ -917,7 +1015,7 @@ const ComplaintsScreen = ({ navigation }) => {
                   style={[styles.formInput, styles.textArea]}
                   placeholder={t('describeComplaint')}
                   value={newComplaint.description}
-                  onChangeText={(text) => setNewComplaint({...newComplaint, description: text})}
+                  onChangeText={(text) => setNewComplaint({ ...newComplaint, description: text })}
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
@@ -926,8 +1024,8 @@ const ComplaintsScreen = ({ navigation }) => {
 
               {/* Location */}
               <View style={styles.formGroup}>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   style={styles.locationButton}
                   onPress={handleGetCurrentLocation}
                 >
@@ -955,7 +1053,7 @@ const ComplaintsScreen = ({ navigation }) => {
               </View>
 
               {/* Submit Button */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.submitButton}
                 onPress={handleSubmitComplaint}
               >
