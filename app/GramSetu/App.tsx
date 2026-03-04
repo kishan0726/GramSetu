@@ -22,6 +22,12 @@ import ShopkeeperProfile from './src/screens/ShopkeeperProfile';
 import ForgotPassword from './src/screens/ForgotPassword';
 import ShopInventory from './src/screens/ShopInventory';
 import ForgotPasswordUser from './src/screens/ForgotPasswordUser';
+import ChatSetupScreen from './src/screens/ChatSetupScreen';
+import ChatListScreen from './src/screens/ChatListScreen';
+import ChatScreen from './src/screens/ChatScreen';
+import CommunityScreen from './src/screens/CommunityScreen';
+import AddChatUserScreen from './src/screens/AddChatUserScreen';
+import ChatRequestsScreen from './src/screens/ChatRequestsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,6 +56,12 @@ const App = () => {
           <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
           <Stack.Screen name="ForgotPasswordUser" component={ForgotPasswordUser} />
           <Stack.Screen name="ShopInventory" component={ShopInventory} />
+          <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
+          <Stack.Screen name="ChatScreen" component={ChatScreen} />
+          <Stack.Screen name="CommunityScreen" component={CommunityScreen} />
+          <Stack.Screen name="ChatSetupScreen" component={ChatSetupScreen} />
+          <Stack.Screen name="AddChatUserScreen" component={AddChatUserScreen} />
+          <Stack.Screen name="ChatRequestsScreen" component={ChatRequestsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </LanguageProvider>

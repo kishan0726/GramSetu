@@ -148,12 +148,13 @@ const DashboardScreen = ({ navigation }) => {
 
     useEffect(() => {
         getWeather();
+        setUserOnline();
         const unsubscribe = fetchAnnouncements();
         return unsubscribe;
     }, []);
 
     const handleChatPress = () => {
-        navigation.navigate('Chat');
+        navigation.navigate('ChatSetupScreen');
     };
 
     const handleNotificationPress = () => {
@@ -236,6 +237,23 @@ const DashboardScreen = ({ navigation }) => {
         });
 
         return () => reference.off();
+    };
+
+    const setUserOnline = async () => {
+
+        const session = await AsyncStorage.getItem("userSession");
+        const userId = JSON.parse(session)?.userId;
+
+        const userRef = database().ref(`users/${userId}`);
+
+        userRef.update({
+            online: true
+        });
+
+        userRef.onDisconnect().update({
+            online: false,
+            lastSeen: Date.now()
+        });
     };
 
     return (

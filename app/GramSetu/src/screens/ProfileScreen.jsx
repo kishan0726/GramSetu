@@ -12,49 +12,34 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
+  Image,
 } from 'react-native';
 import { db } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
+import * as ImagePicker from 'react-native-image-picker';
 
 const { width } = Dimensions.get('window');
 
-// Sample user data based on your DB structure
-const SAMPLE_USER_DATA = {
-  id: "1771659441412",
-  aadharNumber: "1234-5678-9012",
-  address: "123, Main Street, Ramnagar Village, District Ahmedabad",
-  addressGuj: "૧૨૩, મુખ્ય માર્ગ, રામનગર ગામ, જિલ્લો અમદાવાદ",
-  age: 32,
-  ageGroup: "Adult (25-40)",
-  bloodGroup: "O+",
-  contactNumber: "9876543210",
-  dateOfBirth: "1994-05-15",
-  disabilityDetails: "None",
-  education: "Graduate",
-  name: "Kishan Shingrakhiya",
-  nameGuj: "કિશન શિંગરખિયા",
-  email: "kishan.s@example.com",
-  gender: "Male",
-  genderGuj: "પુરુષ",
-  maritalStatus: "Married",
-  maritalStatusGuj: "પરિણીત",
-  occupation: "Farmer",
-  occupationGuj: "ખેડૂત",
-  familyMembers: 5,
-  rationCardNumber: "R123456789",
-  voterId: "ABC1234567",
-  profileImage: null,
-};
+// Cloudinary configuration
+const CLOUDINARY_CLOUD_NAME = 'dmjwrm8sp';
+const CLOUDINARY_UPLOAD_PRESET = 'Documents';
 
 const ProfileScreen = ({ navigation }) => {
   const { t, language } = useLanguage();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editedData, setEditedData] = useState({});
   const [passwordModal, setPasswordModal] = useState(false);
+  const [imageOptionsVisible, setImageOptionsVisible] = useState(false);
+  const [profileImage, setProfileImage] = useState({
+    uri: null,
+    fileName: null,
+    public_id: null
+  });
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
@@ -65,7 +50,7 @@ const ProfileScreen = ({ navigation }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState({});
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState('personal'); // 'personal', 'contact', 'documents'
+  const [activeSection, setActiveSection] = useState('personal');
 
   useEffect(() => {
     fetchUserData();
@@ -84,8 +69,6 @@ const ProfileScreen = ({ navigation }) => {
       }
 
       const parsedSession = JSON.parse(session);
-
-      // ✅ FIXED HERE
       const userId = parsedSession.userId;
 
       console.log("User ID:", userId);
@@ -101,12 +84,22 @@ const ProfileScreen = ({ navigation }) => {
 
         const formattedData = {
           ...data,
-          name: `${data.firstName} ${data.lastName}`,
-          nameGuj: `${data.firstNameGuj} ${data.lastNameGuj}`,
+          id: userId,
+          name: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+          nameGuj: `${data.firstNameGuj || ''} ${data.lastNameGuj || ''}`.trim(),
         };
 
         setUserData(formattedData);
         setEditedData(formattedData);
+
+        // Load profile image if exists
+        const imageSnapshot = await db
+          .ref(`user_data/${userId}/profile_image`)
+          .once('value');
+        
+        if (imageSnapshot.exists()) {
+          setProfileImage(imageSnapshot.val());
+        }
       }
 
       setLoading(false);
@@ -115,6 +108,174 @@ const ProfileScreen = ({ navigation }) => {
       console.log("Profile Fetch Error:", error);
       setLoading(false);
     }
+  };
+
+  // Generate custom filename
+  const generateFileName = (userId) => {
+    const timestamp = Date.now();
+    return `user_${userId}_profile_${timestamp}`;
+  };
+
+  // Upload image to Cloudinary
+  const uploadToCloudinary = async (imageUri) => {
+    const fileName = generateFileName(userData.id);
+    
+    const data = new FormData();
+    const fileExtension = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
+    const mimeType = fileExtension === 'png' ? 'image/png' : 
+                     fileExtension === 'jpg' || fileExtension === 'jpeg' ? 'image/jpeg' : 
+                     'image/jpeg';
+
+    data.append("file", {
+      uri: imageUri,
+      type: mimeType,
+      name: `${fileName}.${fileExtension}`,
+    });
+
+    data.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    data.append("public_id", fileName);
+
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+    try {
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        body: data,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error?.message || "Upload failed");
+      }
+
+      return {
+        secure_url: result.secure_url,
+        public_id: result.public_id,
+        fileName: fileName
+      };
+    } catch (error) {
+      console.log("Cloudinary upload error:", error);
+      throw error;
+    }
+  };
+
+  // Save image URL to Firebase
+  const saveImageToFirebase = async (uploadResult) => {
+    try {
+      const imageData = {
+        uri: uploadResult.secure_url,
+        fileName: uploadResult.fileName,
+        public_id: uploadResult.public_id,
+        uploadedAt: new Date().toISOString(),
+      };
+      
+      await db.ref(`user_data/${userData.id}/profile_image`).set(imageData);
+      
+      return imageData;
+    } catch (error) {
+      console.error('Error saving to Firebase:', error);
+      throw error;
+    }
+  };
+
+  // Handle image selection
+  const handleSelectImage = () => {
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      includeBase64: false,
+    };
+
+    ImagePicker.launchImageLibrary(options, async (response) => {
+      if (response.didCancel) return;
+
+      if (response.errorCode) {
+        Alert.alert('Error', response.errorMessage || 'Image picker error');
+        return;
+      }
+
+      if (!response.assets || response.assets.length === 0) {
+        Alert.alert('Error', 'No image selected');
+        return;
+      }
+
+      const imageUri = response.assets[0].uri;
+
+      try {
+        setUploading(true);
+        setImageOptionsVisible(false);
+
+        // Upload to Cloudinary
+        const uploadResult = await uploadToCloudinary(imageUri);
+
+        // Save to Firebase
+        const imageData = await saveImageToFirebase(uploadResult);
+
+        // Update local state
+        setProfileImage(imageData);
+
+        Alert.alert(t('success'), 'Profile image uploaded successfully');
+
+      } catch (error) {
+        console.log(error);
+        Alert.alert('Upload Failed', error.message || 'Failed to upload image');
+      } finally {
+        setUploading(false);
+      }
+    });
+  };
+
+  // Handle camera capture
+  const handleTakePhoto = () => {
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      saveToPhotos: true,
+      includeBase64: false,
+    };
+
+    ImagePicker.launchCamera(options, async (response) => {
+      if (response.didCancel) return;
+
+      if (response.errorCode) {
+        Alert.alert('Error', response.errorMessage || 'Camera error');
+        return;
+      }
+
+      if (!response.assets || response.assets.length === 0) {
+        Alert.alert('Error', 'No image captured');
+        return;
+      }
+
+      const imageUri = response.assets[0].uri;
+
+      try {
+        setUploading(true);
+        setImageOptionsVisible(false);
+
+        // Upload to Cloudinary
+        const uploadResult = await uploadToCloudinary(imageUri);
+
+        // Save to Firebase
+        const imageData = await saveImageToFirebase(uploadResult);
+
+        // Update local state
+        setProfileImage(imageData);
+
+        Alert.alert(t('success'), 'Profile image uploaded successfully');
+
+      } catch (error) {
+        console.log(error);
+        Alert.alert('Upload Failed', error.message || 'Failed to upload image');
+      } finally {
+        setUploading(false);
+      }
+    });
   };
 
   const handleEdit = () => {
@@ -261,6 +422,14 @@ const ProfileScreen = ({ navigation }) => {
     </View>
   );
 
+  // Get initials for avatar fallback
+  const getInitials = () => {
+    if (!userData) return 'U';
+    const firstName = userData.firstName || '';
+    const lastName = userData.lastName || '';
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'U';
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -313,20 +482,72 @@ const ProfileScreen = ({ navigation }) => {
         )}
       </View>
 
-      {/* Profile Header */}
+      {/* Profile Header with Image Upload */}
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {userData?.name?.charAt(0) || 'U'}
-            </Text>
-          </View>
+          <TouchableOpacity 
+            style={styles.avatar}
+            onPress={() => setImageOptionsVisible(true)}
+            activeOpacity={0.7}
+          >
+            {profileImage.uri ? (
+              <Image 
+                source={{ uri: profileImage.uri }} 
+                style={styles.profileImage}
+                onError={() => console.log('Failed to load profile image')}
+              />
+            ) : (
+              <Text style={styles.avatarText}>
+                {getInitials()}
+              </Text>
+            )}
+            <View style={styles.cameraIconContainer}>
+              <Icon name="camera-alt" size={16} color="#ffffff" />
+            </View>
+          </TouchableOpacity>
+          {uploading && (
+            <View style={styles.uploadingOverlay}>
+              <ActivityIndicator size="small" color="#ffffff" />
+            </View>
+          )}
         </View>
         <Text style={styles.profileName}>
           {language === 'gu' ? userData?.nameGuj || userData?.name : userData?.name}
         </Text>
         <Text style={styles.profileId}>ID: {userData?.id}</Text>
       </View>
+
+      {/* Image Options Modal */}
+      {imageOptionsVisible && (
+        <View style={styles.imageOptionsOverlay}>
+          <View style={styles.imageOptionsContainer}>
+            <Text style={styles.imageOptionsTitle}>{t('uploadImage')}</Text>
+            
+            <TouchableOpacity 
+              style={styles.imageOption}
+              onPress={handleTakePhoto}
+            >
+              <Icon name="camera-alt" size={24} color="#38bdf8" />
+              <Text style={styles.imageOptionText}>{t('takePhoto')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.imageOption}
+              onPress={handleSelectImage}
+            >
+              <Icon name="photo-library" size={24} color="#38bdf8" />
+              <Text style={styles.imageOptionText}>{t('chooseFromGallery')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.imageOptionCancel}
+              onPress={() => setImageOptionsVisible(false)}
+            >
+              <Text style={styles.imageOptionCancelText}>{t('cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Section Tabs */}
       <View style={styles.tabContainer}>
@@ -381,7 +602,7 @@ const ProfileScreen = ({ navigation }) => {
         {activeSection === 'personal' && renderSection(
           t('personalDetails'),
           <View>
-            {renderField(t('fullName'), language === 'gu' ? userData?.nameGuj || userData?.name : userData?.name, 'name', editing)}
+            {renderField(t('fullName'), language === 'gu' ? userData?.nameGuj || userData?.name : userData?.name, 'name', false)}
             {renderField(t('dateOfBirth'), userData?.dateOfBirth, 'dateOfBirth', false)}
             {renderField(t('age'), userData?.age?.toString(), 'age', false)}
             {renderField(t('ageGroup'), userData?.ageGroup, 'ageGroup', false)}
@@ -617,11 +838,12 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginBottom: 12,
+    position: 'relative',
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#38bdf8',
     justifyContent: 'center',
     alignItems: 'center',
@@ -631,10 +853,41 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#38bdf8',
+  },
   avatarText: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  cameraIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#38bdf8',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileName: {
     fontSize: 20,
@@ -736,7 +989,7 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 16,
+    marginTop: 8,
   },
   actionButton: {
     flex: 1,
@@ -761,11 +1014,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#ffffff',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
   },
   passwordChangeButton: {
     flex: 1,
@@ -800,6 +1048,57 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#ef4444',
+  },
+  // Image Options Modal Styles
+  imageOptionsOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  imageOptionsContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    width: width * 0.8,
+  },
+  imageOptionsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1e293b',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  imageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 10,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  imageOptionText: {
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  imageOptionCancel: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  imageOptionCancelText: {
+    fontSize: 16,
+    color: '#ef4444',
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,

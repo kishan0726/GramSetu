@@ -1890,6 +1890,34 @@ export const translations = {
     en: 'Enter shop description',
     gu: 'દુકાનનું વર્ણન દાખલ કરો',
   },
+  messages: {
+    en: 'Messages',
+    gu: 'સંદેશાઓ',
+  },
+  searchChats: {
+    en: 'Search conversations...',
+    gu: 'વાતચીત શોધો...',
+  },
+  noChats: {
+    en: 'No conversations found',
+    gu: 'કોઈ વાતચીત મળી નથી',
+  },
+  typeMessage: {
+    en: 'Type a message...',
+    gu: 'સંદેશો લખો...',
+  },
+  communities: {
+    en: 'Communities',
+    gu: 'સમુદાયો',
+  },
+  searchGroups: {
+    en: 'Search groups...',
+    gu: 'જૂથો શોધો...',
+  },
+  noGroups: {
+    en: 'No groups found',
+    gu: 'કોઈ જૂથો મળ્યા નથી',
+  },
 };
 
 export const LanguageProvider = ({ children }) => {

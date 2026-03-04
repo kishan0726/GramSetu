@@ -15,6 +15,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
+import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -362,15 +363,71 @@ const ShopsScreen = ({ navigation }) => {
 
   const fetchShops = () => {
     setLoading(true);
-    // Simulate API call - Only fetch approved shops
-    setTimeout(() => {
-      // Filter only approved shops
-      const approvedShops = SAMPLE_SHOPS.filter(shop => shop.status === 'approved');
-      setShops(approvedShops);
-      setFilteredShops(approvedShops);
+
+    const ref = db.ref("shops_list");
+
+    ref.once("value").then(snapshot => {
+
+      if (snapshot.exists()) {
+
+        const data = snapshot.val();
+
+        const shopArray = Object.keys(data).map(key => {
+
+          const shop = data[key];
+
+          return {
+            id: key,
+            name: shop.shopName || "Unnamed Shop",
+            ownerName: shop.ownerName || "",
+            address: shop.address || "",
+            category: shop.category || "general",
+            description: shop.description || "",
+            phone: shop.phone || shop.mobile || "",
+            email: shop.email || "",
+            rating: shop.rating || 4,
+            totalRatings: shop.totalRatings || 0,
+            openingTime: shop.openingTime || "8:00 AM",
+            closingTime: shop.closingTime || "8:00 PM",
+            deliveryAvailable: shop.deliveryAvailable || false,
+            verified: shop.status === "approved",
+
+            coordinates: {
+              lat: shop.coordinates?.lat || 0,
+              lng: shop.coordinates?.lng || 0,
+            },
+
+            image: shop.shop_image?.profile?.url || null,
+
+            // convert items → inventory array
+            inventory: shop.items
+              ? Object.values(shop.items)
+              : [],
+
+            status: shop.status
+          };
+        });
+
+        const approvedShops = shopArray.filter(
+          shop => shop.status === "approved"
+        );
+
+        setShops(approvedShops);
+        setFilteredShops(approvedShops);
+
+      } else {
+        setShops([]);
+        setFilteredShops([]);
+      }
+
       setLoading(false);
       setRefreshing(false);
-    }, 1000);
+
+    }).catch(err => {
+      console.log(err);
+      setLoading(false);
+      setRefreshing(false);
+    });
   };
 
   const onRefresh = () => {
@@ -384,13 +441,15 @@ const ShopsScreen = ({ navigation }) => {
       filterByCategory();
     } else {
       const query = searchQuery.toLowerCase();
-      const filtered = shops.filter(shop => 
+      const filtered = shops.filter(shop =>
         shop.name.toLowerCase().includes(query) ||
         shop.category.toLowerCase().includes(query) ||
         shop.description.toLowerCase().includes(query) ||
-        shop.inventory?.some(item => item.item.toLowerCase().includes(query))
+        shop.inventory && shop.inventory.some(
+          item => item.name?.toLowerCase().includes(query)
+        )
       );
-      
+
       if (selectedCategory === 'all') {
         setFilteredShops(filtered);
       } else {
@@ -422,8 +481,8 @@ const ShopsScreen = ({ navigation }) => {
     const results = [];
 
     shops.forEach(shop => {
-      const matchingItems = shop.inventory?.filter(item => 
-        item.item.toLowerCase().includes(query)
+      const matchingItems = shop.inventory?.filter(item =>
+        item.name?.toLowerCase().includes(query)
       ) || [];
 
       if (matchingItems.length > 0) {
@@ -488,142 +547,70 @@ const ShopsScreen = ({ navigation }) => {
     return stars;
   };
 
-  const renderGridView = () => {
+  const renderGridItem = ({ item }) => {
+    const categoryColor = getCategoryColor(item.category);
+
     return (
-      <View style={styles.gridContainer}>
-        {filteredShops.map((shop) => {
-          const categoryColor = getCategoryColor(shop.category);
-          
-          return (
-            <TouchableOpacity
-              key={shop.id}
-              style={styles.gridCard}
-              onPress={() => handleShopPress(shop)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.gridIconContainer, { backgroundColor: categoryColor + '15' }]}>
-                <Icon name={getCategoryIcon(shop.category)} size={30} color={categoryColor} />
-              </View>
-              
-              <Text style={styles.gridShopName} numberOfLines={2}>
-                {shop.name}
-              </Text>
+      <TouchableOpacity
+        style={styles.gridCard}
+        onPress={() => handleShopPress(item)}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.gridIconContainer, { backgroundColor: categoryColor + '15' }]}>
+          <Icon name={getCategoryIcon(item.category)} size={30} color={categoryColor} />
+        </View>
 
-              <View style={styles.gridRating}>
-                <View style={styles.starsContainer}>
-                  {renderStars(shop.rating)}
-                </View>
-                <Text style={styles.ratingCount}>({shop.totalRatings})</Text>
-              </View>
+        <Text style={styles.gridShopName} numberOfLines={2}>
+          {item.name}
+        </Text>
 
-              <View style={styles.gridTiming}>
-                <Icon name="access-time" size={12} color="#64748b" />
-                <Text style={styles.gridTimingText}>
-                  {shop.openingTime} - {shop.closingTime}
-                </Text>
-              </View>
-
-              <View style={styles.gridFooter}>
-                <View style={styles.gridBadges}>
-                  {shop.deliveryAvailable && (
-                    <View style={styles.deliveryBadge}>
-                      <Icon name="delivery-dining" size={10} color="#10b981" />
-                    </View>
-                  )}
-                  <View style={styles.verifiedBadge}>
-                    <Icon name="verified" size={10} color="#38bdf8" />
-                  </View>
-                </View>
-                <TouchableOpacity 
-                  style={styles.navigateSmallButton}
-                  onPress={() => handleNavigateToMap(shop.coordinates, shop.name)}
-                >
-                  <Icon name="navigation" size={16} color="#38bdf8" />
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+        <View style={styles.gridTiming}>
+          <Icon name="access-time" size={12} color="#64748b" />
+          <Text style={styles.gridTimingText}>
+            {item.openingTime} - {item.closingTime}
+          </Text>
+        </View>
+      </TouchableOpacity>
     );
   };
 
-  const renderListView = () => {
+  const renderListItem = ({ item }) => {
+    const categoryColor = getCategoryColor(item.category);
+
     return (
-      <View style={styles.listContainer}>
-        {filteredShops.map((shop) => {
-          const categoryColor = getCategoryColor(shop.category);
-          
-          return (
-            <TouchableOpacity
-              key={shop.id}
-              style={styles.listCard}
-              onPress={() => handleShopPress(shop)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.listIconContainer, { backgroundColor: categoryColor + '15' }]}>
-                <Icon name={getCategoryIcon(shop.category)} size={28} color={categoryColor} />
-              </View>
-              
-              <View style={styles.listContent}>
-                <View style={styles.listHeader}>
-                  <Text style={styles.listShopName} numberOfLines={1}>
-                    {shop.name}
-                  </Text>
-                  <View style={styles.listRating}>
-                    <Icon name="star" size={14} color="#f59e0b" />
-                    <Text style={styles.listRatingText}>{shop.rating}</Text>
-                  </View>
-                </View>
+      <TouchableOpacity
+        style={styles.listCard}
+        onPress={() => handleShopPress(item)}
+      >
+        <View style={[styles.listIconContainer, { backgroundColor: categoryColor + '15' }]}>
+          <Icon name={getCategoryIcon(item.category)} size={28} color={categoryColor} />
+        </View>
 
-                <Text style={styles.listCategory} numberOfLines={1}>
-                  {t(shop.category)} • {shop.subCategory}
-                </Text>
+        <View style={styles.listContent}>
+          <Text style={styles.listShopName}>{item.name}</Text>
 
-                <View style={styles.listAddress}>
-                  <Icon name="location-on" size={14} color="#64748b" />
-                  <Text style={styles.listAddressText} numberOfLines={1}>
-                    {shop.address}
-                  </Text>
-                </View>
+          <Text style={styles.listCategory}>
+            {t(item.category)}
+          </Text>
 
-                <View style={styles.listFooter}>
-                  <View style={styles.listTiming}>
-                    <Icon name="access-time" size={12} color="#64748b" />
-                    <Text style={styles.listTimingText}>
-                      {shop.openingTime} - {shop.closingTime}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.listBadges}>
-                    {shop.deliveryAvailable && (
-                      <View style={styles.deliveryChip}>
-                        <Icon name="delivery-dining" size={10} color="#10b981" />
-                      </View>
-                    )}
-                    <View style={styles.verifiedChip}>
-                      <Icon name="verified" size={10} color="#38bdf8" />
-                    </View>
-                  </View>
-                </View>
+          <Text style={styles.listAddress}>
+            {item.address}
+          </Text>
 
-                <TouchableOpacity 
-                  style={styles.listNavigateButton}
-                  onPress={() => handleNavigateToMap(shop.coordinates, shop.name)}
-                >
-                  <Icon name="navigation" size={16} color="#38bdf8" />
-                  <Text style={styles.listNavigateText}>{t('navigate')}</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+          <TouchableOpacity
+            style={styles.listNavigateButton}
+            onPress={() => handleNavigateToMap(item.coordinates, item.name)}
+          >
+            <Icon name="navigation" size={16} color="#38bdf8" />
+            <Text style={styles.listNavigateText}>{t('navigate')}</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
     );
   };
 
   const renderSearchResultItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.searchResultCard}
       onPress={() => {
         setItemSearchModal(false);
@@ -645,9 +632,9 @@ const ShopsScreen = ({ navigation }) => {
         <Text style={styles.searchResultItemsTitle}>{t('availableItems')}:</Text>
         {item.items.map((inv, idx) => (
           <View key={idx} style={styles.searchResultItem}>
-            <Text style={styles.searchResultItemName}>{inv.item}</Text>
+            <Text style={styles.searchResultItemName}>{inv.name}</Text>
             <Text style={styles.searchResultItemPrice}>₹{inv.price}/{inv.unit}</Text>
-            {inv.available ? (
+            {inv.stock > 0 ? (
               <View style={styles.searchResultAvailable}>
                 <Icon name="check-circle" size={12} color="#10b981" />
                 <Text style={styles.searchResultAvailableText}>{t('inStock')}</Text>
@@ -671,14 +658,14 @@ const ShopsScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Icon name="arrow-back" size={24} color="#ffffff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('shops')}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.itemSearchButton}
             onPress={handleItemSearch}
           >
@@ -706,8 +693,8 @@ const ShopsScreen = ({ navigation }) => {
 
       {/* Category Filter */}
       <View style={styles.categorySection}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryContainer}
         >
@@ -721,10 +708,10 @@ const ShopsScreen = ({ navigation }) => {
               ]}
               onPress={() => setSelectedCategory(category.id)}
             >
-              <Icon 
-                name={category.icon} 
-                size={16} 
-                color={selectedCategory === category.id ? '#ffffff' : category.color} 
+              <Icon
+                name={category.icon}
+                size={16}
+                color={selectedCategory === category.id ? '#ffffff' : category.color}
               />
               <Text style={[
                 styles.categoryChipText,
@@ -738,13 +725,13 @@ const ShopsScreen = ({ navigation }) => {
 
         {/* View Toggle */}
         <View style={styles.viewToggleContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.viewToggle, viewType === 'grid' && styles.viewToggleActive]}
             onPress={() => setViewType('grid')}
           >
             <Icon name="grid-view" size={20} color={viewType === 'grid' ? '#38bdf8' : '#94a3b8'} />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.viewToggle, viewType === 'list' && styles.viewToggleActive]}
             onPress={() => setViewType('list')}
           >
@@ -762,38 +749,14 @@ const ShopsScreen = ({ navigation }) => {
       ) : (
         <FlatList
           data={filteredShops}
-          renderItem={viewType === 'grid' ? renderGridView : renderListView}
-          keyExtractor={item => item.id}
+          renderItem={viewType === 'grid' ? renderGridItem : renderListItem}
+          keyExtractor={(item) => item.id}
           key={viewType}
           numColumns={viewType === 'grid' ? 2 : 1}
           contentContainerStyle={styles.listContentContainer}
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={onRefresh}
-              colors={['#38bdf8']}
-              tintColor="#38bdf8"
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Icon name="store" size={60} color="#e2e8f0" />
-              <Text style={styles.emptyText}>{t('noShopsFound')}</Text>
-              <Text style={styles.emptySubText}>
-                {t('tryChangingFilters')}
-              </Text>
-            </View>
-          }
-          ListHeaderComponent={
-            filteredShops.length > 0 ? (
-              <View style={styles.resultHeader}>
-                <Text style={styles.resultText}>
-                  {filteredShops.length} {t('shops')} {t('found')}
-                </Text>
-              </View>
-            ) : null
-          }
-          showsVerticalScrollIndicator={false}
         />
       )}
 
@@ -807,7 +770,7 @@ const ShopsScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setModalVisible(false)}
               >
@@ -816,7 +779,7 @@ const ShopsScreen = ({ navigation }) => {
             </View>
 
             {selectedShop && (
-              <ScrollView 
+              <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.modalScrollContent}
               >
@@ -869,9 +832,7 @@ const ShopsScreen = ({ navigation }) => {
                     <Icon name="payment" size={18} color="#38bdf8" />
                     <View style={styles.modalInfoContent}>
                       <Text style={styles.modalInfoLabel}>{t('payment')}</Text>
-                      <Text style={styles.modalInfoValue}>
-                        {selectedShop.paymentMethods.map(p => t(p)).join(', ')}
-                      </Text>
+
                     </View>
                   </View>
                 </View>
@@ -887,7 +848,7 @@ const ShopsScreen = ({ navigation }) => {
                 </View>
 
                 <View style={styles.modalActions}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.modalActionButton, styles.navigateModalButton]}
                     onPress={() => {
                       setModalVisible(false);
@@ -898,7 +859,7 @@ const ShopsScreen = ({ navigation }) => {
                     <Text style={styles.modalActionText}>{t('navigateToShop')}</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.modalActionButton, styles.callModalButton]}
                     onPress={() => Alert.alert(t('call'), `${t('calling')} ${selectedShop.phone}`)}
                   >
@@ -923,7 +884,7 @@ const ShopsScreen = ({ navigation }) => {
           <View style={[styles.modalContent, styles.searchModal]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalHeaderTitle}>{t('searchItems')}</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setItemSearchModal(false)}
               >
