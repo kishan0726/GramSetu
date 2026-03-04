@@ -1,18 +1,31 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminReportGenerator from './AdminReportGenerator';
 import '../stylesheets/Sidebar.css';
 
 const Sidebar = ({ villageData }) => {
   const navigate = useNavigate();
   const [showReportModal, setShowReportModal] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const quick_links = [
-    { name: "Village Reports", path: "/", color: "#38bdf8", icon: "📊", action: "modal" },
-    { name: "Shop Directory", path: "/shops", color: "#f59e0b", icon: "🏪", action: "navigate" },
-    { name: "Complaint Log", path: "/complaint", color: "#ef4444", icon: "📋", action: "navigate" },
-    { name: "Announcements", path: "/announcement", color: "#ec4899", icon: "📢", action: "navigate" }
+    { name: "Village Reports", path: "/", color: "#38bdf8", icon: "📊", action: "modal", description: "Generate detailed reports" },
+    { name: "Shop Directory", path: "/shops", color: "#f59e0b", icon: "🏪", action: "navigate", description: "Browse all shops" },
+    { name: "Complaint Log", path: "/complaint", color: "#ef4444", icon: "📋", action: "navigate", description: "Manage complaints" },
+    { name: "Announcements", path: "/announcement", color: "#ec4899", icon: "📢", action: "navigate", description: "View announcements" }
   ];
+
+  // Get admin initials
+  const getInitials = () => {
+    const name = villageData?.name || 'Admin';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
 
   const handleQuickLinkClick = (link) => {
     if (link.action === 'modal') {
@@ -22,54 +35,87 @@ const Sidebar = ({ villageData }) => {
     }
   };
 
+  // Get greeting based on time
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   return (
     <aside className="sidebar-village-sidebar">
-      {/* Village Header */}
+      {/* Decorative Header Gradient */}
+      <div className="sidebar-gradient-header"></div>
+
+      {/* Village Header with Glass Effect */}
       <div className="sidebar-village-header">
+        <div className="sidebar-village-avatar">
+          <span className="sidebar-avatar-icon">🏛️</span>
+        </div>
         <div className="sidebar-village-details">
-          <h1>{villageData.details.name} Gram Panchayat</h1>
-          <p className="sidebar-village-code">Village Code: {villageData.details.code}</p>
+          <h3>{villageData?.details?.name || 'Village'} Gram Panchayat</h3>
+          <span className="sidebar-village-code">Code: {villageData?.details?.code || 'N/A'}</span>
           <div className="sidebar-village-meta">
-            <span className="sidebar-meta-item"><b>Population: </b>{villageData.details.population}</span>
-            <span className="sidebar-meta-item"><b>Household: </b>{villageData.details.households}</span>
-            <span className="sidebar-meta-item"><b>Village Area: </b>{villageData.details.area}</span>
+            <span className="sidebar-meta-item">
+              <span className="meta-icon">👥</span>
+              <span><b>{villageData?.details?.population?.toLocaleString() || 'N/A'}</b></span>
+            </span>
+            <span className="sidebar-meta-item">
+              <span className="meta-icon">🏠</span>
+              <span><b>{villageData?.details?.households?.toLocaleString() || 'N/A'}</b></span>
+            </span>
+            <span className="sidebar-meta-item">
+              <span className="meta-icon">📍</span>
+              <span><b>{villageData?.details?.area || 'N/A'}</b></span>
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Village Leader */}
+      {/* Village Leader Card with Gradient */}
       <div className="sidebar-village-leader">
+        <div className="sidebar-leader-gradient"></div>
         <div className="sidebar-leader-info">
-          <div className="sidebar-leader-avatar">KS</div>
+          <div className="sidebar-leader-avatar-wrapper">
+            <div className="sidebar-leader-avatar">{getInitials()}</div>
+            <div className="sidebar-leader-online"></div>
+          </div>
           <div className="sidebar-leader-details">
-            <h4>Admin Name</h4>
-            <p className="sidebar-leader-name">{villageData.name}</p>
-            <p className="sidebar-leader-contact">{villageData.phone1}</p>
+            <span className="sidebar-greeting">{getGreeting()}</span>
+            <h4>{villageData?.name || 'Admin Name'}</h4>
+            <p className="sidebar-leader-role">Administrator</p>
+            <div className="sidebar-leader-contact">
+              <span className="contact-item">
+                <span className="contact-icon">📞</span>
+                <span>{villageData?.phone1 || '+91 1234567890'}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="sidebar-leader-stats">
+          <div className="leader-stat">
+            <span className="stat-value">{villageData?.details?.population || 0}</span>
+            <span className="stat-label">Population</span>
+          </div>
+          <div className="leader-stat">
+            <span className="stat-value">{villageData?.details?.households || 0}</span>
+            <span className="stat-label">Households</span>
+          </div>
+          <div className="leader-stat">
+            <span className="stat-value">{villageData?.details?.literacyRate || '0%'}</span>
+            <span className="stat-label">Literacy</span>
           </div>
         </div>
       </div>
 
-      {/* Village Stats */}
-      <div className="sidebar-village-stats-section">
-        <h3>Village Statistics</h3>
-        <div className="sidebar-stats-grid">
-          {villageData?.stat?.map((stat, index) => (
-            <div key={index} className="sidebar-stat-item">
-              <div className="sidebar-stat-icon" style={{ background: getColorForIndex(index) }}>
-                {stat.icon}
-              </div>
-              <div className="sidebar-stat-content">
-                <div className="sidebar-stat-value">{stat.value}</div>
-                <div className="sidebar-stat-label">{stat.label}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Links */}
+      {/* Quick Links with Hover Effects */}
       <div className="sidebar-quick-links">
-        <h3>Quick Actions</h3>
+        <div className="sidebar-section-header">
+          <span className="header-icon">⚡</span>
+          <h3>Quick Actions</h3>
+          <span className="header-badge">{quick_links.length}</span>
+        </div>
         <div className="sidebar-links-grid">
           {quick_links.map((link, index) => (
             <button
@@ -78,10 +124,25 @@ const Sidebar = ({ villageData }) => {
               style={{ '--link-color': link.color }}
               onClick={() => handleQuickLinkClick(link)}
             >
-              <span className="sidebar-link-icon">{link.icon}</span>
+              <div className="link-icon-wrapper" style={{ background: `${link.color}15` }}>
+                <span className="sidebar-link-icon">{link.icon}</span>
+              </div>
               <span className="sidebar-link-text">{link.name}</span>
+              <span className="link-description">{link.description}</span>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* System Status */}
+      <div className="sidebar-system-status">
+        <div className="status-item">
+          <span className="status-dot online"></span>
+          <span className="status-text">System Online</span>
+        </div>
+        <div className="status-item">
+          <span className="status-label">Last Sync:</span>
+          <span className="status-time">{currentTime.toLocaleTimeString()}</span>
         </div>
       </div>
 
@@ -90,7 +151,10 @@ const Sidebar = ({ villageData }) => {
         <div className="sidebar-modal-overlay" onClick={() => setShowReportModal(false)}>
           <div className="sidebar-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="sidebar-modal-header">
-              <h2>Generate Village Report</h2>
+              <div className="modal-title-wrapper">
+                <span className="modal-icon">📊</span>
+                <h2>Generate Village Report</h2>
+              </div>
               <button className="sidebar-modal-close" onClick={() => setShowReportModal(false)}>✕</button>
             </div>
             <div className="sidebar-modal-body">
@@ -101,19 +165,6 @@ const Sidebar = ({ villageData }) => {
       )}
     </aside>
   );
-};
-
-// Helper function for colors
-const getColorForIndex = (index) => {
-  const colors = [
-    'linear-gradient(135deg, #38bdf8, #0ea5e9)',
-    'linear-gradient(135deg, #10b981, #059669)',
-    'linear-gradient(135deg, #f59e0b, #d97706)',
-    'linear-gradient(135deg, #ef4444, #dc2626)',
-    'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-    'linear-gradient(135deg, #ec4899, #db2777)'
-  ];
-  return colors[index % colors.length];
 };
 
 export default Sidebar;

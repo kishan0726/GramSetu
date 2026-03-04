@@ -1384,7 +1384,7 @@ const User = () => {
                             <button
                                 className="user-btn-secondary"
                                 onClick={() => setShowRestoreModal(false)}
-                            >
+                            >   
                                 Cancel
                             </button>
                             <button

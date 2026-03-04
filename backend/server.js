@@ -1431,6 +1431,140 @@ router.get('/check-report-data', async (req, res) => {
     }
 });
 
+
+
+
+
+
+
+
+// Get village statistics (total complaints, shops, announcements, users)
+router.get('/get-village-stats', async (req, res) => {
+    try {
+        console.log("📊 Fetching village statistics...");
+        
+        // Fetch all required data in parallel
+        const [
+            complaintsSnapshot,
+            shopsSnapshot,
+            announcementsSnapshot,
+            usersSnapshot,
+            chatUsersSnapshot
+        ] = await Promise.all([
+            db.ref("complaints_list").once("value"),
+            db.ref("shops_list").once("value"),
+            db.ref("published_announcement").once("value"),
+            db.ref("user_data").once("value"),
+            db.ref("chat_users").once("value")
+        ]);
+
+        // Calculate counts
+        const complaintsCount = complaintsSnapshot.exists() 
+            ? Object.keys(complaintsSnapshot.val()).length 
+            : 0;
+            
+        const shopsCount = shopsSnapshot.exists() 
+            ? Object.keys(shopsSnapshot.val()).length 
+            : 0;
+            
+        const announcementsCount = announcementsSnapshot.exists() 
+            ? Object.keys(announcementsSnapshot.val()).length 
+            : 0;
+            
+        const usersCount = usersSnapshot.exists() 
+            ? Object.keys(usersSnapshot.val()).length 
+            : 0;
+
+        // Count online users
+        let onlineUsers = 0;
+        if (chatUsersSnapshot.exists()) {
+            const chatUsers = chatUsersSnapshot.val();
+            Object.values(chatUsers).forEach(user => {
+                if (user.online) onlineUsers++;
+            });
+        }
+
+        // Get today's date for filtering today's complaints
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let todayComplaints = 0;
+        let pendingComplaints = 0;
+        let resolvedComplaints = 0;
+        
+        if (complaintsSnapshot.exists()) {
+            const complaints = complaintsSnapshot.val();
+            Object.values(complaints).forEach(complaint => {
+                // Count today's complaints
+                if (complaint.submittedDate) {
+                    const complaintDate = new Date(complaint.submittedDate);
+                    if (complaintDate >= today) {
+                        todayComplaints++;
+                    }
+                }
+                
+                // Count by status
+                if (complaint.status === 'pending') pendingComplaints++;
+                else if (complaint.status === 'resolved') resolvedComplaints++;
+            });
+        }
+
+        // Get shop status counts
+        let approvedShops = 0;
+        let pendingShops = 0;
+        let rejectedShops = 0;
+        
+        if (shopsSnapshot.exists()) {
+            const shops = shopsSnapshot.val();
+            Object.values(shops).forEach(shop => {
+                if (shop.status === 'approved') approvedShops++;
+                else if (shop.status === 'pending') pendingShops++;
+                else if (shop.status === 'rejected') rejectedShops++;
+            });
+        }
+
+        const responseData = {
+            success: true,
+            timestamp: new Date().toISOString(),
+            stats: {
+                complaints: {
+                    total: complaintsCount,
+                    today: todayComplaints,
+                    pending: pendingComplaints,
+                    resolved: resolvedComplaints
+                },
+                shops: {
+                    total: shopsCount,
+                    approved: approvedShops,
+                    pending: pendingShops,
+                    rejected: rejectedShops
+                },
+                announcements: {
+                    total: announcementsCount
+                },
+                users: {
+                    total: usersCount
+                },
+                onlineUsers: onlineUsers
+            }
+        };
+
+        console.log("✅ Village statistics fetched successfully");
+        res.json(responseData);
+
+    } catch (error) {
+        console.error("❌ Error fetching village statistics:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Failed to fetch village statistics",
+            error: error.message 
+        });
+    }
+});
+
+
+
+
 // Optional: Clean up expired OTPs periodically
 setInterval(() => {
     const now = Date.now();

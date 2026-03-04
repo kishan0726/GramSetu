@@ -15,162 +15,17 @@ import {
   TextInput,
   Image,
   Alert,
+  Platform,
+  Linking,
 } from 'react-native';
-import { db } from '../config/firebase';   // adjust path if needed
+import { db } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
-
-// Sample complaints data based on your DB structure
-const SAMPLE_COMPLAINTS = [
-  {
-    id: "COMP001",
-    title: "Water Supply Issue",
-    description: "No water supply in North Zone for past 3 days. Affecting 50+ households.",
-    category: "water",
-    priority: "high",
-    status: "pending",
-    submittedDate: "2024-12-25 10:30 AM",
-    lastUpdated: "21/02/26, 12:37 pm",
-    location: {
-      lat: 23.0225,
-      lng: 72.5714
-    },
-    userAddress: "House No. 12, North Zone, Ramnagar",
-    assignedTo: "Assigned to Team",
-    department: "Public Works",
-    images: ["water1.jpg", "water2.jpg"]
-  },
-  {
-    id: "COMP002",
-    title: "Street Light Not Working",
-    description: "Street lights near the temple have been not working for 5 days. Dark area causing safety concerns.",
-    category: "electricity",
-    priority: "high",
-    status: "in-progress",
-    submittedDate: "2024-12-24 03:15 PM",
-    lastUpdated: "21/02/26, 10:15 am",
-    location: {
-      lat: 23.0255,
-      lng: 72.5754
-    },
-    userAddress: "Near Temple, Main Road",
-    assignedTo: "Electricity Department",
-    department: "Electricity Board",
-    images: ["light1.jpg"]
-  },
-  {
-    id: "COMP003",
-    title: "Garbage Collection Issue",
-    description: "Garbage not collected for a week. Overflowing bins causing health hazard.",
-    category: "sanitation",
-    priority: "medium",
-    status: "resolved",
-    submittedDate: "2024-12-23 09:45 AM",
-    lastUpdated: "21/02/25, 03:22 pm",
-    location: {
-      lat: 23.0205,
-      lng: 72.5694
-    },
-    userAddress: "Market Area, Sector B",
-    assignedTo: "Sanitation Team",
-    department: "Municipal Corporation",
-    images: []
-  },
-  {
-    id: "COMP004",
-    title: "Road Damage",
-    description: "Large pothole on main road causing traffic issues and accidents.",
-    category: "road",
-    priority: "urgent",
-    status: "pending",
-    submittedDate: "2024-12-22 11:20 AM",
-    lastUpdated: "21/02/26, 09:05 am",
-    location: {
-      lat: 23.0285,
-      lng: 72.5784
-    },
-    userAddress: "Main Road, Near Bus Stop",
-    assignedTo: "Road Department",
-    department: "Public Works",
-    images: ["road1.jpg", "road2.jpg"]
-  },
-  {
-    id: "COMP005",
-    title: "Drainage Blockage",
-    description: "Drainage line blocked near school, water logging during rain.",
-    category: "drainage",
-    priority: "medium",
-    status: "in-progress",
-    submittedDate: "2024-12-21 02:30 PM",
-    lastUpdated: "21/02/25, 11:45 am",
-    location: {
-      lat: 23.0265,
-      lng: 72.5734
-    },
-    userAddress: "Near Primary School",
-    assignedTo: "Drainage Team",
-    department: "Public Works",
-    images: []
-  },
-  {
-    id: "COMP006",
-    title: "Mosquito Problem",
-    description: "Stagnant water causing mosquito breeding, health concerns in community.",
-    category: "health",
-    priority: "high",
-    status: "pending",
-    submittedDate: "2024-12-20 04:15 PM",
-    lastUpdated: "21/02/24, 02:30 pm",
-    location: {
-      lat: 23.0245,
-      lng: 72.5704
-    },
-    userAddress: "Community Center Area",
-    assignedTo: "Health Department",
-    department: "Health Services",
-    images: []
-  },
-  {
-    id: "COMP007",
-    title: "Broken Water Pipe",
-    description: "Water pipe broken near market, water wastage and muddy road.",
-    category: "water",
-    priority: "urgent",
-    status: "resolved",
-    submittedDate: "2024-12-19 08:00 AM",
-    lastUpdated: "21/02/23, 04:50 pm",
-    location: {
-      lat: 23.0295,
-      lng: 72.5764
-    },
-    userAddress: "Market Complex",
-    assignedTo: "Water Department",
-    department: "Public Works",
-    images: ["pipe1.jpg"]
-  },
-  {
-    id: "COMP008",
-    title: "Stray Animal Issue",
-    description: "Stray dogs creating nuisance in residential area, children scared to go out.",
-    category: "animal",
-    priority: "medium",
-    status: "pending",
-    submittedDate: "2024-12-18 05:45 PM",
-    lastUpdated: "21/02/23, 10:20 am",
-    location: {
-      lat: 23.0215,
-      lng: 72.5674
-    },
-    userAddress: "Housing Society, Block C",
-    assignedTo: "Animal Control",
-    department: "Municipal Corporation",
-    images: []
-  }
-];
 
 const ComplaintsScreen = ({ navigation }) => {
   const { t, language } = useLanguage();
@@ -183,6 +38,7 @@ const ComplaintsScreen = ({ navigation }) => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [showNewComplaintModal, setShowNewComplaintModal] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   // New complaint form state
   const [newComplaint, setNewComplaint] = useState({
@@ -271,9 +127,153 @@ const ComplaintsScreen = ({ navigation }) => {
 
   }, []);
 
+  // Request location permission
+  const requestLocationPermission = async () => {
+    try {
+      let permissionStatus;
+
+      if (Platform.OS === 'ios') {
+        permissionStatus = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+      } else {
+        permissionStatus = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+      }
+
+      return permissionStatus === RESULTS.GRANTED;
+    } catch (error) {
+      console.log('Permission request error:', error);
+      return false;
+    }
+  };
+
   const handleGetCurrentLocation = () => {
-    Geolocation.getCurrentPosition(
-      position => {
+    setLocationLoading(true);
+
+    const requestLocation = (useHighAccuracy = true) => {
+      return new Promise((resolve, reject) => {
+        Geolocation.getCurrentPosition(
+          position => resolve(position),
+          error => reject(error),
+          {
+            enableHighAccuracy: useHighAccuracy,
+            timeout: 8000,
+            maximumAge: 0
+          }
+        );
+      });
+    };
+
+    const tryWithFallback = async () => {
+      try {
+        // Try with high accuracy first
+        console.log('Trying high accuracy location...');
+        const position = await requestLocation(true);
+        return position;
+      } catch (highAccuracyError) {
+        console.log('High accuracy failed, trying low accuracy...', highAccuracyError);
+
+        // If high accuracy fails, try with low accuracy
+        try {
+          const position = await requestLocation(false);
+          return position;
+        } catch (lowAccuracyError) {
+          console.log('Low accuracy also failed', lowAccuracyError);
+          throw lowAccuracyError;
+        }
+      }
+    };
+
+    // Set overall timeout
+    const overallTimeout = setTimeout(() => {
+      setLocationLoading(false);
+      showLocationError({ code: 3, message: 'Overall location request timed out' });
+    }, 20000);
+
+    const showLocationError = (error) => {
+      let errorMessage = 'Failed to get location';
+
+      switch (error.code) {
+        case 1:
+          errorMessage = 'Location permission denied';
+          break;
+        case 2:
+          errorMessage = 'Unable to get location. Please check if GPS is enabled.';
+          break;
+        case 3:
+          errorMessage = 'Location request timed out. You can enter address manually.';
+          break;
+        default:
+          errorMessage = error.message || 'Unknown error';
+      }
+
+      Alert.alert(
+        'Location Error',
+        errorMessage,
+        [
+          {
+            text: 'Try Again',
+            onPress: () => handleGetCurrentLocation()
+          },
+          {
+            text: 'Enter Manually',
+            onPress: () => {
+              Alert.prompt(
+                'Enter Address',
+                'Please enter your location address',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'OK',
+                    onPress: (address) => {
+                      if (address && address.trim()) {
+                        setNewComplaint({
+                          ...newComplaint,
+                          address: address.trim()
+                        });
+                        Alert.alert('Success', 'Address saved');
+                      }
+                    }
+                  }
+                ],
+                'plain-text'
+              );
+            }
+          },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    };
+
+    // Request permission first
+    const executeLocationRequest = async () => {
+      const hasPermission = await requestLocationPermission();
+
+      if (!hasPermission) {
+        clearTimeout(overallTimeout);
+        setLocationLoading(false);
+        Alert.alert(
+          'Permission Required',
+          'Location permission is needed to get your current location.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              }
+            }
+          ]
+        );
+        return;
+      }
+
+      try {
+        const position = await tryWithFallback();
+        clearTimeout(overallTimeout);
+
         const { latitude, longitude } = position.coords;
 
         setNewComplaint({
@@ -284,14 +284,18 @@ const ComplaintsScreen = ({ navigation }) => {
           }
         });
 
-        Alert.alert("Success", "Location captured");
-      },
-      error => {
-        Alert.alert("Error", "Location permission denied");
-        console.log(error);
-      },
-      { enableHighAccuracy: true, timeout: 15000 }
-    );
+        Alert.alert("Success", "Location captured successfully");
+        setLocationLoading(false);
+
+      } catch (error) {
+        clearTimeout(overallTimeout);
+        console.log('All location attempts failed:', error);
+        showLocationError(error);
+        setLocationLoading(false);
+      }
+    };
+
+    executeLocationRequest();
   };
 
   const onRefresh = () => {
@@ -301,17 +305,14 @@ const ComplaintsScreen = ({ navigation }) => {
   const getFilteredComplaints = () => {
     let filtered = complaints;
 
-    // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
 
-    // Filter by status
     if (selectedStatus !== 'all') {
       filtered = filtered.filter(item => item.status === selectedStatus);
     }
 
-    // Limit to 10 if not showing all
     if (!showAll) {
       filtered = filtered.slice(0, 10);
     }
@@ -421,7 +422,6 @@ const ComplaintsScreen = ({ navigation }) => {
         return;
       }
 
-      // 🔥 Fetch user data from user_data node
       const userSnapshot = await db.ref(`user_data/${userId}`).once("value");
       const userData = userSnapshot.val();
 
@@ -431,8 +431,6 @@ const ComplaintsScreen = ({ navigation }) => {
       }
 
       const complaintsRef = db.ref('complaints_list');
-
-      // Get existing complaints
       const snapshot = await complaintsRef.once('value');
 
       let nextNumber = 1;
@@ -441,7 +439,6 @@ const ComplaintsScreen = ({ navigation }) => {
         nextNumber = Object.keys(snapshot.val()).length + 1;
       }
 
-      // Generate ID like COMP001
       const formattedId = `COMP${String(nextNumber).padStart(3, '0')}`;
 
       const fullName = `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
@@ -449,12 +446,9 @@ const ComplaintsScreen = ({ navigation }) => {
       const complaintData = {
         id: formattedId,
         userId: userId,
-
-        // 🔥 IDENTIFICATION DATA
         userName: fullName || "Unknown",
         userPhone: userData.contactNumber || "-",
         userAddress: userData.address || "-",
-
         title: newComplaint.title,
         description: newComplaint.description,
         category: newComplaint.category,
@@ -468,7 +462,6 @@ const ComplaintsScreen = ({ navigation }) => {
         images: [],
       };
 
-      // 🔥 Save using ID as key
       await db.ref(`complaints_list/${formattedId}`).set(complaintData);
 
       Alert.alert("Success", "Complaint submitted");
@@ -1024,13 +1017,19 @@ const ComplaintsScreen = ({ navigation }) => {
 
               {/* Location */}
               <View style={styles.formGroup}>
-
                 <TouchableOpacity
                   style={styles.locationButton}
                   onPress={handleGetCurrentLocation}
+                  disabled={locationLoading}
                 >
-                  <Icon name="my-location" size={20} color="#38bdf8" />
-                  <Text style={styles.locationButtonText}>{t('getCurrentLocation')}</Text>
+                  {locationLoading ? (
+                    <ActivityIndicator size="small" color="#38bdf8" />
+                  ) : (
+                    <>
+                      <Icon name="my-location" size={20} color="#38bdf8" />
+                      <Text style={styles.locationButtonText}>{t('getCurrentLocation')}</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
 
                 {newComplaint.location && (

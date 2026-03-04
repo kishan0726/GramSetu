@@ -11,11 +11,15 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Platform,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 import * as ImagePicker from 'react-native-image-picker';
+import Geolocation from '@react-native-community/geolocation';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 // Cloudinary configuration
 const CLOUDINARY_CLOUD_NAME = 'dmjwrm8sp';
@@ -47,6 +51,158 @@ const EditShopDetails = ({ navigation, route }) => {
     fileName: shopData.shop_image?.profile?.fileName || null
   });
   const [originalData] = useState(formData);
+
+  // Request location permission
+  const requestLocationPermission = async () => {
+    try {
+      let permissionStatus;
+
+      if (Platform.OS === 'ios') {
+        permissionStatus = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+      } else {
+        permissionStatus = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+      }
+
+      return permissionStatus === RESULTS.GRANTED;
+    } catch (error) {
+      console.log('Permission request error:', error);
+      return false;
+    }
+  };
+
+  // Updated location handler with same logic as ComplaintsScreen
+  const handleFetchLocation = () => {
+    setLocationLoading(true);
+
+    const requestLocation = (useHighAccuracy = true) => {
+      return new Promise((resolve, reject) => {
+        Geolocation.getCurrentPosition(
+          position => resolve(position),
+          error => reject(error),
+          {
+            enableHighAccuracy: useHighAccuracy,
+            timeout: 8000,
+            maximumAge: 0
+          }
+        );
+      });
+    };
+
+    const tryWithFallback = async () => {
+      try {
+        // Try with high accuracy first
+        console.log('Trying high accuracy location...');
+        const position = await requestLocation(true);
+        return position;
+      } catch (highAccuracyError) {
+        console.log('High accuracy failed, trying low accuracy...', highAccuracyError);
+
+        // If high accuracy fails, try with low accuracy
+        try {
+          const position = await requestLocation(false);
+          return position;
+        } catch (lowAccuracyError) {
+          console.log('Low accuracy also failed', lowAccuracyError);
+          throw lowAccuracyError;
+        }
+      }
+    };
+
+    // Set overall timeout
+    const overallTimeout = setTimeout(() => {
+      setLocationLoading(false);
+      showLocationError({ code: 3, message: 'Overall location request timed out' });
+    }, 20000);
+
+    const showLocationError = (error) => {
+      let errorMessage = 'Failed to get location';
+
+      switch (error.code) {
+        case 1:
+          errorMessage = 'Location permission denied';
+          break;
+        case 2:
+          errorMessage = 'Unable to get location. Please check if GPS is enabled.';
+          break;
+        case 3:
+          errorMessage = 'Location request timed out. You can enter coordinates manually.';
+          break;
+        default:
+          errorMessage = error.message || 'Unknown error';
+      }
+
+      Alert.alert(
+        'Location Error',
+        errorMessage,
+        [
+          {
+            text: 'Try Again',
+            onPress: () => handleFetchLocation()
+          },
+          {
+            text: 'Enter Manually',
+            onPress: () => {
+              // Just dismiss, user can enter manually in the input fields
+              Alert.alert('Info', 'Please enter coordinates manually');
+            }
+          },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    };
+
+    // Request permission first
+    const executeLocationRequest = async () => {
+      const hasPermission = await requestLocationPermission();
+
+      if (!hasPermission) {
+        clearTimeout(overallTimeout);
+        setLocationLoading(false);
+        Alert.alert(
+          'Permission Required',
+          'Location permission is needed to get your current location.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              }
+            }
+          ]
+        );
+        return;
+      }
+
+      try {
+        const position = await tryWithFallback();
+        clearTimeout(overallTimeout);
+
+        const { latitude, longitude } = position.coords;
+
+        setFormData({
+          ...formData,
+          latitude: latitude.toString(),
+          longitude: longitude.toString(),
+        });
+
+        Alert.alert("Success", "Location captured successfully");
+        setLocationLoading(false);
+
+      } catch (error) {
+        clearTimeout(overallTimeout);
+        console.log('All location attempts failed:', error);
+        showLocationError(error);
+        setLocationLoading(false);
+      }
+    };
+
+    executeLocationRequest();
+  };
 
   // Generate custom filename
   const generateFileName = (shopId, type) => {
@@ -250,24 +406,6 @@ const EditShopDetails = ({ navigation, route }) => {
     }
 
     return true;
-  };
-
-  const handleFetchLocation = () => {
-    setLocationLoading(true);
-    
-    setTimeout(() => {
-      const mockLat = '23.0225';
-      const mockLng = '72.5714';
-      
-      setFormData({
-        ...formData,
-        latitude: mockLat,
-        longitude: mockLng,
-      });
-      
-      setLocationLoading(false);
-      Alert.alert(t('success'), t('locationFetched'));
-    }, 1500);
   };
 
   const handleSave = async () => {
@@ -552,7 +690,7 @@ const EditShopDetails = ({ navigation, route }) => {
             </View>
           </View>
 
-          {/* Current Location Button */}
+          {/* Current Location Button - Updated with working location */}
           <TouchableOpacity
             style={styles.locationButton}
             onPress={handleFetchLocation}

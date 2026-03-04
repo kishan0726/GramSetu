@@ -1,26 +1,102 @@
+import React, { useState, useEffect } from 'react';
 import '../stylesheets/Home.css';
 
 const Home = ({ villageData }) => {
+  const [stats, setStats] = useState({
+    totalComplaints: 0,
+    totalShops: 0,
+    totalAnnouncements: 0,
+    totalUsers: 0,
+    todayComplaints: 0,
+    pendingComplaints: 0,
+    resolvedComplaints: 0,
+    approvedShops: 0,
+    pendingShops: 0,
+    onlineUsers: 0,
+    resolutionRate: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [recentUpdates, setRecentUpdates] = useState([]);
+
+  useEffect(() => {
+    fetchVillageStats();
+  }, []);
+
+  const fetchVillageStats = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/get-village-stats');
+      const result = await response.json();
+      
+      if (result.success) {
+        setStats({
+          totalComplaints: result.stats.complaints.total,
+          totalShops: result.stats.shops.total,
+          totalAnnouncements: result.stats.announcements.total,
+          totalUsers: result.stats.users.total,
+          todayComplaints: result.stats.complaints.today,
+          pendingComplaints: result.stats.complaints.pending,
+          resolvedComplaints: result.stats.complaints.resolved,
+          approvedShops: result.stats.shops.approved,
+          pendingShops: result.stats.shops.pending,
+          onlineUsers: result.stats.onlineUsers || 0,
+          resolutionRate: result.stats.complaints.total > 0 
+            ? Math.round((result.stats.complaints.resolved / result.stats.complaints.total) * 100) 
+            : 0
+        });
+
+        // Create recent updates based on the data
+        const updates = [];
+        if (result.stats.complaints.today > 0) {
+          updates.push({
+            message: `${result.stats.complaints.today} new complaint${result.stats.complaints.today > 1 ? 's' : ''} registered today`,
+            type: 'warning'
+          });
+        }
+        if (result.stats.complaints.resolved > 0) {
+          updates.push({
+            message: `${result.stats.complaints.resolved} complaint${result.stats.complaints.resolved > 1 ? 's' : ''} resolved`,
+            type: 'success'
+          });
+        }
+        if (result.stats.shops.pending > 0) {
+          updates.push({
+            message: `${result.stats.shops.pending} shop${result.stats.shops.pending > 1 ? 's' : ''} pending approval`,
+            type: 'info'
+          });
+        }
+        setRecentUpdates(updates);
+      }
+    } catch (error) {
+      console.error('Error fetching village stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Format number with commas
+  const formatNumber = (num) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
 
   return (
     <div className="home-village-home">
       {/* Village Header */}
       <div className="home-village-hero">
         <div className="home-hero-content">
-          <h1>{villageData.details.name} Village</h1>
-          <p className="home-village-location">{villageData.details.district}, {villageData.details.state}</p>
-          <p className="home-village-slogan">"{villageData.details.slogan}"</p>
+          <h1>{villageData?.details?.name || 'Village'} Village</h1>
+          <p className="home-village-location">{villageData?.details?.district || 'District'}, {villageData?.details?.state || 'State'}</p>
+          <p className="home-village-slogan">"{villageData?.details?.slogan || 'Digital Village, Prosperous Future'}"</p>
         </div>
         <div className="home-hero-stats">
           <div className="home-hero-stat">
             <div className="home-stat-info">
-              <div className="home-stat-value">{villageData.details.literacyRate}</div>
+              <div className="home-stat-value">{villageData?.details?.literacyRate || '67.9%'}</div>
               <div className="home-stat-label">Literacy Rate</div>
             </div>
           </div>
           <div className="home-hero-stat">
             <div className="home-stat-info">
-              <div className="home-stat-value">{villageData.details.population}</div>
+              <div className="home-stat-value">{formatNumber(villageData?.details?.population || 3470)}</div>
               <div className="home-stat-label">Population</div>
             </div>
           </div>
@@ -34,23 +110,24 @@ const Home = ({ villageData }) => {
           {/* About Village */}
           <div className="home-info-card">
             <h2 className="home-card-title">
-              About {villageData.details.name}
+              <span className="home-title-icon">📋</span>
+              About {villageData?.details?.name || 'Village'}
             </h2>
-            <p className="home-village-description">{villageData.details.description}</p>
+            <p className="home-village-description">{villageData?.details?.description || 'No description available'}</p>
 
             <div className="home-features-grid">
               <div className="home-feature-item">
                 <span className="home-feature-icon">🌾</span>
                 <div>
                   <h4>Main Crops</h4>
-                  <p>{villageData.details.mainCrops.join(', ')}</p>
+                  <p>{villageData?.details?.mainCrops?.join(', ') || 'Wheat, Rice, Sugarcane'}</p>
                 </div>
               </div>
               <div className="home-feature-item">
                 <span className="home-feature-icon">🏥</span>
                 <div>
                   <h4>Facilities</h4>
-                  <p>{villageData.details.facilities.join(', ')}</p>
+                  <p>{villageData?.details?.facilities?.join(', ') || 'Health Center, School, Bank'}</p>
                 </div>
               </div>
               <div className="home-feature-item">
@@ -73,6 +150,7 @@ const Home = ({ villageData }) => {
           {/* Economic Sectors */}
           <div className="home-info-card">
             <h2 className="home-card-title">
+              <span className="home-title-icon">📊</span>
               Economic Overview
             </h2>
             <div className="home-sectors-chart">
@@ -100,6 +178,7 @@ const Home = ({ villageData }) => {
           {/* Important Places */}
           <div className="home-info-card">
             <h2 className="home-card-title">
+              <span className="home-title-icon">📍</span>
               Important Places
             </h2>
             <div className="home-places-grid">
@@ -126,6 +205,7 @@ const Home = ({ villageData }) => {
           <div className="home-map-card">
             <div className="home-map-header">
               <h2 className="home-card-title">
+                <span className="home-title-icon">🗺️</span>
                 Village Map
               </h2>
               <div className="home-map-controls">
@@ -136,25 +216,29 @@ const Home = ({ villageData }) => {
             </div>
 
             <div className="home-map-container">
-              {/* Replace this with your actual village map image */}
               <div className="home-map-placeholder">
                 <div className="home-map-grid">
                   {/* Village Center */}
-                  {/* <div className="home-map-area center" title="Village Center">
+                  <div className="home-map-area center" title="Village Center">
                     <div className="home-area-icon">🏛️</div>
                     <span className="home-area-label">Center</span>
-                  </div> */}
+                  </div>
 
                   {/* Surrounding Areas */}
-                  {/* {['North', 'South', 'East', 'West'].map((direction) => (
+                  {['North', 'South', 'East', 'West'].map((direction) => (
                     <div key={direction} className={`home-map-area ${direction.toLowerCase()}`}>
-                      <div className="home-area-icon">{getAreaIcon(direction)}</div>
+                      <div className="home-area-icon">
+                        {direction === 'North' && '⬆️'}
+                        {direction === 'South' && '⬇️'}
+                        {direction === 'East' && '➡️'}
+                        {direction === 'West' && '⬅️'}
+                      </div>
                       <span className="home-area-label">{direction}</span>
                     </div>
-                  ))} */}
+                  ))}
 
                   {/* Additional Points */}
-                  {/* <div className="home-map-point school" title="School">
+                  <div className="home-map-point school" title="School">
                     <div className="home-point-icon">🏫</div>
                   </div>
                   <div className="home-map-point health" title="Health Center">
@@ -162,10 +246,10 @@ const Home = ({ villageData }) => {
                   </div>
                   <div className="home-map-point market" title="Market">
                     <div className="home-point-icon">🛒</div>
-                  </div> */}
+                  </div>
                 </div>
 
-                {/* <div className="home-map-legend">
+                <div className="home-map-legend">
                   <div className="home-legend-item">
                     <div className="home-legend-color residential"></div>
                     <span>Residential Area</span>
@@ -178,7 +262,7 @@ const Home = ({ villageData }) => {
                     <div className="home-legend-color agricultural"></div>
                     <span>Agricultural Land</span>
                   </div>
-                </div> */}
+                </div>
               </div>
             </div>
           </div>
@@ -186,34 +270,99 @@ const Home = ({ villageData }) => {
           {/* Live Village Data */}
           <div className="home-live-data-card">
             <h2 className="home-card-title">
-              Live Village Data
+              <span className="home-title-icon">📡</span>
+              Live Village Statistics
             </h2>
 
-            <div className="home-live-stats">
-              {villageData?.liveData?.map((stat, index) => (
-                <div key={index} className="home-live-stat">
-                  <div className="home-live-info">
-                    <div className="home-live-value">{stat.value}</div>
-                    <div className="home-live-label">{stat.label}</div>
+            {loading ? (
+              <div className="home-loading">Loading statistics...</div>
+            ) : (
+              <>
+                <div className="home-live-stats">
+                  {/* Total Complaints */}
+                  <div className="home-live-stat">
+                    <div className="home-live-icon online">📋</div>
+                    <div className="home-live-info">
+                      <div className="home-live-value">{stats.totalComplaints}</div>
+                      <div className="home-live-label">Total Complaints</div>
+                    </div>
                   </div>
 
+                  {/* Total Shops */}
+                  <div className="home-live-stat">
+                    <div className="home-live-icon online">🏪</div>
+                    <div className="home-live-info">
+                      <div className="home-live-value">{stats.totalShops}</div>
+                      <div className="home-live-label">Registered Shops</div>
+                    </div>
+                  </div>
+
+                  {/* Total Announcements */}
+                  <div className="home-live-stat">
+                    <div className="home-live-icon online">📢</div>
+                    <div className="home-live-info">
+                      <div className="home-live-value">{stats.totalAnnouncements}</div>
+                      <div className="home-live-label">Announcements</div>
+                    </div>
+                  </div>
+
+                  {/* Total Users */}
+                  <div className="home-live-stat">
+                    <div className="home-live-icon online">👥</div>
+                    <div className="home-live-info">
+                      <div className="home-live-value">{stats.totalUsers}</div>
+                      <div className="home-live-label">Registered Users</div>
+                    </div>
+                  </div>
+
+                  {/* Today's Complaints */}
+                  <div className="home-live-stat">
+                    <div className="home-live-icon online">📅</div>
+                    <div className="home-live-info">
+                      <div className="home-live-value">{stats.todayComplaints}</div>
+                      <div className="home-live-label">Today's Complaints</div>
+                    </div>
+                  </div>
+
+                  {/* Online Users */}
+                  <div className="home-live-stat">
+                    <div className="home-live-icon online">🟢</div>
+                    <div className="home-live-info">
+                      <div className="home-live-value">{stats.onlineUsers}</div>
+                      <div className="home-live-label">Online Now</div>
+                    </div>
+                  </div>
+
+                  {/* Pending Complaints */}
+                  <div className="home-live-stat">
+                    <div className="home-live-icon online">⏳</div>
+                    <div className="home-live-info">
+                      <div className="home-live-value">{stats.pendingComplaints}</div>
+                      <div className="home-live-label">Pending Complaints</div>
+                    </div>
+                  </div>
+
+                  {/* Resolution Rate */}
+                  <div className="home-live-stat">
+                    <div className="home-live-icon online">📊</div>
+                    <div className="home-live-info">
+                      <div className="home-live-value">{stats.resolutionRate}%</div>
+                      <div className="home-live-label">Resolution Rate</div>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </>
+            )}
 
-            {/* Recent Updates */}
-            <div className="home-recent-updates">
-              <h3>Recent Updates</h3>
-              <div className="home-updates-list">
-                {villageData?.recentUpdates?.map((update, index) => (
-                  <div
-                    key={index}
-                    className={`home-update-item ${update.type}`}
-                  >
-                    <span>{update.message}</span>
-                  </div>
-                ))}
-              </div>
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <button 
+                className="home-place-navigate"
+                onClick={fetchVillageStats}
+                style={{ display: 'inline-flex' }}
+              >
+                <span>🔄</span>
+                <span>Refresh Data</span>
+              </button>
             </div>
           </div>
         </div>
