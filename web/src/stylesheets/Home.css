@@ -324,7 +324,7 @@
   background: #f8fafc;
   border-radius: 15px;
   padding: 30px;
-  min-height: 400px;
+  max-height: 400px;
   border: 2px dashed #cbd5e1;
 }
 

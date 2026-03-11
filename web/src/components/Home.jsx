@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
+import MapView from './Map';
 import '../stylesheets/Home.css';
 
 const Home = ({ villageData }) => {
+  const navigate = useNavigate();
+
   const [stats, setStats] = useState({
     totalComplaints: 0,
     totalShops: 0,
@@ -26,7 +30,7 @@ const Home = ({ villageData }) => {
     try {
       const response = await fetch('http://localhost:5000/get-village-stats');
       const result = await response.json();
-      
+
       if (result.success) {
         setStats({
           totalComplaints: result.stats.complaints.total,
@@ -39,8 +43,8 @@ const Home = ({ villageData }) => {
           approvedShops: result.stats.shops.approved,
           pendingShops: result.stats.shops.pending,
           onlineUsers: result.stats.onlineUsers || 0,
-          resolutionRate: result.stats.complaints.total > 0 
-            ? Math.round((result.stats.complaints.resolved / result.stats.complaints.total) * 100) 
+          resolutionRate: result.stats.complaints.total > 0
+            ? Math.round((result.stats.complaints.resolved / result.stats.complaints.total) * 100)
             : 0
         });
 
@@ -71,6 +75,12 @@ const Home = ({ villageData }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNavigate = (placeName) => {
+    navigate("/navigateMap", {
+      state: { placeName: placeName }
+    });
   };
 
   // Format number with commas
@@ -185,11 +195,16 @@ const Home = ({ villageData }) => {
               {villageData?.important_places?.map((place, index) => (
                 <div key={index} className="home-place-card">
                   <div className="home-place-icon">{place.icon}</div>
+
                   <div className="home-place-info">
                     <h4>{place.name}</h4>
                     <p className="home-place-type">{place.type}</p>
                   </div>
-                  <button className="home-place-navigate">
+
+                  <button
+                    className="home-place-navigate"
+                    onClick={() => handleNavigate(place.name)}
+                  >
                     <span>Navigate</span>
                     <span>➔</span>
                   </button>
@@ -208,63 +223,11 @@ const Home = ({ villageData }) => {
                 <span className="home-title-icon">🗺️</span>
                 Village Map
               </h2>
-              <div className="home-map-controls">
-                <button className="home-map-btn">➕</button>
-                <button className="home-map-btn">➖</button>
-                <button className="home-map-btn">🗺️</button>
-              </div>
             </div>
 
-            <div className="home-map-container">
-              <div className="home-map-placeholder">
-                <div className="home-map-grid">
-                  {/* Village Center */}
-                  <div className="home-map-area center" title="Village Center">
-                    <div className="home-area-icon">🏛️</div>
-                    <span className="home-area-label">Center</span>
-                  </div>
-
-                  {/* Surrounding Areas */}
-                  {['North', 'South', 'East', 'West'].map((direction) => (
-                    <div key={direction} className={`home-map-area ${direction.toLowerCase()}`}>
-                      <div className="home-area-icon">
-                        {direction === 'North' && '⬆️'}
-                        {direction === 'South' && '⬇️'}
-                        {direction === 'East' && '➡️'}
-                        {direction === 'West' && '⬅️'}
-                      </div>
-                      <span className="home-area-label">{direction}</span>
-                    </div>
-                  ))}
-
-                  {/* Additional Points */}
-                  <div className="home-map-point school" title="School">
-                    <div className="home-point-icon">🏫</div>
-                  </div>
-                  <div className="home-map-point health" title="Health Center">
-                    <div className="home-point-icon">🏥</div>
-                  </div>
-                  <div className="home-map-point market" title="Market">
-                    <div className="home-point-icon">🛒</div>
-                  </div>
-                </div>
-
-                <div className="home-map-legend">
-                  <div className="home-legend-item">
-                    <div className="home-legend-color residential"></div>
-                    <span>Residential Area</span>
-                  </div>
-                  <div className="home-legend-item">
-                    <div className="home-legend-color commercial"></div>
-                    <span>Commercial Area</span>
-                  </div>
-                  <div className="home-legend-item">
-                    <div className="home-legend-color agricultural"></div>
-                    <span>Agricultural Land</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* <div className="home-map-container"> */}
+            <MapView />
+            {/* </div> */}
           </div>
 
           {/* Live Village Data */}
@@ -355,7 +318,7 @@ const Home = ({ villageData }) => {
             )}
 
             <div style={{ marginTop: '20px', textAlign: 'center' }}>
-              <button 
+              <button
                 className="home-place-navigate"
                 onClick={fetchVillageStats}
                 style={{ display: 'inline-flex' }}

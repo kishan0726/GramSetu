@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import '../stylesheets/Complaint.css';
 
 const Complaint = () => {
+  const navigate = useNavigate();
+
   const [complaints, setComplaints] = useState([]);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [filter, setFilter] = useState('all');
@@ -74,6 +77,20 @@ const Complaint = () => {
     }
     fetchComplaints();
   }, []);
+
+   const handleNavigate = (lat, lng) => {
+    if (!lat || !lng) {
+      alert('Location coordinates not available for this shop');
+      return;
+    }
+
+    navigate('/navigateMap', {
+      state: {
+        coordinates: [[lat, lng]],
+        // customName: selectedComplaint?.shopName || selectedComplaint?.name || 'Shop Location'
+      }
+    });
+  };
 
   // Filtered Complaints
   const filteredComplaints = complaints.filter(complaint => {
@@ -642,13 +659,32 @@ const Complaint = () => {
                 </div>
               )}
 
+              
+
+              {/* Location Coordinates */}
+              <div className="shop-details-section">
+                <h4 className="shop-section-title">
+                  Location Coordinates
+                </h4>
+                <div className="shop-coordinates-display">
+                  <div className="shop-coordinate-item">
+                    <span className="shop-coord-label">Latitude:</span>
+                    <span className="shop-coord-value">{selectedComplaint.location?.lat || "N/A"}</span>
+                  </div>
+                  <div className="shop-coordinate-item">
+                    <span className="shop-coord-label">Longitude:</span>
+                    <span className="shop-coord-value">{selectedComplaint.location?.lng || "N/A"}</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Action Buttons */}
               <div className="complaint-action-buttons-panel">
                 <button className="complaint-btn btn-outline">
                   Call User
                 </button>
 
-                <button className="complaint-btn btn-outline">
+                <button className="complaint-btn btn-outline" onClick={() => handleNavigate(selectedComplaint.location?.lat, selectedComplaint.location?.lng)}>
                   View on Map
                 </button>
 

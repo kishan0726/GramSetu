@@ -28,6 +28,8 @@ import ChatScreen from './src/screens/ChatScreen';
 import CommunityScreen from './src/screens/CommunityScreen';
 import AddChatUserScreen from './src/screens/AddChatUserScreen';
 import ChatRequestsScreen from './src/screens/ChatRequestsScreen';
+import MapScreen from './src/screens/MapScreen';
+import NavigateScreen from './src/screens/NavigateScreen'
 
 const Stack = createNativeStackNavigator();
 
@@ -62,6 +64,8 @@ const App = () => {
           <Stack.Screen name="ChatSetupScreen" component={ChatSetupScreen} />
           <Stack.Screen name="AddChatUserScreen" component={AddChatUserScreen} />
           <Stack.Screen name="ChatRequestsScreen" component={ChatRequestsScreen} />
+          <Stack.Screen name="MapScreen" component={MapScreen} />
+          <Stack.Screen name="NavigateScreen" component={NavigateScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </LanguageProvider>

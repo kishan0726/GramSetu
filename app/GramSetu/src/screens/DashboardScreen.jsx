@@ -41,7 +41,7 @@ const DashboardScreen = ({ navigation }) => {
             id: 1,
             title: t('map'),
             icon: 'map',
-            screen: 'Map',
+            screen: 'MapScreen',
             color: '#3b82f6',
             bgColor: '#eff6ff',
         },

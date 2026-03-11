@@ -573,6 +573,22 @@ const ComplaintsScreen = ({ navigation }) => {
     );
   };
 
+  const handleNavigateToMap = (coordinates, complaintId) => {
+    console.log('Navigating to map with coordinates:', coordinates, 'complaint:', complaintId);
+
+    if (!coordinates || !coordinates.lat || !coordinates.lng) {
+      Alert.alert('Error', 'Location coordinates not available');
+      return;
+    }
+
+    navigation.navigate('NavigateScreen', {
+      latitude: coordinates.lat,
+      longitude: coordinates.lng,
+      shopName: `Complaint #${complaintId}`,
+      zoomIn: true
+    });
+  };
+
   const filteredComplaints = getFilteredComplaints();
 
   return (
@@ -878,7 +894,10 @@ const ComplaintsScreen = ({ navigation }) => {
                     </Text>
                   </View>
                   {selectedComplaint.location && (
-                    <TouchableOpacity style={styles.viewMapButton}>
+                    <TouchableOpacity style={styles.viewMapButton}
+                      onPress={() => {
+                        handleNavigateToMap(selectedComplaint.location, selectedComplaint.id);
+                      }}>
                       <Icon name="map" size={16} color="#38bdf8" />
                       <Text style={styles.viewMapText}>{t('viewOnMap')}</Text>
                     </TouchableOpacity>

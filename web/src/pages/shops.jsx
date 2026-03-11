@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import '../stylesheets/Shops.css';
 
 const Shops = () => {
+  const navigate = useNavigate();
+
   const [shops, setShops] = useState([]);
   const [selectedShop, setSelectedShop] = useState(null);
   const [filter, setFilter] = useState('all');
@@ -64,6 +67,20 @@ const Shops = () => {
 
     fetchShop();
   }, []);
+
+  const handleNavigate = (lat, lng) => {
+    if (!lat || !lng) {
+      alert('Location coordinates not available for this shop');
+      return;
+    }
+
+    navigate('/navigateMap', {
+      state: {
+        coordinates: [[lat, lng]],
+        customName: selectedShop?.shopName || selectedShop?.name || 'Shop Location'
+      }
+    });
+  };
 
   // Fetch document images and profile images when a shop is selected
   useEffect(() => {
@@ -527,7 +544,11 @@ const Shops = () => {
                     <span className="shop-coord-label">Longitude:</span>
                     <span className="shop-coord-value">{selectedShop.coordinates?.lng || "N/A"}</span>
                   </div>
-                  <button className="shop-btn btn-outline" onClick={() => setMapView(true)}>
+                  <button
+                    className="shop-btn btn-outline"
+                    onClick={() => handleNavigate(selectedShop.coordinates?.lat, selectedShop.coordinates?.lng)}
+                    disabled={!selectedShop.coordinates?.lat || !selectedShop.coordinates?.lng}
+                  >
                     View on Map
                   </button>
                 </div>

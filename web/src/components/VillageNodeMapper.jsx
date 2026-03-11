@@ -44,8 +44,8 @@ const createImportantPointIcon = (name, isSelected = false) => {
       justify-content: center;
     ">
       <div style="
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
         background: ${isSelected ? '#f59e0b' : '#ff4444'};
         border: 3px solid white;
         border-radius: 50%;
@@ -55,28 +55,28 @@ const createImportantPointIcon = (name, isSelected = false) => {
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 14px;
+        font-size: 16px;
         font-weight: bold;
         margin-bottom: 2px;
       ">⭐</div>
       <div style="
-        background: rgba(0,0,0,0.7);
+        background: rgba(0,0,0,0.8);
         color: white;
-        padding: 2px 6px;
+        padding: 2px 8px;
         border-radius: 12px;
-        font-size: 10px;
+        font-size: 11px;
         font-weight: bold;
         white-space: nowrap;
         border: 1px solid white;
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        max-width: 100px;
+        max-width: 120px;
         overflow: hidden;
         text-overflow: ellipsis;
       ">${name}</div>
     </div>`,
-    iconSize: [24, 40],
-    iconAnchor: [12, 40],
-    popupAnchor: [0, -40],
+    iconSize: [28, 48],
+    iconAnchor: [14, 48],
+    popupAnchor: [0, -48],
   });
 };
 
@@ -113,8 +113,8 @@ const createSpecialIcon = (type) => {
   return L.divIcon({
     className: `special-marker ${type}`,
     html: `<div style="
-      width: 5px;
-      height: 5px;
+      width: 10px;
+      height: 10px;
       background: ${colors[type]};
       border: 3px solid white;
       border-radius: 50%;
@@ -570,7 +570,7 @@ const MapClickHandler = ({ onMapClick }) => {
   return null;
 };
 
-const MapView = () => {
+const VillageNodeMapper = () => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedPath, setSelectedPath] = useState(null);
   const [showNodeLabels, setShowNodeLabels] = useState(true);
@@ -705,6 +705,7 @@ const MapView = () => {
     setDestinationNode(null);
     setShortestPath([]);
     setShortestPathDistance(0);
+    setSelectedImportantPoint(null);
   };
 
   // Get node coordinates for path
@@ -794,12 +795,23 @@ const MapView = () => {
 
   return (
     <div className="map-node-mapper-container">
+      <div className="map-node-mapper-header">
+        <h1>🏞️ Village Node Network with Path Finding</h1>
+        <div className="map-header-stats">
+          <span>{NODE_DATA.length} Nodes</span>
+          <span>•</span>
+          <span>{PATH_DATA.length} Paths</span>
+          <span>•</span>
+          <span style={{ color: '#ff4444' }}>⭐ {IMPORTANT_POINTS.length} Important Places</span>
+        </div>
+      </div>
+
       <div className="map-node-mapper-main">
         {/* Map Container */}
         <div className="map-container">
           <MapContainer
-            center={[21.773, 69.452]}
-            zoom={16}
+            center={[21.77, 69.45]}
+            zoom={15}
             style={{ height: '100%', width: '100%' }}
             zoomControl={true}
             ref={setMap}
@@ -1062,6 +1074,405 @@ const MapView = () => {
             >
               🛰️ {satelliteView ? 'Satellite' : 'Map'}
             </button>
+            
+            <button
+              className={`map-control-btn ${showNodeLabels ? 'active' : ''}`}
+              onClick={() => setShowNodeLabels(!showNodeLabels)}
+              title="Show/Hide Node Labels"
+            >
+              🏷️ Labels
+            </button>
+
+            <button
+              className="map-control-btn"
+              onClick={() => {
+                if (map && NODE_DATA.length > 0) {
+                  const bounds = L.latLngBounds(NODE_DATA.map(node => [node.lat, node.lng]));
+                  map.fitBounds(bounds, { padding: [50, 50] });
+                }
+              }}
+              title="Fit to All Nodes"
+            >
+              🔍 Fit View
+            </button>
+
+            <button
+              className="map-control-btn"
+              onClick={() => {
+                if (map && IMPORTANT_POINTS.length > 0) {
+                  const bounds = L.latLngBounds(IMPORTANT_POINTS.map(point => [point.lat, point.lng]));
+                  map.fitBounds(bounds, { padding: [50, 50] });
+                }
+              }}
+              title="Fit to Important Points"
+              style={{ background: selectedImportantPoint ? '#ff4444' : '' }}
+            >
+              ⭐ Important Places
+            </button>
+          </div>
+
+          {/* Path Type Legend */}
+          <div className="map-legend" style={{ bottom: '20px', left: '10px', top: 'auto' }}>
+            <h4>Path Types</h4>
+            <div className="map-legend-item">
+              <span className="map-legend-line highway-line"></span>
+              <span>Highway (8px)</span>
+            </div>
+            <div className="map-legend-item">
+              <span className="map-legend-line mainroad-line"></span>
+              <span>Main Road (5px)</span>
+            </div>
+            <div className="map-legend-item">
+              <span className="map-legend-line street-line"></span>
+              <span>Street (3px)</span>
+            </div>
+            <div className="map-legend-item">
+              <span className="map-legend-line footpath-line"></span>
+              <span>Footpath</span>
+            </div>
+            <div className="map-legend-item">
+              <span className="map-legend-line track-line"></span>
+              <span>Track</span>
+            </div>
+            <div className="map-legend-item">
+              <span className="map-legend-line" style={{ background: '#f59e0b', height: '6px' }}></span>
+              <span>Shortest Path</span>
+            </div>
+          </div>
+
+          {/* Important Points Legend */}
+          <div className="map-legend" style={{ bottom: '20px', right: '10px', top: 'auto', maxWidth: '200px' }}>
+            <h4 style={{ margin: '0 0 8px 0', color: '#ff4444' }}>⭐ Important Locations</h4>
+            <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+              {IMPORTANT_POINTS.map(point => (
+                <div 
+                  key={point.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '2px 0',
+                    cursor: 'pointer',
+                    fontSize: '11px'
+                  }}
+                  onClick={() => {
+                    if (map) {
+                      map.setView([point.lat, point.lng], 18);
+                      setSelectedImportantPoint(point.id);
+                    }
+                  }}
+                >
+                  <span style={{ color: '#ff4444' }}>⭐</span>
+                  <span style={{ 
+                    fontWeight: selectedImportantPoint === point.id ? 'bold' : 'normal',
+                    color: selectedImportantPoint === point.id ? '#ff4444' : 'inherit'
+                  }}>
+                    {point.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Control Panel */}
+        <div className="map-control-panel">
+          <div className="map-panel-section">
+            <h3>📍 Location & Routing</h3>
+            
+            <button
+              className="map-btn btn-primary"
+              onClick={setHardcodedLocation}
+            >
+              📍 Set Hardcoded Location
+            </button>
+            
+            {userLocation && (
+              <div className="map-location-info">
+                <div className="map-info-item">
+                  <strong>Your Location (Hardcoded):</strong>
+                  <div className="map-small-text">
+                    Lat: {userLocation.lat.toFixed(6)}<br />
+                    Lng: {userLocation.lng.toFixed(6)}
+                  </div>
+                </div>
+                
+                {nearestNode && (
+                  <div className="map-info-item">
+                    <strong>Nearest Node:</strong> #{nearestNode}
+                    <div className="map-small-text">
+                      Distance: {formatDistance(calculateDistance(
+                        userLocation.lat, userLocation.lng,
+                        NODE_DATA.find(n => n.id === nearestNode).lat,
+                        NODE_DATA.find(n => n.id === nearestNode).lng
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="map-info-item">
+              <strong>Destination:</strong>{' '}
+              {destinationNode ? `Node #${destinationNode}` : 'Click on map to set'}
+            </div>
+            
+            <div className="map-button-group">
+              <button
+                className="map-btn btn-success"
+                onClick={calculateShortestPath}
+                disabled={!nearestNode || !destinationNode}
+              >
+                🗺️ Find Shortest Path
+              </button>
+              
+              <button
+                className="map-btn btn-danger"
+                onClick={clearRouting}
+              >
+                🧹 Clear
+              </button>
+            </div>
+            
+            {shortestPath.length > 0 && (
+              <div className="map-path-result">
+                <h4>Shortest Path Result</h4>
+                <div className="map-path-nodes-list">
+                  {shortestPath.join(' → ')}
+                </div>
+                <div className="map-path-distance">
+                  Total Distance: <strong>{formatDistance(shortestPathDistance)}</strong>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="map-panel-section">
+            <h3>🔍 Node Search</h3>
+            <div className="map-search-box">
+              <input
+                type="number"
+                min="1"
+                max={NODE_DATA.length}
+                value={searchNode}
+                onChange={(e) => setSearchNode(e.target.value)}
+                placeholder={`Enter node number (1-${NODE_DATA.length})`}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearchNode()}
+              />
+              <button onClick={handleSearchNode}>Go</button>
+            </div>
+          </div>
+
+          <div className="map-panel-section">
+            <h3>📊 Selected Node</h3>
+            {selectedNode ? (
+              <div className="map-node-details">
+                <h4>Node {selectedNode}</h4>
+                <div className="map-node-coords">
+                  {(() => {
+                    const node = NODE_DATA.find(n => n.id === selectedNode);
+                    return node ? (
+                      <>
+                        Lat: {node.lat.toFixed(6)}<br />
+                        Lng: {node.lng.toFixed(6)}
+                      </>
+                    ) : 'Node not found';
+                  })()}
+                </div>
+                
+                <div className="map-node-connections">
+                  <h4>Connected Paths:</h4>
+                  {getNodeConnections(selectedNode).map((conn, idx) => (
+                    <div key={idx} className="map-connection-item">
+                      <span className={`map-path-badge ${conn.pathType}`}>
+                        {conn.pathName}
+                      </span>
+                      <br />
+                      <small>Node {conn.fromNode} ↔ {conn.toNode}</small>
+                    </div>
+                  ))}
+                </div>
+                
+                <button
+                  className="map-btn-small"
+                  onClick={() => setDestinationNode(selectedNode)}
+                >
+                  Set as Destination
+                </button>
+              </div>
+            ) : (
+              <p className="map-empty-message">Click a node to view details</p>
+            )}
+          </div>
+
+          <div className="map-panel-section">
+            <h3>⭐ Important Places</h3>
+            <div className="map-important-places-list" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+              {IMPORTANT_POINTS.map(point => (
+                <div 
+                  key={point.id}
+                  className={`map-important-place-item ${selectedImportantPoint === point.id ? 'selected' : ''}`}
+                  style={{
+                    padding: '8px',
+                    margin: '4px 0',
+                    background: selectedImportantPoint === point.id ? '#fff0f0' : '#f8f8f8',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    border: selectedImportantPoint === point.id ? '1px solid #ff4444' : '1px solid #ddd'
+                  }}
+                  onClick={() => {
+                    if (map) {
+                      map.setView([point.lat, point.lng], 18);
+                      setSelectedImportantPoint(point.id);
+                    }
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ color: '#ff4444' }}>⭐</span>
+                    <strong style={{ color: '#ff4444' }}>{point.name}</strong>
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#666', marginTop: '2px' }}>
+                    Lat: {point.lat.toFixed(6)}<br />
+                    Lng: {point.lng.toFixed(6)}
+                  </div>
+                  <button
+                    style={{
+                      marginTop: '4px',
+                      padding: '2px 6px',
+                      background: '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nearest = findNearestNode(point.lat, point.lng);
+                      setDestinationNode(nearest);
+                    }}
+                  >
+                    Set as Destination
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="map-panel-section">
+            <h3>🛣️ Path Types</h3>
+            <div className="map-path-type-filters">
+              <label className="map-filter-item">
+                <input
+                  type="checkbox"
+                  checked={visiblePathTypes.highway}
+                  onChange={() => togglePathType('highway')}
+                />
+                <span className="map-filter-color highway"></span>
+                Highways - {PATH_DATA.filter(p => p.type === 'highway').length}
+              </label>
+              <label className="map-filter-item">
+                <input
+                  type="checkbox"
+                  checked={visiblePathTypes.mainRoad}
+                  onChange={() => togglePathType('mainRoad')}
+                />
+                <span className="map-filter-color mainroad"></span>
+                Main Roads - {PATH_DATA.filter(p => p.type === 'mainRoad').length}
+              </label>
+              <label className="map-filter-item">
+                <input
+                  type="checkbox"
+                  checked={visiblePathTypes.street}
+                  onChange={() => togglePathType('street')}
+                />
+                <span className="map-filter-color street"></span>
+                Streets - {PATH_DATA.filter(p => p.type === 'street').length}
+              </label>
+              <label className="map-filter-item">
+                <input
+                  type="checkbox"
+                  checked={visiblePathTypes.footpath}
+                  onChange={() => togglePathType('footpath')}
+                />
+                <span className="map-filter-color footpath"></span>
+                Footpaths - {PATH_DATA.filter(p => p.type === 'footpath').length}
+              </label>
+              <label className="map-filter-item">
+                <input
+                  type="checkbox"
+                  checked={visiblePathTypes.track}
+                  onChange={() => togglePathType('track')}
+                />
+                <span className="map-filter-color track"></span>
+                Tracks - {PATH_DATA.filter(p => p.type === 'track').length}
+              </label>
+            </div>
+          </div>
+
+          <div className="map-panel-section">
+            <h3>🛣️ Individual Paths</h3>
+            <div className="map-paths-list">
+              {PATH_DATA.map(path => {
+                const style = getPathStyle(path.type);
+                return (
+                  <div 
+                    key={path.id} 
+                    className={`map-path-item ${selectedPath === path.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedPath(path.id)}
+                  >
+                    <div className="map-path-header">
+                      <input
+                        type="checkbox"
+                        checked={visiblePaths.includes(path.id)}
+                        onChange={() => togglePathVisibility(path.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span className={`map-path-name ${path.type}`} style={{ color: style.color }}>
+                        {path.name}
+                      </span>
+                    </div>
+                    <div className="map-path-details">
+                      <span className={`map-path-type-badge ${path.type}`}>
+                        {path.type} • {style.weight}px
+                      </span>
+                      <span className="map-path-nodes">{path.nodes.length} nodes</span>
+                      <span className="map-path-length">{formatDistance(pathLengths[path.id] || 0)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="map-panel-section">
+            <h3>📈 Statistics</h3>
+            <div className="map-stats-grid">
+              <div className="map-stat-item">
+                <span>Total Nodes:</span>
+                <strong>{NODE_DATA.length}</strong>
+              </div>
+              <div className="map-stat-item">
+                <span>Total Paths:</span>
+                <strong>{PATH_DATA.length}</strong>
+              </div>
+              <div className="map-stat-item">
+                <span>Connected Nodes:</span>
+                <strong>
+                  {new Set(PATH_DATA.flatMap(p => p.nodes)).size}
+                </strong>
+              </div>
+              <div className="map-stat-item">
+                <span>Important Places:</span>
+                <strong style={{ color: '#ff4444' }}>{IMPORTANT_POINTS.length}</strong>
+              </div>
+              <div className="map-stat-item">
+                <span>Total Path Length:</span>
+                <strong>
+                  {formatDistance(Object.values(pathLengths).reduce((a, b) => a + b, 0))}
+                </strong>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1069,4 +1480,4 @@ const MapView = () => {
   );
 };
 
-export default MapView;
+export default VillageNodeMapper;

@@ -11,6 +11,8 @@ import Complaint from "./pages/Complaint.jsx";
 import Profile from "./pages/AdminProfile.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import Navbar from "./components/Navbar.jsx";
+import MapView from "./components/Map.jsx";
+import NavigateMap from "./components/NavigateMap.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const isLoggedIn = sessionStorage.getItem("isLoggedIn");
@@ -111,6 +113,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <Shops />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/map"
+            element={
+              <ProtectedRoute>
+                <MapView />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/navigateMap"
+            element={
+              <ProtectedRoute>
+                <NavigateMap />
               </ProtectedRoute>
             }
           />
