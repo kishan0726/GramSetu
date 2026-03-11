@@ -10,8 +10,9 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const ChatSetupScreen = ({ navigation, route }) => {
@@ -25,11 +26,11 @@ const ChatSetupScreen = ({ navigation, route }) => {
     checkExistingUserAndNavigate();
   }, []);
 
+  // Check Exitsing User And Navigate
   const checkExistingUserAndNavigate = async () => {
     try {
       console.log('Checking for existing user session...');
       
-      // Get user session from AsyncStorage
       const session = await AsyncStorage.getItem('userSession');
       
       if (!session) {
@@ -58,7 +59,6 @@ const ChatSetupScreen = ({ navigation, route }) => {
 
       setUserId(sessionUserId);
 
-      // Fetch user data from Firebase using the userId
       console.log('Fetching user data from Firebase for ID:', sessionUserId);
       const userSnapshot = await db.ref(`user_data/${sessionUserId}`).once('value');
       
@@ -67,7 +67,6 @@ const ChatSetupScreen = ({ navigation, route }) => {
         console.log('User data found:', user.firstName, user.lastName);
         setUserData(user);
         
-        // Check if user already has a chat account
         await checkChatAccount(sessionUserId);
       } else {
         throw new Error('User data not found in database');
@@ -89,30 +88,26 @@ const ChatSetupScreen = ({ navigation, route }) => {
     }
   };
 
+  // Check Chat Account
   const checkChatAccount = async (userId) => {
     try {
       console.log('Checking for existing chat account with userId:', userId);
       
-      // Check if user already has chat account in Firebase using userId as the key
       const chatUserSnapshot = await db.ref(`chat_users/${userId}`).once('value');
       
       if (chatUserSnapshot.exists()) {
-        // User already has a chat account with userId as key
         const chatUser = chatUserSnapshot.val();
         
         console.log('Found existing chat account with userId as key:', userId);
         
-        // Save to AsyncStorage
         await AsyncStorage.setItem('chatUserId', userId);
         await AsyncStorage.setItem('chatUserData', JSON.stringify(chatUser));
         
         console.log('Saved to AsyncStorage, navigating to ChatList...');
-        // Navigate directly to chat list
         navigation.replace('ChatListScreen');
         return;
       }
 
-      // Also check if there's any chat account with this userDataId (backward compatibility)
       const chatUsersSnapshot = await db.ref('chat_users').orderByChild('userDataId').equalTo(userId).once('value');
       
       if (chatUsersSnapshot.exists()) {
@@ -122,7 +117,6 @@ const ChatSetupScreen = ({ navigation, route }) => {
         
         console.log('Found existing chat account with userDataId:', chatUserId);
         
-        // Save to AsyncStorage
         await AsyncStorage.setItem('chatUserId', chatUserId);
         await AsyncStorage.setItem('chatUserData', JSON.stringify(chatUser));
         
@@ -132,7 +126,6 @@ const ChatSetupScreen = ({ navigation, route }) => {
       }
 
       console.log('No existing chat account found, showing setup screen');
-      // Need to create new chat account
       setGenerating(false);
     } catch (error) {
       console.error('Error checking chat account:', error);
@@ -140,6 +133,7 @@ const ChatSetupScreen = ({ navigation, route }) => {
     }
   };
 
+  // Create Chat Account
   const createChatAccount = async () => {
     if (!userData || !userId) {
       Alert.alert('Error', 'User data not available');
@@ -150,15 +144,12 @@ const ChatSetupScreen = ({ navigation, route }) => {
     console.log('Creating new chat account with userId as key:', userId);
 
     try {
-      // Use userId directly as the chatUserId
       const chatUserId = userId;
       
-      // Check if it already exists (shouldn't, but just in case)
       const exists = await db.ref(`chat_users/${chatUserId}`).once('value');
       
       if (exists.exists()) {
         console.log('Chat account already exists with this userId');
-        // Just use the existing one
         const existingChatUser = exists.val();
         
         await AsyncStorage.setItem('chatUserId', chatUserId);
@@ -172,7 +163,6 @@ const ChatSetupScreen = ({ navigation, route }) => {
         return;
       }
 
-      // Create chat user object using userId as key
       const chatUser = {
         userDataId: userId,
         firstName: userData.firstName || '',
@@ -185,13 +175,10 @@ const ChatSetupScreen = ({ navigation, route }) => {
 
       console.log('Saving chat user to Firebase with key:', chatUserId);
       
-      // Save to Firebase using userId as the key
       await db.ref(`chat_users/${chatUserId}`).set(chatUser);
 
-      // Create search indexes
       await createSearchIndexes(chatUserId, userData);
 
-      // Save locally
       await AsyncStorage.setItem('chatUserId', chatUserId);
       await AsyncStorage.setItem('chatUserData', JSON.stringify(chatUser));
 
@@ -211,10 +198,10 @@ const ChatSetupScreen = ({ navigation, route }) => {
     }
   };
 
+  // Create Search Indexes
   const createSearchIndexes = async (chatUserId, userData) => {
     const updates = {};
     
-    // Index by first name
     if (userData.firstName) {
       const firstNameKey = userData.firstName.toLowerCase();
       updates[`user_search/${firstNameKey}/${chatUserId}`] = {
@@ -224,7 +211,6 @@ const ChatSetupScreen = ({ navigation, route }) => {
       };
     }
 
-    // Index by last name
     if (userData.lastName) {
       const lastNameKey = userData.lastName.toLowerCase();
       updates[`user_search/${lastNameKey}/${chatUserId}`] = {
@@ -234,7 +220,6 @@ const ChatSetupScreen = ({ navigation, route }) => {
       };
     }
 
-    // Index by full name
     if (userData.firstName || userData.lastName) {
       const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.toLowerCase().trim();
       if (fullName) {
@@ -246,7 +231,6 @@ const ChatSetupScreen = ({ navigation, route }) => {
       }
     }
 
-    // Index by phone number if exists
     if (userData.contactNumber) {
       updates[`user_search/${userData.contactNumber}/${chatUserId}`] = {
         firstName: userData.firstName || '',
@@ -258,6 +242,7 @@ const ChatSetupScreen = ({ navigation, route }) => {
     await db.ref().update(updates);
   };
 
+  // Generating
   if (generating) {
     return (
       <SafeAreaView style={styles.container}>
@@ -292,6 +277,7 @@ const ChatSetupScreen = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
 
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -303,6 +289,7 @@ const ChatSetupScreen = ({ navigation, route }) => {
         <View style={{ width: 40 }} />
       </View>
 
+      {/* Content */}
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <Icon name="chat" size={80} color="#38bdf8" />
@@ -353,6 +340,7 @@ const ChatSetupScreen = ({ navigation, route }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

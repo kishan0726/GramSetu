@@ -13,8 +13,9 @@ import {
   Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const ChatListScreen = ({ navigation }) => {
@@ -30,6 +31,7 @@ const ChatListScreen = ({ navigation }) => {
     loadUserData();
   }, []);
 
+  // Fetch User Data from DB
   const loadUserData = async () => {
     try {
       const storedChatUserId = await AsyncStorage.getItem('chatUserId');
@@ -55,6 +57,7 @@ const ChatListScreen = ({ navigation }) => {
     }
   };
 
+  // Fetch Pending Requests
   const loadPendingRequests = (userId) => {
     const requestsRef = db.ref('chat_requests');
     
@@ -74,6 +77,7 @@ const ChatListScreen = ({ navigation }) => {
     return () => requestsRef.off();
   };
 
+  // Fetch Chats from DB
   const loadChats = (userId) => {
     const chatsRef = db.ref('chats');
     
@@ -81,25 +85,19 @@ const ChatListScreen = ({ navigation }) => {
       const allChats = snapshot.val() || {};
       const userChats = [];
 
-      // Use Promise.all to handle async operations
       const promises = [];
 
       Object.entries(allChats).forEach(([chatId, chatData]) => {
-        // Check if user is participant
         if (chatData.participants && chatData.participants[userId]) {
-          // Get the other participant
           const otherUserId = Object.keys(chatData.participants).find(id => id !== userId);
           
           if (otherUserId) {
-            // Create promise for each user data fetch
             const promise = db.ref(`user_data/${otherUserId}`).once('value').then(userSnapshot => {
               const userData = userSnapshot.val();
               
-              // Also get chat user data for online status
               return db.ref(`chat_users/${otherUserId}`).once('value').then(chatUserSnapshot => {
                 const chatUser = chatUserSnapshot.val();
                 
-                // Get profile image if available
                 return db.ref(`user_data/${otherUserId}/profile_image`).once('value').then(imageSnapshot => {
                   const profileImage = imageSnapshot.val();
                   
@@ -123,9 +121,7 @@ const ChatListScreen = ({ navigation }) => {
         }
       });
 
-      // Wait for all user data to be fetched
       Promise.all(promises).then(() => {
-        // Sort by last message timestamp
         userChats.sort((a, b) => 
           (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0)
         );
@@ -138,6 +134,7 @@ const ChatListScreen = ({ navigation }) => {
     return () => chatsRef.off();
   };
 
+  // Calculate Unread Count
   const calculateUnreadCount = (messages, userId) => {
     if (!messages) return 0;
     
@@ -150,6 +147,7 @@ const ChatListScreen = ({ navigation }) => {
     return count;
   };
 
+  // Format Time
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     
@@ -168,12 +166,13 @@ const ChatListScreen = ({ navigation }) => {
     }
   };
 
-  // Get initials for avatar fallback
+  // Get initials
   const getInitials = (firstName, lastName) => {
     if (!firstName && !lastName) return '👤';
     return (firstName?.charAt(0) || '') + (lastName?.charAt(0) || '');
   };
 
+  // Render Chat Item
   const renderChatItem = ({ item }) => {
     const fullName = `${item.userData.firstName || ''} ${item.userData.lastName || ''}`.trim();
     const initials = getInitials(item.userData.firstName, item.userData.lastName);
@@ -226,6 +225,7 @@ const ChatListScreen = ({ navigation }) => {
     );
   };
 
+  // Loading
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -245,6 +245,7 @@ const ChatListScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
 
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chats</Text>
         <View style={styles.headerIcons}>
@@ -272,6 +273,7 @@ const ChatListScreen = ({ navigation }) => {
         </View>
       </View>
 
+      {/* Search Container */}
       <View style={styles.searchContainer}>
         <Icon name="search" size={20} color="#94a3b8" style={styles.searchIcon} />
         <TextInput
@@ -309,6 +311,7 @@ const ChatListScreen = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

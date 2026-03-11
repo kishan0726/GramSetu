@@ -238,7 +238,7 @@ const PublicServicesScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedService, setSelectedService] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [viewType, setViewType] = useState('grid'); // 'grid' or 'list'
+  const [viewType, setViewType] = useState('grid');
 
   const categories = [
     { id: 'all', name: t('all'), icon: 'apps', color: '#64748b' },
@@ -249,52 +249,6 @@ const PublicServicesScreen = ({ navigation }) => {
     { id: 'transport', name: t('transport'), icon: 'directions-bus', color: '#3b82f6' },
     { id: 'emergency', name: t('emergency'), icon: 'warning', color: '#ef4444' },
   ];
-
-  // Map service categories
-  const getServiceCategory = (service) => {
-    const utilityServices = ['water', 'electricity', 'internet', 'streetlight'];
-    const infrastructureServices = ['road', 'drainage'];
-    const healthServices = ['health'];
-    const educationServices = ['education'];
-    const transportServices = ['bus'];
-    const emergencyServices = ['fire', 'police'];
-    
-    if (utilityServices.some(s => service.id.includes(s))) return 'utility';
-    if (infrastructureServices.some(s => service.id.includes(s))) return 'infrastructure';
-    if (healthServices.some(s => service.id.includes(s))) return 'health';
-    if (educationServices.some(s => service.id.includes(s))) return 'education';
-    if (transportServices.some(s => service.id.includes(s))) return 'transport';
-    if (emergencyServices.some(s => service.id.includes(s))) return 'emergency';
-    return 'utility';
-  };
-
-  useEffect(() => {
-    fetchServices();
-  }, []);
-
-  const fetchServices = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setServices(SAMPLE_SERVICES);
-      setLoading(false);
-      setRefreshing(false);
-    }, 1000);
-  };
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchServices();
-  };
-
-  const getFilteredServices = () => {
-    if (selectedCategory === 'all') {
-      return services;
-    }
-    return services.filter(service => 
-      getServiceCategory(service) === selectedCategory
-    );
-  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -335,11 +289,55 @@ const PublicServicesScreen = ({ navigation }) => {
     }
   };
 
-  const getCategoryColor = (service) => {
-    const category = categories.find(c => c.id === getServiceCategory(service));
-    return category?.color || '#64748b';
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  // Map service categories
+  const getServiceCategory = (service) => {
+    const utilityServices = ['water', 'electricity', 'internet', 'streetlight'];
+    const infrastructureServices = ['road', 'drainage'];
+    const healthServices = ['health'];
+    const educationServices = ['education'];
+    const transportServices = ['bus'];
+    const emergencyServices = ['fire', 'police'];
+    
+    if (utilityServices.some(s => service.id.includes(s))) return 'utility';
+    if (infrastructureServices.some(s => service.id.includes(s))) return 'infrastructure';
+    if (healthServices.some(s => service.id.includes(s))) return 'health';
+    if (educationServices.some(s => service.id.includes(s))) return 'education';
+    if (transportServices.some(s => service.id.includes(s))) return 'transport';
+    if (emergencyServices.some(s => service.id.includes(s))) return 'emergency';
+    return 'utility';
   };
 
+  // Fetch Services
+  const fetchServices = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setServices(SAMPLE_SERVICES);
+      setLoading(false);
+      setRefreshing(false);
+    }, 1000);
+  };
+
+  // Refresh
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchServices();
+  };
+
+  // Get Filtered Services
+  const getFilteredServices = () => {
+    if (selectedCategory === 'all') {
+      return services;
+    }
+    return services.filter(service => 
+      getServiceCategory(service) === selectedCategory
+    );
+  };
+
+  // Render Grid View
   const renderGridView = () => {
     const filteredServices = getFilteredServices();
     
@@ -392,6 +390,7 @@ const PublicServicesScreen = ({ navigation }) => {
     );
   };
 
+  // Render List View
   const renderListView = () => {
     const filteredServices = getFilteredServices();
     
@@ -767,6 +766,7 @@ const PublicServicesScreen = ({ navigation }) => {
   );
 };
 
+// Stylesheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

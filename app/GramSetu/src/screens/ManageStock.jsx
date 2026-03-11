@@ -13,6 +13,7 @@ import {
   Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
 import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -30,18 +31,27 @@ const ManageStock = ({ navigation, route }) => {
   const [quantityToAdd, setQuantityToAdd] = useState('');
   const [filterLowStock, setFilterLowStock] = useState(false);
   const [priceInputs, setPriceInputs] = useState({});
+  
+  const getStockStatusColor = (stock) => {
+    if (stock <= 0) return '#ef4444';
+    if (stock < 10) return '#f59e0b';
+    return '#10b981'; 
+  };
 
-  // Load items when component mounts
+  const getStockStatusText = (stock) => {
+    if (stock <= 0) return t('outOfStock');
+    if (stock < 10) return t('lowStock');
+    return t('inStock');
+  };
+
   useEffect(() => {
     loadItems();
   }, []);
 
-  // Filter items based on search query and low stock filter
   useEffect(() => {
     filterItems();
   }, [items, searchQuery, filterLowStock]);
 
-  // Initialize price inputs when items change
   useEffect(() => {
     const initialPriceInputs = {};
     items.forEach(item => {
@@ -50,6 +60,7 @@ const ManageStock = ({ navigation, route }) => {
     setPriceInputs(initialPriceInputs);
   }, [items]);
 
+  // Fetch Items
   const loadItems = async () => {
     setLoading(true);
     try {
@@ -74,17 +85,16 @@ const ManageStock = ({ navigation, route }) => {
     }
   };
 
+  // Filter Item
   const filterItems = () => {
     let filtered = [...items];
     
-    // Apply search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(item => 
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
     
-    // Apply low stock filter (items with stock less than 10)
     if (filterLowStock) {
       filtered = filtered.filter(item => (item.stock || 0) < 10);
     }
@@ -92,6 +102,7 @@ const ManageStock = ({ navigation, route }) => {
     setFilteredItems(filtered);
   };
 
+  // Update Stock
   const updateStock = async (itemId, newStock) => {
     if (newStock < 0) {
       Alert.alert(t('error'), t('stockCannotBeNegative'));
@@ -107,7 +118,6 @@ const ManageStock = ({ navigation, route }) => {
         lastUpdated: new Date().toISOString().split('T')[0]
       });
 
-      // Update shop's lastUpdated timestamp
       await db.ref(`shops_list/${shopId}`).update({
         lastUpdated: new Date().toISOString().split('T')[0]
       });
@@ -121,6 +131,7 @@ const ManageStock = ({ navigation, route }) => {
     }
   };
 
+  // Update Price
   const updatePrice = async (itemId, newPrice) => {
     if (newPrice <= 0) {
       Alert.alert(t('error'), t('priceMustBePositive'));
@@ -136,7 +147,6 @@ const ManageStock = ({ navigation, route }) => {
         lastUpdated: new Date().toISOString().split('T')[0]
       });
 
-      // Update shop's lastUpdated timestamp
       await db.ref(`shops_list/${shopId}`).update({
         lastUpdated: new Date().toISOString().split('T')[0]
       });
@@ -150,6 +160,7 @@ const ManageStock = ({ navigation, route }) => {
     }
   };
 
+  // Add Stock
   const handleAddStock = () => {
     if (!selectedItem) return;
     
@@ -168,6 +179,7 @@ const ManageStock = ({ navigation, route }) => {
     setSelectedItem(null);
   };
 
+  // Reduce Stock
   const handleReduceStock = () => {
     if (!selectedItem) return;
     
@@ -191,6 +203,7 @@ const ManageStock = ({ navigation, route }) => {
     setSelectedItem(null);
   };
 
+  // Price Input Change
   const handlePriceInputChange = (itemId, value) => {
     setPriceInputs(prev => ({
       ...prev,
@@ -198,6 +211,7 @@ const ManageStock = ({ navigation, route }) => {
     }));
   };
 
+  // Price Update
   const handlePriceUpdate = (itemId) => {
     const newPrice = parseFloat(priceInputs[itemId]);
     if (isNaN(newPrice) || newPrice <= 0) {
@@ -208,6 +222,7 @@ const ManageStock = ({ navigation, route }) => {
     updatePrice(itemId, newPrice);
   };
 
+  // Mannual Stock Update
   const handleManualStockUpdate = (itemId, value) => {
     const newStock = parseInt(value);
     if (!isNaN(newStock)) {
@@ -215,24 +230,14 @@ const ManageStock = ({ navigation, route }) => {
     }
   };
 
+  // Open Stock Modak
   const openStockModal = (item, action) => {
     setSelectedItem({ ...item, action });
     setStockModalVisible(true);
     setQuantityToAdd('');
   };
 
-  const getStockStatusColor = (stock) => {
-    if (stock <= 0) return '#ef4444'; // Red - Out of stock
-    if (stock < 10) return '#f59e0b'; // Orange - Low stock
-    return '#10b981'; // Green - In stock
-  };
-
-  const getStockStatusText = (stock) => {
-    if (stock <= 0) return t('outOfStock');
-    if (stock < 10) return t('lowStock');
-    return t('inStock');
-  };
-
+  // Render Item
   const renderItem = ({ item }) => {
     const stockStatusColor = getStockStatusColor(item.stock || 0);
     const stockStatusText = getStockStatusText(item.stock || 0);
@@ -351,6 +356,7 @@ const ManageStock = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
       
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#ffffff" />
@@ -531,6 +537,7 @@ const ManageStock = ({ navigation, route }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

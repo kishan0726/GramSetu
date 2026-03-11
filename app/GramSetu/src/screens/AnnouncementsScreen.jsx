@@ -15,6 +15,7 @@ import {
   TextInput
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
 import { useLanguage } from '../context/LanguageContext';
 import { db } from '../config/firebase'
 
@@ -32,22 +33,54 @@ const AnnouncementsScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const categories = [
-  { id: 'all', name: t('all'), icon: 'apps', color: '#64748b' },
-  { id: 'general', name: t('general'), icon: 'info', color: '#3b82f6' },
-  { id: 'emergency', name: t('emergency'), icon: 'warning', color: '#ef4444' },
-  { id: 'scheme', name: t('scheme'), icon: 'account-balance-wallet', color: '#10b981' },
-  { id: 'event', name: t('event'), icon: 'event', color: '#8b5cf6' },
-  { id: 'maintenance', name: t('maintenance'), icon: 'build', color: '#f59e0b' },
-  { id: 'holiday', name: t('holiday'), icon: 'celebration', color: '#ec4899' },
-  { id: 'meeting', name: t('meeting'), icon: 'groups', color: '#6366f1' },
-  { id: 'important', name: t('important'), icon: 'priority-high', color: '#ef4444' },
-];
+    { id: 'all', name: t('all'), icon: 'apps', color: '#64748b' },
+    { id: 'general', name: t('general'), icon: 'info', color: '#3b82f6' },
+    { id: 'emergency', name: t('emergency'), icon: 'warning', color: '#ef4444' },
+    { id: 'scheme', name: t('scheme'), icon: 'account-balance-wallet', color: '#10b981' },
+    { id: 'event', name: t('event'), icon: 'event', color: '#8b5cf6' },
+    { id: 'maintenance', name: t('maintenance'), icon: 'build', color: '#f59e0b' },
+    { id: 'holiday', name: t('holiday'), icon: 'celebration', color: '#ec4899' },
+    { id: 'meeting', name: t('meeting'), icon: 'groups', color: '#6366f1' },
+    { id: 'important', name: t('important'), icon: 'priority-high', color: '#ef4444' },
+  ];
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'urgent':
+        return '#ef4444';
+      case 'high':
+        return '#f59e0b';
+      case 'normal':
+        return '#3b82f6';
+      default:
+        return '#64748b';
+    }
+  };
+
+  const getPriorityIcon = (priority) => {
+    switch (priority) {
+      case 'urgent':
+        return 'warning';
+      case 'high':
+        return 'priority-high';
+      case 'normal':
+        return 'info';
+      default:
+        return 'info';
+    }
+  };
+
+  const getCategoryColor = (categoryId) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.color || '#64748b';
+  };
 
   useEffect(() => {
     const unsubscribe = fetchAnnouncements();
     return unsubscribe;
   }, []);
 
+  // Fetch Announcements from DB
   const fetchAnnouncements = () => {
     setLoading(true);
 
@@ -86,20 +119,20 @@ const AnnouncementsScreen = ({ navigation }) => {
     return () => reference.off();
   };
 
+  // Refresh
   const onRefresh = () => {
     setRefreshing(true);
     fetchAnnouncements();
   };
 
+  // Filtered Announcements
   const getFilteredAnnouncements = () => {
     let filtered = announcements;
 
-    // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
 
-    // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(item =>
@@ -110,7 +143,6 @@ const AnnouncementsScreen = ({ navigation }) => {
       );
     }
 
-    // Limit to 10 if not showing all
     if (!showAll) {
       filtered = filtered.slice(0, 10);
     }
@@ -118,32 +150,7 @@ const AnnouncementsScreen = ({ navigation }) => {
     return filtered;
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'urgent':
-        return '#ef4444';
-      case 'high':
-        return '#f59e0b';
-      case 'normal':
-        return '#3b82f6';
-      default:
-        return '#64748b';
-    }
-  };
-
-  const getPriorityIcon = (priority) => {
-    switch (priority) {
-      case 'urgent':
-        return 'warning';
-      case 'high':
-        return 'priority-high';
-      case 'normal':
-        return 'info';
-      default:
-        return 'info';
-    }
-  };
-
+  // Format Date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -165,11 +172,7 @@ const AnnouncementsScreen = ({ navigation }) => {
     }
   };
 
-  const getCategoryColor = (categoryId) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.color || '#64748b';
-  };
-
+  // Render Announcement Item
   const renderAnnouncementItem = ({ item, index }) => {
     const categoryColor = getCategoryColor(item.category);
 
@@ -446,10 +449,10 @@ const AnnouncementsScreen = ({ navigation }) => {
                       <Text style={styles.modalMetaLabel}>{t('expires')}</Text>
                       <Text style={styles.modalMetaValue}>
                         {new Date(selectedAnnouncement.expiryDate).toLocaleDateString(language === 'gu' ? 'gu-IN' : 'en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
                       </Text>
                     </View>
                   )}
@@ -498,6 +501,7 @@ const AnnouncementsScreen = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

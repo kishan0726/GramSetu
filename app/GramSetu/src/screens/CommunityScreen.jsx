@@ -88,6 +88,7 @@ const CommunityScreen = ({ navigation }) => {
         { id: 'Business', name: 'Business', icon: 'store' },
     ];
 
+    // Filtered Groups
     const filteredGroups = groups.filter(group => {
         const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             group.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
@@ -95,6 +96,7 @@ const CommunityScreen = ({ navigation }) => {
         return matchesSearch && matchesCategory;
     });
 
+    // Render Group Item
     const renderGroupItem = ({ item }) => (
         <TouchableOpacity
             style={styles.groupCard}
@@ -238,6 +240,7 @@ const CommunityScreen = ({ navigation }) => {
     );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
     container: {
         flex: 1,

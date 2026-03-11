@@ -18,11 +18,12 @@ import {
   Platform,
   Linking,
 } from 'react-native';
-import { db } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
@@ -40,7 +41,6 @@ const ComplaintsScreen = ({ navigation }) => {
   const [showNewComplaintModal, setShowNewComplaintModal] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
 
-  // New complaint form state
   const [newComplaint, setNewComplaint] = useState({
     title: '',
     description: '',
@@ -69,6 +69,61 @@ const ComplaintsScreen = ({ navigation }) => {
     { id: 'resolved', name: t('resolved'), color: '#10b981' },
     { id: 'rejected', name: t('rejected'), color: '#ef4444' },
   ];
+  
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending':
+        return '#f59e0b';
+      case 'in-progress':
+        return '#3b82f6';
+      case 'resolved':
+        return '#10b981';
+      case 'rejected':
+        return '#ef4444';
+      default:
+        return '#64748b';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'hourglass-empty';
+      case 'in-progress':
+        return 'pending';
+      case 'resolved':
+        return 'check-circle';
+      case 'rejected':
+        return 'cancel';
+      default:
+        return 'info';
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'urgent':
+        return '#ef4444';
+      case 'high':
+        return '#f59e0b';
+      case 'medium':
+        return '#3b82f6';
+      case 'low':
+        return '#10b981';
+      default:
+        return '#64748b';
+    }
+  };
+
+  const getCategoryColor = (categoryId) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.color || '#64748b';
+  };
+
+  const getCategoryIcon = (categoryId) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.icon || 'info';
+  };
 
   useEffect(() => {
     let ref;
@@ -145,6 +200,7 @@ const ComplaintsScreen = ({ navigation }) => {
     }
   };
 
+  // Get Current Location
   const handleGetCurrentLocation = () => {
     setLocationLoading(true);
 
@@ -298,10 +354,12 @@ const ComplaintsScreen = ({ navigation }) => {
     executeLocationRequest();
   };
 
+  // Refresh
   const onRefresh = () => {
     setRefreshing(true);
   };
 
+  // Filtered Complaints
   const getFilteredComplaints = () => {
     let filtered = complaints;
 
@@ -320,51 +378,7 @@ const ComplaintsScreen = ({ navigation }) => {
     return filtered;
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending':
-        return '#f59e0b';
-      case 'in-progress':
-        return '#3b82f6';
-      case 'resolved':
-        return '#10b981';
-      case 'rejected':
-        return '#ef4444';
-      default:
-        return '#64748b';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'hourglass-empty';
-      case 'in-progress':
-        return 'pending';
-      case 'resolved':
-        return 'check-circle';
-      case 'rejected':
-        return 'cancel';
-      default:
-        return 'info';
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'urgent':
-        return '#ef4444';
-      case 'high':
-        return '#f59e0b';
-      case 'medium':
-        return '#3b82f6';
-      case 'low':
-        return '#10b981';
-      default:
-        return '#64748b';
-    }
-  };
-
+  // Format Data
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -386,16 +400,7 @@ const ComplaintsScreen = ({ navigation }) => {
     }
   };
 
-  const getCategoryColor = (categoryId) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.color || '#64748b';
-  };
-
-  const getCategoryIcon = (categoryId) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.icon || 'info';
-  };
-
+  // Handle Submit Complaint
   const handleSubmitComplaint = async () => {
     try {
       if (!newComplaint.title.trim()) {
@@ -484,6 +489,7 @@ const ComplaintsScreen = ({ navigation }) => {
     }
   };
 
+  // Render Complain Item
   const renderComplaintItem = ({ item, index }) => {
     const categoryColor = getCategoryColor(item.category);
     const statusColor = getStatusColor(item.status);
@@ -573,6 +579,7 @@ const ComplaintsScreen = ({ navigation }) => {
     );
   };
 
+  // Navigate To Map
   const handleNavigateToMap = (coordinates, complaintId) => {
     console.log('Navigating to map with coordinates:', coordinates, 'complaint:', complaintId);
 
@@ -1087,6 +1094,7 @@ const ComplaintsScreen = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -13,6 +13,7 @@ import {
   FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
 import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -31,6 +32,7 @@ const AddShopItem = ({ navigation, route }) => {
   ]);
   const [loading, setLoading] = useState(false);
 
+  // Add New Item
   const addNewItem = () => {
     setItems([
       ...items,
@@ -45,6 +47,7 @@ const AddShopItem = ({ navigation, route }) => {
     ]);
   };
 
+  // Remove Item
   const removeItem = (id) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
@@ -53,12 +56,14 @@ const AddShopItem = ({ navigation, route }) => {
     }
   };
 
+  // Update Item
   const updateItem = (id, field, value) => {
     setItems(items.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
 
+  // Validate Item
   const validateItems = () => {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -87,18 +92,17 @@ const AddShopItem = ({ navigation, route }) => {
     return 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   };
 
+  // Handle Add Items
   const handleAddItems = async () => {
     if (!validateItems()) return;
 
     setLoading(true);
 
     try {
-      // Get reference to the items path in Firebase
       const itemsRef = db.ref(`shops_list/${shopId}/items`);
       
-      // Prepare items for batch upload
       const uploadPromises = items.map(async (item) => {
-        if (!item.name.trim()) return null; // Skip empty items
+        if (!item.name.trim()) return null;
         
         const itemId = generateItemId();
         const itemData = {
@@ -112,20 +116,16 @@ const AddShopItem = ({ navigation, route }) => {
           status: 'active'
         };
 
-        // Save individual item under items path with unique ID
         await itemsRef.child(itemId).set(itemData);
         return itemData;
       });
 
-      // Wait for all items to be uploaded
       await Promise.all(uploadPromises);
 
-      // Update shop's lastUpdated timestamp
       await db.ref(`shops_list/${shopId}`).update({
         lastUpdated: new Date().toISOString().split('T')[0]
       });
 
-      // Success message with options
       Alert.alert(
         t('success'),
         `${items.length} ${t('itemsAddedSuccessfully')}`,
@@ -158,6 +158,7 @@ const AddShopItem = ({ navigation, route }) => {
     }
   };
 
+  // Render Items
   const renderItem = ({ item, index }) => (
     <View style={styles.itemCard}>
       <View style={styles.itemHeader}>
@@ -274,6 +275,7 @@ const AddShopItem = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
       
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#ffffff" />
@@ -286,6 +288,7 @@ const AddShopItem = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
+      {/* summary */}
       <View style={styles.summaryBar}>
         <Text style={styles.summaryText}>
           {t('totalItems')}: {items.length}
@@ -338,6 +341,7 @@ const AddShopItem = ({ navigation, route }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

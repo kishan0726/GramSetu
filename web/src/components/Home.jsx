@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+
 import MapView from './Map';
+
 import '../stylesheets/Home.css';
 
 const Home = ({ villageData }) => {
@@ -26,6 +28,7 @@ const Home = ({ villageData }) => {
     fetchVillageStats();
   }, []);
 
+  // Fetch Village Stats from DB
   const fetchVillageStats = async () => {
     try {
       const response = await fetch('http://localhost:5000/get-village-stats');
@@ -77,6 +80,7 @@ const Home = ({ villageData }) => {
     }
   };
 
+  // Handle Navigate
   const handleNavigate = (placeName) => {
     navigate("/navigateMap", {
       state: { placeName: placeName }

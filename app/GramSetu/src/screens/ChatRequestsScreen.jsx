@@ -11,8 +11,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const ChatRequestsScreen = ({ navigation }) => {
@@ -26,6 +27,7 @@ const ChatRequestsScreen = ({ navigation }) => {
     loadUserData();
   }, []);
 
+  // Fetch User Data from DB
   const loadUserData = async () => {
     try {
       const storedChatUserId = await AsyncStorage.getItem('chatUserId');
@@ -38,6 +40,7 @@ const ChatRequestsScreen = ({ navigation }) => {
     }
   };
 
+  // Fetch Requests from DB
   const loadRequests = (userId) => {
     const requestsRef = db.ref('chat_requests');
     
@@ -69,8 +72,8 @@ const ChatRequestsScreen = ({ navigation }) => {
     return () => requestsRef.off();
   };
 
+  // Create ChatRoom
   const createChatRoom = async (fromUserId, toUserId) => {
-    // Sort user IDs to create consistent room ID
     const users = [fromUserId, toUserId].sort();
     const roomId = `chat_${users[0]}_${users[1]}`;
 
@@ -86,6 +89,7 @@ const ChatRequestsScreen = ({ navigation }) => {
     return roomId;
   };
 
+  // Handle Request Accept
   const handleAccept = async (request) => {
     setProcessingId(request.id);
     try {
@@ -127,6 +131,7 @@ const ChatRequestsScreen = ({ navigation }) => {
     }
   };
 
+  // Handle Request Reject
   const handleReject = async (requestId) => {
     setProcessingId(requestId);
     try {
@@ -146,6 +151,7 @@ const ChatRequestsScreen = ({ navigation }) => {
     }
   };
 
+  // Render Request Item
   const renderRequestItem = ({ item }) => (
     <View style={styles.requestCard}>
       <View style={styles.requestHeader}>
@@ -199,6 +205,7 @@ const ChatRequestsScreen = ({ navigation }) => {
     </View>
   );
 
+  // Loading
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -224,6 +231,7 @@ const ChatRequestsScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
 
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -255,6 +263,7 @@ const ChatRequestsScreen = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

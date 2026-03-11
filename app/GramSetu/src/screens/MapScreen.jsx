@@ -1,4 +1,3 @@
-// WebViewVillageMap.js
 import React, { useRef, useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -1191,6 +1190,7 @@ const MapScreen = () => {
         </View>
       )}
 
+      {/* WebView */}
       <WebView
         ref={webViewRef}
         source={{ html: htmlContent }}
@@ -1362,6 +1362,7 @@ const MapScreen = () => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -15,11 +15,12 @@ import {
   Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Geolocation from '@react-native-community/geolocation';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+
 import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 import * as ImagePicker from 'react-native-image-picker';
-import Geolocation from '@react-native-community/geolocation';
-import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 // Cloudinary configuration
 const CLOUDINARY_CLOUD_NAME = 'dmjwrm8sp';
@@ -29,7 +30,6 @@ const EditShopDetails = ({ navigation, route }) => {
   const { t } = useLanguage();
   const { shopData, shopId } = route.params;
   
-  // Initialize form data
   const [formData, setFormData] = useState({
     shopName: shopData.shopName || shopData.name || '',
     ownerName: shopData.ownerName || '',
@@ -46,11 +46,23 @@ const EditShopDetails = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [imageOptionsVisible, setImageOptionsVisible] = useState(false);
   const [profileImage, setProfileImage] = useState({
     uri: shopData.shop_image?.profile?.url || null,
     fileName: shopData.shop_image?.profile?.fileName || null
   });
   const [originalData] = useState(formData);
+
+  const categories = [
+    { id: 'grocery', name: t('grocery') },
+    { id: 'medical', name: t('medical') },
+    { id: 'hardware', name: t('hardware') },
+    { id: 'electronics', name: t('electronics') },
+    { id: 'food', name: t('food') },
+    { id: 'stationery', name: t('stationery') },
+    { id: 'dairy', name: t('dairy') },
+    { id: 'agriculture', name: t('agriculture') },
+  ];
 
   // Request location permission
   const requestLocationPermission = async () => {
@@ -70,7 +82,7 @@ const EditShopDetails = ({ navigation, route }) => {
     }
   };
 
-  // Updated location handler with same logic as ComplaintsScreen
+  // Fetch Location 
   const handleFetchLocation = () => {
     setLocationLoading(true);
 
@@ -90,14 +102,12 @@ const EditShopDetails = ({ navigation, route }) => {
 
     const tryWithFallback = async () => {
       try {
-        // Try with high accuracy first
         console.log('Trying high accuracy location...');
         const position = await requestLocation(true);
         return position;
       } catch (highAccuracyError) {
         console.log('High accuracy failed, trying low accuracy...', highAccuracyError);
 
-        // If high accuracy fails, try with low accuracy
         try {
           const position = await requestLocation(false);
           return position;
@@ -108,7 +118,6 @@ const EditShopDetails = ({ navigation, route }) => {
       }
     };
 
-    // Set overall timeout
     const overallTimeout = setTimeout(() => {
       setLocationLoading(false);
       showLocationError({ code: 3, message: 'Overall location request timed out' });
@@ -303,13 +312,10 @@ const EditShopDetails = ({ navigation, route }) => {
       try {
         setUploading(true);
 
-        // Upload to Cloudinary
         const uploadResult = await uploadToCloudinary(imageUri);
 
-        // Save to Firebase
         await saveImageToFirebase(uploadResult);
 
-        // Update local state
         setProfileImage({
           uri: uploadResult.secure_url,
           fileName: uploadResult.fileName
@@ -376,9 +382,7 @@ const EditShopDetails = ({ navigation, route }) => {
     });
   };
 
-  // Show image options modal
-  const [imageOptionsVisible, setImageOptionsVisible] = useState(false);
-
+  // Get Change Fields 
   const getChangedFields = () => {
     const changes = {};
     Object.keys(formData).forEach(key => {
@@ -389,6 +393,7 @@ const EditShopDetails = ({ navigation, route }) => {
     return changes;
   };
 
+  // Validate Form
   const validateForm = () => {
     const errors = [];
 
@@ -408,6 +413,7 @@ const EditShopDetails = ({ navigation, route }) => {
     return true;
   };
 
+  // Handle Save
   const handleSave = async () => {
     if (!validateForm()) return;
 
@@ -458,21 +464,11 @@ const EditShopDetails = ({ navigation, route }) => {
     }
   };
 
-  const categories = [
-    { id: 'grocery', name: t('grocery') },
-    { id: 'medical', name: t('medical') },
-    { id: 'hardware', name: t('hardware') },
-    { id: 'electronics', name: t('electronics') },
-    { id: 'food', name: t('food') },
-    { id: 'stationery', name: t('stationery') },
-    { id: 'dairy', name: t('dairy') },
-    { id: 'agriculture', name: t('agriculture') },
-  ];
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
       
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#ffffff" />
@@ -733,6 +729,7 @@ const EditShopDetails = ({ navigation, route }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

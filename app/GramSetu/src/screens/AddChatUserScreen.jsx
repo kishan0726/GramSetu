@@ -12,8 +12,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const AddChatUserScreen = ({ navigation }) => {
@@ -30,6 +31,7 @@ const AddChatUserScreen = ({ navigation }) => {
     loadUserData();
   }, []);
 
+  // Fetch Data from DB
   const loadUserData = async () => {
     try {
       const storedChatUserId = await AsyncStorage.getItem('chatUserId');
@@ -45,6 +47,7 @@ const AddChatUserScreen = ({ navigation }) => {
     }
   };
 
+  // Fetch Existing Requests from DB
   const loadExistingRequests = (userId) => {
     const requestsRef = db.ref('chat_requests');
     
@@ -65,6 +68,7 @@ const AddChatUserScreen = ({ navigation }) => {
     return () => requestsRef.off();
   };
 
+  // Fetch Existing Chats from DB
   const loadExistingChats = (userId) => {
     const chatsRef = db.ref('chats');
     
@@ -88,6 +92,7 @@ const AddChatUserScreen = ({ navigation }) => {
     return () => chatsRef.off();
   };
 
+  // Search User
   const searchUsers = async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -142,6 +147,7 @@ const AddChatUserScreen = ({ navigation }) => {
     }
   };
 
+  // Relationship status
   const getRelationshipStatus = (userId) => {
     if (existingChats[userId]) {
       return { status: 'connected', text: 'Connected', color: '#10b981' };
@@ -158,11 +164,11 @@ const AddChatUserScreen = ({ navigation }) => {
     return { status: 'none', text: 'Send Request', color: '#38bdf8' };
   };
 
+  // Send Request
   const sendChatRequest = async (toUserId) => {
     try {
       console.log('Sending request to:', toUserId);
       
-      // Check if request already exists
       const existingStatus = existingRequests[toUserId];
       
       if (existingStatus === 'pending') {
@@ -175,7 +181,6 @@ const AddChatUserScreen = ({ navigation }) => {
         return;
       }
 
-      // Create request
       const requestRef = db.ref('chat_requests').push();
       const requestId = requestRef.key;
 
@@ -189,7 +194,6 @@ const AddChatUserScreen = ({ navigation }) => {
 
       await requestRef.set(request);
 
-      // Update local state
       setExistingRequests(prev => ({
         ...prev,
         [toUserId]: 'pending'
@@ -206,11 +210,13 @@ const AddChatUserScreen = ({ navigation }) => {
     }
   };
 
+  // Handle Search
   const handleSearch = (text) => {
     setSearchQuery(text);
     searchUsers(text);
   };
 
+  // Render User Item
   const renderUserItem = ({ item }) => {
     const relationship = getRelationshipStatus(item.id);
 
@@ -269,6 +275,7 @@ const AddChatUserScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
 
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -285,6 +292,7 @@ const AddChatUserScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
+      {/* Search Container */}
       <View style={styles.searchContainer}>
         <Icon name="search" size={20} color="#94a3b8" style={styles.searchIcon} />
         <TextInput
@@ -343,6 +351,7 @@ const AddChatUserScreen = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

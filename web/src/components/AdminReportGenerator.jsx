@@ -34,19 +34,6 @@ const AdminReportGenerator = ({ onClose }) => {
         }
     };
 
-    // Format date
-    const formatDate = (timestamp) => {
-        if (!timestamp) return 'N/A';
-        const date = new Date(timestamp);
-        return date.toLocaleString('en-IN', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
     // Get status counts for complaints
     const getComplaintStats = () => {
         const complaints = data?.complaints_list || {};
@@ -165,6 +152,7 @@ const AdminReportGenerator = ({ onClose }) => {
         };
     };
 
+    // Generate Report
     const generateReport = () => {
         setGenerating(true);
 
@@ -430,6 +418,7 @@ const AdminReportGenerator = ({ onClose }) => {
         }
     };
 
+    // Loading
     if (loading) {
         return (
             <div style={styles.loadingContainer}>
@@ -504,6 +493,7 @@ const AdminReportGenerator = ({ onClose }) => {
     );
 };
 
+// StyleSheet
 const styles = {
     container: {
         width: '100%'

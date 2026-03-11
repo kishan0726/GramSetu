@@ -779,19 +779,6 @@ const NavigateMap = () => {
         }
     };
 
-    // Clear routing
-    const clearRouting = () => {
-        setUserLocation(null);
-        setNearestNode(null);
-        setDestinationNode(null);
-        setShortestPath([]);
-        setShortestPathDistance(0);
-        setSelectedImportantPoint(null);
-        setTargetPoint(null);
-        setCustomPoints([]);
-        setHardcodedLocation();
-    };
-
     // Get node coordinates for path
     const getPathPositions = (pathNodes) => {
         return pathNodes
@@ -800,32 +787,6 @@ const NavigateMap = () => {
                 return node ? [node.lat, node.lng] : null;
             })
             .filter(coord => coord !== null);
-    };
-
-    const togglePathVisibility = (pathId) => {
-        setVisiblePaths(prev =>
-            prev.includes(pathId)
-                ? prev.filter(id => id !== pathId)
-                : [...prev, pathId]
-        );
-    };
-
-    const togglePathType = (type) => {
-        setVisiblePathTypes(prev => ({
-            ...prev,
-            [type]: !prev[type]
-        }));
-    };
-
-    const handleSearchNode = () => {
-        const nodeId = parseInt(searchNode);
-        if (!isNaN(nodeId) && nodeId >= 1 && nodeId <= NODE_DATA.length) {
-            const node = NODE_DATA.find(n => n.id === nodeId);
-            if (node && map) {
-                map.setView([node.lat, node.lng], 18);
-                setSelectedNode(nodeId);
-            }
-        }
     };
 
     const getNodeConnections = (nodeId) => {

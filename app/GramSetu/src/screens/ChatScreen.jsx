@@ -17,8 +17,9 @@ import {
   Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const ChatScreen = ({ navigation, route }) => {
@@ -40,13 +41,29 @@ const ChatScreen = ({ navigation, route }) => {
   const flatListRef = useRef();
   const inputRef = useRef();
 
+  const getStatusIcon = (message) => {
+    if (message.senderId !== chatUserId) return null;
+    
+    if (message.seen?.[otherUserId]) {
+      return { name: 'done-all', color: '#38bdf8' };
+    } else if (message.delivered?.[otherUserId]) {
+      return { name: 'done-all', color: '#64748b' };
+    } else {
+      return { name: 'check', color: '#94a3b8' };
+    }
+  };
+
+  const getInitials = (firstName, lastName) => {
+    if (!firstName && !lastName) return '👤';
+    return (firstName?.charAt(0) || '') + (lastName?.charAt(0) || '');
+  };
+
   useEffect(() => {
     loadUserData();
     loadOtherUserProfile();
     setupPresenceListener();
     setupTypingListener();
 
-    // Keyboard listeners for better handling
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       (e) => {
@@ -73,18 +90,15 @@ const ChatScreen = ({ navigation, route }) => {
   }, []);
 
   useEffect(() => {
-    // Handle typing indicator
     if (inputText.trim().length > 0 && !isTyping) {
       setIsTyping(true);
       db.ref(`chats/${chatId}/typing/${chatUserId}`).set(true);
     }
 
-    // Clear typing timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Set new timeout
     typingTimeoutRef.current = setTimeout(() => {
       if (isTyping) {
         setIsTyping(false);
@@ -99,6 +113,7 @@ const ChatScreen = ({ navigation, route }) => {
     };
   }, [inputText]);
 
+  // Fetch User Data from DB
   const loadUserData = async () => {
     try {
       const storedChatUserId = await AsyncStorage.getItem('chatUserId');
@@ -111,7 +126,6 @@ const ChatScreen = ({ navigation, route }) => {
 
       setChatUserId(storedChatUserId);
       
-      // Load current user's profile image
       const currentUserSnapshot = await db.ref(`user_data/${storedChatUserId}/profile_image`).once('value');
       if (currentUserSnapshot.exists()) {
         setCurrentUserProfile(currentUserSnapshot.val().uri);
@@ -124,15 +138,14 @@ const ChatScreen = ({ navigation, route }) => {
     }
   };
 
+  // Fetch Other USer Profile
   const loadOtherUserProfile = async () => {
     try {
-      // Load other user's profile image
       const otherUserSnapshot = await db.ref(`user_data/${otherUserId}/profile_image`).once('value');
       if (otherUserSnapshot.exists()) {
         setOtherUserProfileImage(otherUserSnapshot.val().uri);
       }
       
-      // Load other user's complete profile data
       const userSnapshot = await db.ref(`user_data/${otherUserId}`).once('value');
       if (userSnapshot.exists()) {
         setOtherUserProfile(userSnapshot.val());
@@ -142,6 +155,7 @@ const ChatScreen = ({ navigation, route }) => {
     }
   };
 
+  // Setup Presence Listener
   const setupPresenceListener = () => {
     const userRef = db.ref(`chat_users/${otherUserId}`);
     
@@ -153,6 +167,7 @@ const ChatScreen = ({ navigation, route }) => {
     return () => userRef.off();
   };
 
+  // Setup Typing Listener
   const setupTypingListener = () => {
     const typingRef = db.ref(`chats/${chatId}/typing/${otherUserId}`);
     
@@ -163,6 +178,7 @@ const ChatScreen = ({ navigation, route }) => {
     return () => typingRef.off();
   };
 
+  // Fetch Messages from DB
   const loadMessages = () => {
     const messagesRef = db.ref(`chats/${chatId}/messages`);
     
@@ -175,16 +191,15 @@ const ChatScreen = ({ navigation, route }) => {
       setMessages(messageList);
       setLoading(false);
       
-      // Mark messages as seen
       markMessagesAsSeen(messageList);
       
-      // Scroll to bottom
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     });
 
     return () => messagesRef.off();
   };
 
+  // Mark Message as seen
   const markMessagesAsSeen = (messageList) => {
     messageList.forEach(msg => {
       if (msg.senderId !== chatUserId && !msg.seen?.[chatUserId]) {
@@ -193,6 +208,7 @@ const ChatScreen = ({ navigation, route }) => {
     });
   };
 
+  // Send Message
   const sendMessage = async () => {
     if (!inputText.trim() || sending) return;
 
@@ -242,23 +258,13 @@ const ChatScreen = ({ navigation, route }) => {
     }
   };
 
-  const getStatusIcon = (message) => {
-    if (message.senderId !== chatUserId) return null;
-    
-    if (message.seen?.[otherUserId]) {
-      return { name: 'done-all', color: '#38bdf8' };
-    } else if (message.delivered?.[otherUserId]) {
-      return { name: 'done-all', color: '#64748b' };
-    } else {
-      return { name: 'check', color: '#94a3b8' };
-    }
-  };
-
+  // Format Time
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Format Date
   const formatDate = (timestamp) => {
     const date = new Date(timestamp);
     const today = new Date();
@@ -274,15 +280,12 @@ const ChatScreen = ({ navigation, route }) => {
     }
   };
 
-  const getInitials = (firstName, lastName) => {
-    if (!firstName && !lastName) return '👤';
-    return (firstName?.charAt(0) || '') + (lastName?.charAt(0) || '');
-  };
-
+  // Dismiss Keyboard
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
 
+  // Render Message
   const renderMessage = ({ item, index }) => {
     const isMe = item.senderId === chatUserId;
     const statusIcon = getStatusIcon(item);
@@ -339,6 +342,7 @@ const ChatScreen = ({ navigation, route }) => {
     );
   };
 
+  // Loading
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -475,6 +479,7 @@ const ChatScreen = ({ navigation, route }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

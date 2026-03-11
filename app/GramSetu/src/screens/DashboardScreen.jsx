@@ -10,8 +10,9 @@ import {
     Alert,
 } from 'react-native';
 import axios from 'axios';
-import { db } from '../config/firebase';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
@@ -28,14 +29,12 @@ const DashboardScreen = ({ navigation }) => {
         icon: '☀️',
     });
 
-    // Categories for announcements (reusing from AnnouncementsScreen)
     const categories = [
         { id: 'general', name: t('general'), icon: 'info', color: '#3b82f6' },
         { id: 'health', name: t('health'), icon: 'local-hospital', color: '#ef4444' },
         { id: 'utility', name: t('utility'), icon: 'power', color: '#f59e0b' },
     ];
 
-    // Quick actions menu items
     const quickActions = [
         {
             id: 1,
@@ -97,27 +96,6 @@ const DashboardScreen = ({ navigation }) => {
         }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffTime = Math.abs(now - date);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) {
-            return t('today');
-        } else if (diffDays === 1) {
-            return t('yesterday');
-        } else if (diffDays < 7) {
-            return `${diffDays} ${t('daysAgo')}`;
-        } else {
-            return date.toLocaleDateString(language === 'gu' ? 'gu-IN' : 'en-IN', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            });
-        }
-    };
-
     const getWeatherDetails = (code) => {
         if (code === 0) {
             return { condition: "Clear Sky", icon: "☀️" };
@@ -153,30 +131,59 @@ const DashboardScreen = ({ navigation }) => {
         return unsubscribe;
     }, []);
 
+    // Format Data
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+            return t('today');
+        } else if (diffDays === 1) {
+            return t('yesterday');
+        } else if (diffDays < 7) {
+            return `${diffDays} ${t('daysAgo')}`;
+        } else {
+            return date.toLocaleDateString(language === 'gu' ? 'gu-IN' : 'en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+    };
+
+    // Chat Press
     const handleChatPress = () => {
         navigation.navigate('ChatSetupScreen');
     };
 
+    // Notification Press
     const handleNotificationPress = () => {
         navigation.navigate('AnnouncementsScreen');
     };
 
+    // Profile Press
     const handleProfilePress = () => {
         navigation.navigate('ProfileScreen');
     };
 
+    // Quick Action
     const handleQuickAction = (screen) => {
         navigation.navigate(screen);
     };
 
+    // View All Announcemets
     const handleViewAllAnnouncements = () => {
         navigation.navigate('AnnouncementsScreen');
     };
 
+    // Announcement Press
     const handleAnnouncementPress = (announcement) => {
         navigation.navigate('AnnouncementsScreen', { announcementId: announcement.id });
     };
 
+    // Get Weather
     const getWeather = async () => {
         try {
             const url =
@@ -197,6 +204,7 @@ const DashboardScreen = ({ navigation }) => {
         }
     };
 
+    // Fetch Announcements
     const fetchAnnouncements = () => {
         const reference = db.ref('published_announcement');
 
@@ -239,6 +247,7 @@ const DashboardScreen = ({ navigation }) => {
         return () => reference.off();
     };
 
+    // Set User Online
     const setUserOnline = async () => {
 
         const session = await AsyncStorage.getItem("userSession");
@@ -482,6 +491,7 @@ const DashboardScreen = ({ navigation }) => {
     );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
     container: {
         flex: 1,

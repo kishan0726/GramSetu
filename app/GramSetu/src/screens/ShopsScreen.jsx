@@ -35,9 +35,8 @@ const ShopsScreen = ({ navigation }) => {
   const [itemSearchModal, setItemSearchModal] = useState(false);
   const [itemSearchQuery, setItemSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [viewType, setViewType] = useState('grid'); // 'grid' or 'list'
+  const [viewType, setViewType] = useState('grid');
 
-  // Categories for filtering
   const categories = [
     { id: 'all', name: t('all'), icon: 'apps', color: '#64748b' },
     { id: 'grocery', name: t('grocery'), icon: 'shopping-cart', color: '#3b82f6' },
@@ -50,10 +49,48 @@ const ShopsScreen = ({ navigation }) => {
     { id: 'agriculture', name: t('agriculture'), icon: 'agriculture', color: '#84cc16' },
   ];
 
+  const getCategoryColor = (categoryId) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.color || '#64748b';
+  };
+
+  const getCategoryIcon = (categoryId) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.icon || 'store';
+  };
+
   useEffect(() => {
     fetchShops();
   }, []);
 
+  // Handle search by shop name or item
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      filterByCategory();
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = shops.filter(shop =>
+        shop.name.toLowerCase().includes(query) ||
+        shop.category.toLowerCase().includes(query) ||
+        shop.description.toLowerCase().includes(query) ||
+        shop.inventory && shop.inventory.some(
+          item => item.name?.toLowerCase().includes(query)
+        )
+      );
+
+      if (selectedCategory === 'all') {
+        setFilteredShops(filtered);
+      } else {
+        setFilteredShops(filtered.filter(shop => shop.category === selectedCategory));
+      }
+    }
+  }, [searchQuery, shops]);
+
+  useEffect(() => {
+    searchItems();
+  }, [itemSearchQuery]);
+
+  // Fetch Shops data from DB
   const fetchShops = () => {
     setLoading(true);
 
@@ -92,7 +129,6 @@ const ShopsScreen = ({ navigation }) => {
 
             image: shop.shop_image?.profile?.url || null,
 
-            // convert items → inventory array
             inventory: shop.items
               ? Object.values(shop.items)
               : [],
@@ -123,33 +159,11 @@ const ShopsScreen = ({ navigation }) => {
     });
   };
 
+  // Refresh
   const onRefresh = () => {
     setRefreshing(true);
     fetchShops();
   };
-
-  // Handle search by shop name or item
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      filterByCategory();
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = shops.filter(shop =>
-        shop.name.toLowerCase().includes(query) ||
-        shop.category.toLowerCase().includes(query) ||
-        shop.description.toLowerCase().includes(query) ||
-        shop.inventory && shop.inventory.some(
-          item => item.name?.toLowerCase().includes(query)
-        )
-      );
-
-      if (selectedCategory === 'all') {
-        setFilteredShops(filtered);
-      } else {
-        setFilteredShops(filtered.filter(shop => shop.category === selectedCategory));
-      }
-    }
-  }, [searchQuery, shops]);
 
   const filterByCategory = () => {
     if (selectedCategory === 'all') {
@@ -189,26 +203,14 @@ const ShopsScreen = ({ navigation }) => {
     setSearchResults(results);
   };
 
-  useEffect(() => {
-    searchItems();
-  }, [itemSearchQuery]);
-
+  // Handle Item Search
   const handleItemSearch = () => {
     setItemSearchModal(true);
     setItemSearchQuery('');
     setSearchResults([]);
   };
 
-  const getCategoryColor = (categoryId) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.color || '#64748b';
-  };
-
-  const getCategoryIcon = (categoryId) => {
-    const category = categories.find(c => c.id === categoryId);
-    return category?.icon || 'store';
-  };
-
+  // Handle Navigate To Map
   const handleNavigateToMap = (coordinates, shopName) => {
     console.log('Navigating with coordinates:', coordinates, 'shopName:', shopName); // Add this for debugging
     navigation.navigate('NavigateScreen', {
@@ -219,28 +221,13 @@ const ShopsScreen = ({ navigation }) => {
     });
   };
 
+  // Handle Shop Press
   const handleShopPress = (shop) => {
     setSelectedShop(shop);
     setModalVisible(true);
   };
 
-  const renderStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-
-    for (let i = 0; i < 5; i++) {
-      if (i < fullStars) {
-        stars.push(<Icon key={i} name="star" size={14} color="#f59e0b" />);
-      } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Icon key={i} name="star-half" size={14} color="#f59e0b" />);
-      } else {
-        stars.push(<Icon key={i} name="star-border" size={14} color="#f59e0b" />);
-      }
-    }
-    return stars;
-  };
-
+  // Render Grid Item
   const renderGridItem = ({ item }) => {
     const categoryColor = getCategoryColor(item.category);
 
@@ -268,6 +255,7 @@ const ShopsScreen = ({ navigation }) => {
     );
   };
 
+  // Render List Item
   const renderListItem = ({ item }) => {
     const categoryColor = getCategoryColor(item.category);
 
@@ -303,6 +291,7 @@ const ShopsScreen = ({ navigation }) => {
     );
   };
 
+  // Render Search Result Item
   const renderSearchResultItem = ({ item }) => (
     <TouchableOpacity
       style={styles.searchResultCard}
@@ -633,6 +622,7 @@ const ShopsScreen = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

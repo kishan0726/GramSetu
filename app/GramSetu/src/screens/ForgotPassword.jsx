@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
+
 import { useLanguage } from '../context/LanguageContext';
 
 const API_BASE_URL = 'http://10.0.2.2:5000';
@@ -36,7 +37,7 @@ const ForgotPassword = ({ navigation }) => {
 
   // Start countdown timer for OTP
   const startTimer = () => {
-    setTimer(300); // 5 minutes in seconds
+    setTimer(300);
     const interval = setInterval(() => {
       setTimer((prev) => {
         if (prev <= 1) {
@@ -48,12 +49,14 @@ const ForgotPassword = ({ navigation }) => {
     }, 1000);
   };
 
+  // Format Time
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  // Validate Email
   const validateEmail = () => {
     if (!email) {
       setErrors({ email: t('emailRequired') });
@@ -66,6 +69,7 @@ const ForgotPassword = ({ navigation }) => {
     return true;
   };
 
+  // Validate OTP
   const validateOtp = () => {
     if (!otp || otp.length !== 6) {
       setErrors({ otp: t('validOtpRequired') });
@@ -74,6 +78,7 @@ const ForgotPassword = ({ navigation }) => {
     return true;
   };
 
+  // Validate Passwords
   const validatePasswords = () => {
     const errors = {};
     if (!newPassword) {
@@ -90,6 +95,7 @@ const ForgotPassword = ({ navigation }) => {
     return Object.keys(errors).length === 0;
   };
 
+  // Send OTP
   const handleSendOtp = async () => {
     if (!validateEmail()) return;
 
@@ -118,6 +124,7 @@ const ForgotPassword = ({ navigation }) => {
     }
   };
 
+  // Verify OTP
   const handleVerifyOtp = async () => {
     if (!validateOtp()) return;
 
@@ -139,6 +146,7 @@ const ForgotPassword = ({ navigation }) => {
     }
   };
 
+  // Resend OTP
   const handleResendOtp = async () => {
     setLoading(true);
     try {
@@ -158,6 +166,7 @@ const ForgotPassword = ({ navigation }) => {
     }
   };
 
+  // Reset Password
   const handleResetPassword = async () => {
     if (!validatePasswords()) return;
 
@@ -403,6 +412,7 @@ const ForgotPassword = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

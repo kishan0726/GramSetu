@@ -59,6 +59,7 @@ const UserLogin = ({ navigation }) => {
     checkSessionAndNavigate();
   }, []);
 
+  // Validate Form
   const validateForm = () => {
     const newErrors = {};
 
@@ -74,6 +75,7 @@ const UserLogin = ({ navigation }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle Login
   const handleLogin = async () => {
     if (!validateForm()) return;
 
@@ -89,6 +91,7 @@ const UserLogin = ({ navigation }) => {
 
   };
 
+  // Hanlde Back To Welcome
   const handleBackToWelcome = () => {
     navigation.navigate('Welcome');
   };
@@ -193,6 +196,7 @@ const UserLogin = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,

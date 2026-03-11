@@ -14,11 +14,12 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
-import { db } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLanguage } from '../context/LanguageContext';
 import * as ImagePicker from 'react-native-image-picker';
+
+import { db } from '../config/firebase';
 
 const { width } = Dimensions.get('window');
 
@@ -278,16 +279,19 @@ const ProfileScreen = ({ navigation }) => {
     });
   };
 
+  // Handle Edit
   const handleEdit = () => {
     setEditing(true);
     setEditedData({ ...userData });
   };
 
+  // Handle Cancel
   const handleCancel = () => {
     setEditing(false);
     setEditedData({ ...userData });
   };
 
+  // Handle Logout
   const handleLogout = async () => {
     Alert.alert(
       t('logout'),
@@ -316,6 +320,7 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
 
+  // Handle Save
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -342,7 +347,6 @@ const ProfileScreen = ({ navigation }) => {
           familyMembers: editedData.familyMembers || "",
         });
 
-      // Refresh from Firebase
       await fetchUserData();
 
       setEditing(false);
@@ -357,8 +361,8 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  // Handle Change Password
   const handleChangePassword = () => {
-    // Validate passwords
     const errors = {};
 
     if (!passwords.current) {
@@ -378,7 +382,6 @@ const ProfileScreen = ({ navigation }) => {
     setPasswordErrors(errors);
 
     if (Object.keys(errors).length === 0) {
-      // Simulate API call
       setTimeout(() => {
         Alert.alert(t('success'), t('passwordChanged'));
         setPasswordModal(false);
@@ -388,6 +391,7 @@ const ProfileScreen = ({ navigation }) => {
     }
   };
 
+  // Render Field
   const renderField = (label, value, key, editable = true, multiline = false) => {
     if (!editing) {
       return (
@@ -413,6 +417,7 @@ const ProfileScreen = ({ navigation }) => {
     );
   };
 
+  // Render Section
   const renderSection = (title, content) => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -430,6 +435,7 @@ const ProfileScreen = ({ navigation }) => {
     return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'U';
   };
 
+  // Loading
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -785,6 +791,7 @@ const ProfileScreen = ({ navigation }) => {
   );
 };
 
+// StyleSheet
 const styles = StyleSheet.create({
   container: {
     flex: 1,
