@@ -289,6 +289,12 @@ const PublicServicesScreen = ({ navigation }) => {
     }
   };
 
+  const getCategoryColor = (service) => {
+    const category = getServiceCategory(service);
+    const categoryObj = categories.find(cat => cat.id === category);
+    return categoryObj ? categoryObj.color : '#64748b';
+  };
+
   useEffect(() => {
     fetchServices();
   }, []);
@@ -301,7 +307,7 @@ const PublicServicesScreen = ({ navigation }) => {
     const educationServices = ['education'];
     const transportServices = ['bus'];
     const emergencyServices = ['fire', 'police'];
-    
+
     if (utilityServices.some(s => service.id.includes(s))) return 'utility';
     if (infrastructureServices.some(s => service.id.includes(s))) return 'infrastructure';
     if (healthServices.some(s => service.id.includes(s))) return 'health';
@@ -332,7 +338,7 @@ const PublicServicesScreen = ({ navigation }) => {
     if (selectedCategory === 'all') {
       return services;
     }
-    return services.filter(service => 
+    return services.filter(service =>
       getServiceCategory(service) === selectedCategory
     );
   };
@@ -340,13 +346,13 @@ const PublicServicesScreen = ({ navigation }) => {
   // Render Grid View
   const renderGridView = () => {
     const filteredServices = getFilteredServices();
-    
+
     return (
       <View style={styles.gridContainer}>
         {filteredServices.map((service) => {
           const categoryColor = getCategoryColor(service);
           const statusColor = getStatusColor(service.status);
-          
+
           return (
             <TouchableOpacity
               key={service.id}
@@ -360,11 +366,11 @@ const PublicServicesScreen = ({ navigation }) => {
               <View style={[styles.gridIconContainer, { backgroundColor: categoryColor + '15' }]}>
                 <Icon name={service.icon} size={30} color={categoryColor} />
               </View>
-              
+
               <Text style={styles.gridServiceName} numberOfLines={2}>
                 {language === 'gu' ? service.nameGuj : service.name}
               </Text>
-              
+
               <View style={[styles.gridStatusBadge, { backgroundColor: statusColor + '15' }]}>
                 <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
                 <Text style={[styles.gridStatusText, { color: statusColor }]}>
@@ -393,13 +399,13 @@ const PublicServicesScreen = ({ navigation }) => {
   // Render List View
   const renderListView = () => {
     const filteredServices = getFilteredServices();
-    
+
     return (
       <View style={styles.listContainer}>
         {filteredServices.map((service) => {
           const categoryColor = getCategoryColor(service);
           const statusColor = getStatusColor(service.status);
-          
+
           return (
             <TouchableOpacity
               key={service.id}
@@ -413,7 +419,7 @@ const PublicServicesScreen = ({ navigation }) => {
               <View style={[styles.listIconContainer, { backgroundColor: categoryColor + '15' }]}>
                 <Icon name={service.icon} size={24} color={categoryColor} />
               </View>
-              
+
               <View style={styles.listContent}>
                 <View style={styles.listHeader}>
                   <Text style={styles.listServiceName}>
@@ -473,21 +479,21 @@ const PublicServicesScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Icon name="arrow-back" size={24} color="#ffffff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('publicServices')}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.viewToggle}
             onPress={() => setViewType(viewType === 'grid' ? 'list' : 'grid')}
           >
-            <Icon 
-              name={viewType === 'grid' ? 'view-list' : 'grid-view'} 
-              size={24} 
-              color="#ffffff" 
+            <Icon
+              name={viewType === 'grid' ? 'view-list' : 'grid-view'}
+              size={24}
+              color="#ffffff"
             />
           </TouchableOpacity>
         </View>
@@ -515,8 +521,8 @@ const PublicServicesScreen = ({ navigation }) => {
 
       {/* Category Filter */}
       <View style={styles.categorySection}>
-        <ScrollView 
-          horizontal 
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryContainer}
         >
@@ -530,10 +536,10 @@ const PublicServicesScreen = ({ navigation }) => {
               ]}
               onPress={() => setSelectedCategory(category.id)}
             >
-              <Icon 
-                name={category.icon} 
-                size={16} 
-                color={selectedCategory === category.id ? '#ffffff' : category.color} 
+              <Icon
+                name={category.icon}
+                size={16}
+                color={selectedCategory === category.id ? '#ffffff' : category.color}
               />
               <Text style={[
                 styles.categoryChipText,
@@ -557,8 +563,8 @@ const PublicServicesScreen = ({ navigation }) => {
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
+            <RefreshControl
+              refreshing={refreshing}
               onRefresh={onRefresh}
               colors={['#38bdf8']}
               tintColor="#38bdf8"
@@ -594,7 +600,7 @@ const PublicServicesScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setModalVisible(false)}
               >
@@ -603,7 +609,7 @@ const PublicServicesScreen = ({ navigation }) => {
             </View>
 
             {selectedService && (
-              <ScrollView 
+              <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.modalScrollContent}
               >
@@ -618,16 +624,16 @@ const PublicServicesScreen = ({ navigation }) => {
 
                 <View style={styles.modalStatus}>
                   <View style={[
-                    styles.modalStatusBadge, 
+                    styles.modalStatusBadge,
                     { backgroundColor: getStatusColor(selectedService.status) + '15' }
                   ]}>
-                    <Icon 
-                      name={getStatusIcon(selectedService.status)} 
-                      size={16} 
-                      color={getStatusColor(selectedService.status)} 
+                    <Icon
+                      name={getStatusIcon(selectedService.status)}
+                      size={16}
+                      color={getStatusColor(selectedService.status)}
                     />
                     <Text style={[
-                      styles.modalStatusText, 
+                      styles.modalStatusText,
                       { color: getStatusColor(selectedService.status) }
                     ]}>
                       {getStatusText(selectedService.status)}
@@ -666,7 +672,7 @@ const PublicServicesScreen = ({ navigation }) => {
                 {/* Service Specific Details */}
                 <View style={styles.modalDetailsSection}>
                   <Text style={styles.modalDetailsTitle}>{t('serviceDetails')}</Text>
-                  
+
                   {selectedService.coverage && (
                     <View style={styles.modalDetailRow}>
                       <Text style={styles.modalDetailLabel}>{t('coverage')}</Text>
@@ -718,7 +724,7 @@ const PublicServicesScreen = ({ navigation }) => {
                   )}
 
                   {selectedService.complaints !== undefined && (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.complaintButton}
                       onPress={() => {
                         setModalVisible(false);
@@ -736,7 +742,7 @@ const PublicServicesScreen = ({ navigation }) => {
 
                 {/* Action Buttons */}
                 <View style={styles.modalActions}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.actionButton, styles.callButton]}
                     onPress={() => {
                       // Implement call functionality
@@ -744,17 +750,6 @@ const PublicServicesScreen = ({ navigation }) => {
                   >
                     <Icon name="phone" size={20} color="#ffffff" />
                     <Text style={styles.actionButtonText}>{t('callNow')}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    style={[styles.actionButton, styles.navigateButton]}
-                    onPress={() => {
-                      // Implement navigation to map
-                      navigation.navigate('Map', { service: selectedService });
-                    }}
-                  >
-                    <Icon name="navigation" size={20} color="#ffffff" />
-                    <Text style={styles.actionButtonText}>{t('navigate')}</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>

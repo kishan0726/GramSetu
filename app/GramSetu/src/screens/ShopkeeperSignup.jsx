@@ -99,20 +99,25 @@ const ShopkeeperSignup = ({ navigation }) => {
   const handleRegister = async () => {
     if (!validateForm()) return;
 
-      const snapshot = await db.ref('shops_list').once('value');
+    const snapshot = await db.ref('shops_list').once('value');
 
-      let total = snapshot.exists() ? snapshot.numChildren() : 0;
+    let total = snapshot.exists() ? snapshot.numChildren() : 0;
 
-      const newShopId = 'shop' + String(total + 1).padStart(3, '0');
+    const newShopId = 'shop' + String(total + 1).padStart(3, '0');
 
-      await db.ref(`shops_list/${newShopId}`).set({
-        id: newShopId,
-        ...formData, // 🔥 this saves all fields
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      });
+    await db.ref(`shops_list/${newShopId}`).set({
+      id: newShopId,
+      ...formData, // 🔥 this saves all fields
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    });
 
-      alert('Shop Registered Successfully');
+    Alert.alert(
+      "Success",
+      `Your ShopId: ${newShopId}`
+    );
+
+    navigation.goBack()
 
   };
 

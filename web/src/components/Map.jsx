@@ -471,69 +471,6 @@ const formatDistance = (meters) => {
   return `${(meters / 1000).toFixed(2)}km`;
 };
 
-// Dijkstra's algorithm implementation
-const dijkstra = (graph, startNode, endNode) => {
-  const start = startNode.toString();
-  const end = endNode.toString();
-  
-  const distances = {};
-  const previous = {};
-  const nodes = Object.keys(graph);
-  
-  nodes.forEach(node => {
-    distances[node] = Infinity;
-    previous[node] = null;
-  });
-  distances[start] = 0;
-  
-  const unvisited = new Set(nodes);
-  
-  while (unvisited.size > 0) {
-    let minNode = null;
-    let minDistance = Infinity;
-    
-    unvisited.forEach(node => {
-      if (distances[node] < minDistance) {
-        minDistance = distances[node];
-        minNode = node;
-      }
-    });
-    
-    if (minNode === null || minDistance === Infinity) break;
-    if (minNode === end) break;
-    
-    unvisited.delete(minNode);
-    
-    const neighbors = graph[minNode] || {};
-    Object.keys(neighbors).forEach(neighbor => {
-      if (unvisited.has(neighbor)) {
-        const newDistance = distances[minNode] + neighbors[neighbor];
-        if (newDistance < distances[neighbor]) {
-          distances[neighbor] = newDistance;
-          previous[neighbor] = minNode;
-        }
-      }
-    });
-  }
-  
-  const path = [];
-  let currentNode = end;
-  
-  while (currentNode !== null) {
-    path.unshift(parseInt(currentNode));
-    currentNode = previous[currentNode];
-  }
-  
-  if (path.length === 0 || path[0] !== parseInt(start)) {
-    return { path: [], distance: Infinity };
-  }
-  
-  return {
-    path,
-    distance: distances[end]
-  };
-};
-
 // Build graph from path data
 const buildGraph = () => {
   const graph = {};
@@ -620,23 +557,6 @@ const MapView = () => {
     setPathLengths(lengths);
   }, []);
 
-  // Set hardcoded user location
-  const setHardcodedLocation = () => {
-    const hardcodedLat = 21.772242646056295;
-    const hardcodedLng = 69.4555401802245;
-    
-    setUserLocation({ lat: hardcodedLat, lng: hardcodedLng });
-    
-    // Find nearest node to hardcoded location
-    const nearest = findNearestNode(hardcodedLat, hardcodedLng);
-    setNearestNode(nearest);
-    
-    // Center map on hardcoded location
-    if (map) {
-      map.setView([hardcodedLat, hardcodedLng], 16);
-    }
-  };
-
   // Find nearest node to given coordinates
   const findNearestNode = (lat, lng) => {
     let minDistance = Infinity;
@@ -661,53 +581,6 @@ const MapView = () => {
     setDestinationNode(nearest);
   };
 
-  // Calculate shortest path
-  const calculateShortestPath = () => {
-    if (!nearestNode || !destinationNode) {
-      alert('Please set both start and destination points');
-      return;
-    }
-    
-    if (nearestNode === destinationNode) {
-      alert('Start and destination are the same node');
-      return;
-    }
-    
-    const result = dijkstra(graph, nearestNode, destinationNode);
-    
-    if (result.path.length < 2) {
-      alert('No path found between these nodes');
-      return;
-    }
-    
-    setShortestPath(result.path);
-    setShortestPathDistance(result.distance);
-    
-    // Zoom to show the entire path
-    if (map && result.path.length > 0) {
-      const pathPositions = result.path
-        .map(nodeId => {
-          const node = NODE_DATA.find(n => n.id === nodeId);
-          return node ? [node.lat, node.lng] : null;
-        })
-        .filter(coord => coord !== null);
-      
-      if (pathPositions.length > 0) {
-        const bounds = L.latLngBounds(pathPositions);
-        map.fitBounds(bounds, { padding: [50, 50] });
-      }
-    }
-  };
-
-  // Clear routing
-  const clearRouting = () => {
-    setUserLocation(null);
-    setNearestNode(null);
-    setDestinationNode(null);
-    setShortestPath([]);
-    setShortestPathDistance(0);
-  };
-
   // Get node coordinates for path
   const getPathPositions = (pathNodes) => {
     return pathNodes
@@ -716,32 +589,6 @@ const MapView = () => {
         return node ? [node.lat, node.lng] : null;
       })
       .filter(coord => coord !== null);
-  };
-
-  const togglePathVisibility = (pathId) => {
-    setVisiblePaths(prev => 
-      prev.includes(pathId) 
-        ? prev.filter(id => id !== pathId)
-        : [...prev, pathId]
-    );
-  };
-
-  const togglePathType = (type) => {
-    setVisiblePathTypes(prev => ({
-      ...prev,
-      [type]: !prev[type]
-    }));
-  };
-
-  const handleSearchNode = () => {
-    const nodeId = parseInt(searchNode);
-    if (!isNaN(nodeId) && nodeId >= 1 && nodeId <= NODE_DATA.length) {
-      const node = NODE_DATA.find(n => n.id === nodeId);
-      if (node && map) {
-        map.setView([node.lat, node.lng], 18);
-        setSelectedNode(nodeId);
-      }
-    }
   };
 
   const getNodeConnections = (nodeId) => {

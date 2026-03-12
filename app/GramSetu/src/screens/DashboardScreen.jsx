@@ -8,9 +8,11 @@ import {
     StatusBar,
     Dimensions,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { db } from '../config/firebase';
 import { useLanguage } from '../context/LanguageContext';
@@ -20,7 +22,8 @@ const cardWidth = (width - 48) / 2;
 
 const DashboardScreen = ({ navigation }) => {
     const { t, language } = useLanguage();
-    const [userName, setUserName] = useState('Kishan Shingrakhiya');
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [announcementCount, setAnnouncementCount] = useState(0);
     const [dashboardAnnouncements, setDashboardAnnouncements] = useState([]);
     const [weather, setWeather] = useState({
@@ -124,9 +127,73 @@ const DashboardScreen = ({ navigation }) => {
         return category?.icon || 'info';
     };
 
+    // Get user's full name
+    const getUserFullName = () => {
+        if (!userData) return 'User';
+        
+        const firstName = userData.firstName || userData.firstname || '';
+        const lastName = userData.lastName || userData.lastname || '';
+        
+        // If Gujarati name exists and language is Gujarati, use that
+        if (language === 'gu') {
+            const firstNameGuj = userData.firstNameGuj || '';
+            const lastNameGuj = userData.lastNameGuj || '';
+            const fullNameGuj = `${firstNameGuj} ${lastNameGuj}`.trim();
+            if (fullNameGuj) return fullNameGuj;
+        }
+        
+        // Otherwise use English name
+        const fullName = `${firstName} ${lastName}`.trim();
+        return fullName || 'User';
+    };
+
+    // Fetch user data from Firebase (similar to ProfileScreen)
+    const fetchUserData = async () => {
+        try {
+            const session = await AsyncStorage.getItem('userSession');
+            console.log("Dashboard SESSION:", session);
+
+            if (!session) {
+                setLoading(false);
+                return;
+            }
+
+            const parsedSession = JSON.parse(session);
+            const userId = parsedSession.userId;
+
+            console.log("Dashboard User ID:", userId);
+
+            const snapshot = await db
+                .ref(`user_data/${userId}`)
+                .once('value');
+
+            console.log("Dashboard User Data:", snapshot.val());
+
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                setUserData({
+                    ...data,
+                    id: userId,
+                });
+            }
+
+            setLoading(false);
+
+        } catch (error) {
+            console.log("Dashboard Fetch Error:", error);
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        getWeather();
-        setUserOnline();
+        const loadData = async () => {
+            await fetchUserData();
+            getWeather();
+            setUserOnline();
+        };
+        
+        loadData();
+        
         const unsubscribe = fetchAnnouncements();
         return unsubscribe;
     }, []);
@@ -249,21 +316,50 @@ const DashboardScreen = ({ navigation }) => {
 
     // Set User Online
     const setUserOnline = async () => {
+        try {
+            const session = await AsyncStorage.getItem('userSession');
+            if (session) {
+                const parsedSession = JSON.parse(session);
+                const userId = parsedSession.userId;
 
-        const session = await AsyncStorage.getItem("userSession");
-        const userId = JSON.parse(session)?.userId;
+                if (userId) {
+                    const userRef = db.ref(`user_data/${userId}`);
 
-        const userRef = database().ref(`users/${userId}`);
+                    userRef.update({
+                        online: true,
+                        lastSeen: Date.now()
+                    });
 
-        userRef.update({
-            online: true
-        });
-
-        userRef.onDisconnect().update({
-            online: false,
-            lastSeen: Date.now()
-        });
+                    userRef.onDisconnect().update({
+                        online: false,
+                        lastSeen: Date.now()
+                    });
+                }
+            }
+        } catch (error) {
+            console.log("Error setting user online:", error);
+        }
     };
+
+    // Get initials for avatar fallback
+    const getInitials = () => {
+        if (!userData) return 'U';
+        const firstName = userData.firstName || userData.firstname || '';
+        const lastName = userData.lastName || userData.lastname || '';
+        return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'U';
+    };
+
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <StatusBar backgroundColor="#38bdf8" barStyle="light-content" />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#38bdf8" />
+                    <Text style={styles.loadingText}>{t('loading')}</Text>
+                </View>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -278,11 +374,11 @@ const DashboardScreen = ({ navigation }) => {
                         activeOpacity={0.7}
                     >
                         <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>👤</Text>
+                            <Text style={styles.avatarText}>{getInitials()}</Text>
                         </View>
                         <View>
                             <Text style={styles.greeting}>{t('welcomeBack')}</Text>
-                            <Text style={styles.userName}>{userName}</Text>
+                            <Text style={styles.userName}>{getUserFullName()}</Text>
                         </View>
                     </TouchableOpacity>
 
@@ -535,7 +631,9 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     avatarText: {
-        fontSize: 24,
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#38bdf8',
     },
     greeting: {
         fontSize: 12,
@@ -811,6 +909,17 @@ const styles = StyleSheet.create({
         backgroundColor: '#0ea5e9',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 14,
+        color: '#64748b',
     },
 });
 

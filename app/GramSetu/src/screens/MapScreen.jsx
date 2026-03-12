@@ -12,9 +12,13 @@ import {
   ActivityIndicator,
   SafeAreaView,
   StatusBar,
+  Platform,
+  Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Geolocation from '@react-native-community/geolocation';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 const MapScreen = () => {
   const webViewRef = useRef(null);
@@ -41,6 +45,7 @@ const MapScreen = () => {
   const [shortestPathDistance, setShortestPathDistance] = useState(0);
   const [graph, setGraph] = useState({});
   const [pathLengths, setPathLengths] = useState({});
+  const [locationLoading, setLocationLoading] = useState(false);
 
   // Important points data with descriptive names
   const IMPORTANT_POINTS = [
@@ -357,6 +362,151 @@ const MapScreen = () => {
     footpath: { color: '#6b7280', weight: 2, opacity: 0.7, dashArray: '5, 5' },
     track: { color: '#b45309', weight: 3, opacity: 0.8, dashArray: '10, 5' },
     shortestPath: { color: '#f59e0b', weight: 6, opacity: 1 }
+  };
+
+  // Request location permission
+  const requestLocationPermission = async () => {
+    try {
+      let permissionStatus;
+
+      if (Platform.OS === 'ios') {
+        permissionStatus = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+      } else {
+        permissionStatus = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+      }
+
+      return permissionStatus === RESULTS.GRANTED;
+    } catch (error) {
+      console.log('Permission request error:', error);
+      return false;
+    }
+  };
+
+  // Fetch Live Location with fallback
+  const handleFetchLocation = () => {
+    setLocationLoading(true);
+
+    const requestLocation = (useHighAccuracy = true) => {
+      return new Promise((resolve, reject) => {
+        Geolocation.getCurrentPosition(
+          position => resolve(position),
+          error => reject(error),
+          {
+            enableHighAccuracy: useHighAccuracy,
+            timeout: 8000,
+            maximumAge: 0
+          }
+        );
+      });
+    };
+
+    const tryWithFallback = async () => {
+      try {
+        console.log('Trying high accuracy location...');
+        const position = await requestLocation(true);
+        return position;
+      } catch (highAccuracyError) {
+        console.log('High accuracy failed, trying low accuracy...', highAccuracyError);
+
+        try {
+          const position = await requestLocation(false);
+          return position;
+        } catch (lowAccuracyError) {
+          console.log('Low accuracy also failed', lowAccuracyError);
+          throw lowAccuracyError;
+        }
+      }
+    };
+
+    const overallTimeout = setTimeout(() => {
+      setLocationLoading(false);
+      showLocationError({ code: 3, message: 'Overall location request timed out' });
+    }, 20000);
+
+    const showLocationError = (error) => {
+      let errorMessage = 'Failed to get location';
+
+      switch (error.code) {
+        case 1:
+          errorMessage = 'Location permission denied';
+          break;
+        case 2:
+          errorMessage = 'Unable to get location. Please check if GPS is enabled.';
+          break;
+        case 3:
+          errorMessage = 'Location request timed out. Please try again.';
+          break;
+        default:
+          errorMessage = error.message || 'Unknown error';
+      }
+
+      Alert.alert(
+        'Location Error',
+        errorMessage,
+        [
+          {
+            text: 'Try Again',
+            onPress: () => handleFetchLocation()
+          },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    };
+
+    // Request permission first
+    const executeLocationRequest = async () => {
+      const hasPermission = await requestLocationPermission();
+
+      if (!hasPermission) {
+        clearTimeout(overallTimeout);
+        setLocationLoading(false);
+        Alert.alert(
+          'Permission Required',
+          'Location permission is needed to get your current location.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              }
+            }
+          ]
+        );
+        return;
+      }
+
+      try {
+        const position = await tryWithFallback();
+        clearTimeout(overallTimeout);
+
+        const { latitude, longitude } = position.coords;
+
+        setUserLocation({ lat: latitude, lng: longitude });
+
+        const nearest = findNearestNode(latitude, longitude);
+        setNearestNode(nearest);
+
+        webViewRef.current?.injectJavaScript(`
+          window.setUserLocation(${latitude}, ${longitude});
+        `);
+
+        Alert.alert("Success", "Live location captured successfully");
+        setLocationLoading(false);
+
+      } catch (error) {
+        clearTimeout(overallTimeout);
+        console.log('All location attempts failed:', error);
+        showLocationError(error);
+        setLocationLoading(false);
+      }
+    };
+
+    executeLocationRequest();
   };
 
   // Calculate distance between two points
@@ -733,16 +883,16 @@ const MapScreen = () => {
           return L.divIcon({
             className: 'user-location-marker',
             html: \`<div style="
-              width: 5px;
-              height: 5px;
+              width: 24px;
+              height: 24px;
               background: #3b82f6;
               border: 4px solid white;
               border-radius: 50%;
               box-shadow: 0 0 20px rgba(59,130,246,0.8);
               animation: pulse 1.5s infinite;
             "></div>\`,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
           });
         };
 
@@ -762,8 +912,8 @@ const MapScreen = () => {
               border-radius: 50%;
               box-shadow: 0 2px 10px rgba(0,0,0,0.3);
             "></div>\`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
+            iconSize: [26, 26],
+            iconAnchor: [13, 13],
           });
         };
 
@@ -781,12 +931,12 @@ const MapScreen = () => {
           if (isSelected) bgColor = colors.selected;
           else if (isPathNode) bgColor = colors.pathNode;
           
-          const size = isSelected ? 24 : 20;
+          const size = isSelected ? 16 : 12;
           
           return L.divIcon({
             className: 'node-marker',
-            iconSize: [size, size],
-            iconAnchor: [size/2, size/2],
+            iconSize: [size + 4, size + 4],
+            iconAnchor: [(size + 4)/2, (size + 4)/2],
           });
         };
 
@@ -883,30 +1033,6 @@ const MapScreen = () => {
             }));
           });
           
-          // Find connections
-          const connections = [];
-          PATH_DATA.forEach(path => {
-            const index = path.nodes.indexOf(node.id);
-            if (index !== -1) {
-              if (index > 0) {
-                connections.push({
-                  pathName: path.name,
-                  pathType: path.type,
-                  fromNode: path.nodes[index - 1],
-                  toNode: node.id
-                });
-              }
-              if (index < path.nodes.length - 1) {
-                connections.push({
-                  pathName: path.name,
-                  pathType: path.type,
-                  fromNode: node.id,
-                  toNode: path.nodes[index + 1]
-                });
-              }
-            }
-          });
-          
           marker.bindPopup(\`
             <div class="map-node-popup">
               <button class="map-popup-btn" onclick="window.ReactNativeWebView.postMessage(JSON.stringify({type: 'setDestination', nodeId: \${node.id}}))">
@@ -946,8 +1072,8 @@ const MapScreen = () => {
         window.setUserLocation = (lat, lng) => {
           if (userLocationMarker) map.removeLayer(userLocationMarker);
           userLocationMarker = L.marker([lat, lng], { icon: createUserLocationIcon() }).addTo(map);
-          userLocationMarker.bindPopup('Your Location (Hardcoded)');
-          map.setView([lat, lng], 16);
+          userLocationMarker.bindPopup('Your Current Location');
+          map.setView([lat, lng], 18);
         };
 
         // Function to set start marker
@@ -1063,21 +1189,6 @@ const MapScreen = () => {
 
     webViewRef.current?.injectJavaScript(`
       window.setDestinationMarker(${lat}, ${lng});
-    `);
-  };
-
-  // Set hardcoded location
-  const setHardcodedLocation = () => {
-    const hardcodedLat = 21.772242646056295;
-    const hardcodedLng = 69.4555401802245;
-
-    setUserLocation({ lat: hardcodedLat, lng: hardcodedLng });
-
-    const nearest = findNearestNode(hardcodedLat, hardcodedLng);
-    setNearestNode(nearest);
-
-    webViewRef.current?.injectJavaScript(`
-      window.setUserLocation(${hardcodedLat}, ${hardcodedLng});
     `);
   };
 
@@ -1226,10 +1337,17 @@ const MapScreen = () => {
       <View style={styles.routingPanel}>
         <TouchableOpacity
           style={styles.locationButton}
-          onPress={setHardcodedLocation}
+          onPress={handleFetchLocation}
+          disabled={locationLoading}
         >
-          <Icon name="my-location" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Current location</Text>
+          {locationLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Icon name="my-location" size={20} color="#fff" />
+              <Text style={styles.buttonText}>Get Live Location</Text>
+            </>
+          )}
         </TouchableOpacity>
 
         <View style={styles.buttonRow}>
@@ -1358,6 +1476,62 @@ const MapScreen = () => {
           ))}
         </ScrollView>
       )}
+
+      {/* Search Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showSearchModal}
+        onRequestClose={() => setShowSearchModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Search Node</Text>
+              <TouchableOpacity onPress={() => setShowSearchModal(false)}>
+                <Icon name="close" size={24} color="#1e293b" />
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={styles.searchInput}
+              value={searchNode}
+              onChangeText={setSearchNode}
+              placeholder="Enter node ID (1-224)"
+              keyboardType="numeric"
+            />
+
+            <TouchableOpacity
+              style={styles.searchButton}
+              onPress={handleSearchNode}
+            >
+              <Text style={styles.searchButtonText}>Search</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.nodeListTitle}>Quick Access</Text>
+            <ScrollView style={styles.nodeList}>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(id => (
+                <TouchableOpacity
+                  key={id}
+                  style={styles.nodeQuickItem}
+                  onPress={() => {
+                    const node = NODE_DATA.find(n => n.id === id);
+                    if (node) {
+                      webViewRef.current?.injectJavaScript(`
+                        map.setView([${node.lat}, ${node.lng}], 18);
+                      `);
+                      setSelectedNode(id);
+                      setShowSearchModal(false);
+                    }
+                  }}
+                >
+                  <Text>Node #{id}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1524,10 +1698,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   pathDistance: {
-    marginTop: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     fontSize: 12,
+    marginTop: 10
   },
   distanceValue: {
     fontWeight: 'bold',
@@ -1535,10 +1709,10 @@ const styles = StyleSheet.create({
   },
   infoPanel: {
     position: 'absolute',
-    top: 170,
+    top: 80,
     left: 10,
     right: 10,
-    bottom: 150,
+    bottom: 200,
     backgroundColor: 'rgba(255,255,255,0.95)',
     padding: 15,
     borderRadius: 8,
@@ -1644,6 +1818,7 @@ const styles = StyleSheet.create({
   },
   legendLine: {
     width: 20,
+    height: 3,
     marginRight: 6,
     borderRadius: 1,
   },

@@ -615,7 +615,7 @@ const NavigateMap = () => {
 
     // Set hardcoded user location on component mount
     useEffect(() => {
-        setHardcodedLocation();
+        getCurrentLocation();
     }, [map]);
 
     // Handle coordinates from previous page
@@ -707,15 +707,39 @@ const NavigateMap = () => {
         setPathLengths(lengths);
     }, []);
 
-    // Set hardcoded user location
-    const setHardcodedLocation = () => {
-        const hardcodedLat = 21.772242646056295;
-        const hardcodedLng = 69.4555401802245;
+    // Get Live Location
+    const getCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by this browser.");
+            return;
+        }
 
-        setUserLocation({ lat: hardcodedLat, lng: hardcodedLng });
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
 
-        const nearest = findNearestNode(hardcodedLat, hardcodedLng);
-        setNearestNode(nearest);
+                console.log("Current location:", lat, lng);
+
+                setUserLocation({ lat, lng });
+
+                const nearest = findNearestNode(lat, lng);
+                setNearestNode(nearest);
+
+                if (map) {
+                    map.setView([lat, lng], 18);
+                }
+            },
+            (error) => {
+                console.error("Location error:", error);
+                alert("Unable to get your location.");
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
     };
 
     // Find nearest node to given coordinates

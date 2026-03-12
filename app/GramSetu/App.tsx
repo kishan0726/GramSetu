@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'react-native'; // Add this import
 import { LanguageProvider } from './src/context/LanguageContext';
 
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -40,6 +41,7 @@ const App = () => {
 
   return (
     <LanguageProvider>
+      <StatusBar hidden={true} /> {/* This hides the status bar globally */}
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Welcome" component={WelcomeScreen} />

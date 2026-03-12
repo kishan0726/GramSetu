@@ -8,9 +8,14 @@ import {
     ActivityIndicator,
     SafeAreaView,
     StatusBar,
+    Platform,
+    Linking,
+    Alert,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Geolocation from '@react-native-community/geolocation';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 const WebViewNavigateMap = ({ route, navigation }) => {
     const webViewRef = useRef(null);
@@ -22,18 +27,15 @@ const WebViewNavigateMap = ({ route, navigation }) => {
     const [shortestPath, setShortestPath] = useState([]);
     const [shortestPathDistance, setShortestPathDistance] = useState(0);
     const [graph, setGraph] = useState({});
+    const [locationLoading, setLocationLoading] = useState(false);
+    
+    // Live location state to replace START_NODE
+    const [liveLocation, setLiveLocation] = useState(null);
 
     // Get params from previous screen
     const { latitude, longitude, shopName } = route.params || {};
 
     console.log('Received params:', { latitude, longitude, shopName });
-
-    // Node 2 coordinates (fixed starting point)
-    const START_NODE = {
-        id: 2,
-        lat: 21.772242646056295,
-        lng: 69.4555401802245
-    };
 
     // Important points data
     const IMPORTANT_POINTS = [
@@ -477,10 +479,153 @@ const WebViewNavigateMap = ({ route, navigation }) => {
         return nearest;
     };
 
-    // Initialize graph
+    // Request location permission
+    const requestLocationPermission = async () => {
+        try {
+            let permissionStatus;
+
+            if (Platform.OS === 'ios') {
+                permissionStatus = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+            } else {
+                permissionStatus = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+            }
+
+            return permissionStatus === RESULTS.GRANTED;
+        } catch (error) {
+            console.log('Permission request error:', error);
+            return false;
+        }
+    };
+
+    // Fetch Live Location
+    const fetchLiveLocation = () => {
+        setLocationLoading(true);
+
+        const requestLocation = (useHighAccuracy = true) => {
+            return new Promise((resolve, reject) => {
+                Geolocation.getCurrentPosition(
+                    position => resolve(position),
+                    error => reject(error),
+                    {
+                        enableHighAccuracy: useHighAccuracy,
+                        timeout: 8000,
+                        maximumAge: 0
+                    }
+                );
+            });
+        };
+
+        const tryWithFallback = async () => {
+            try {
+                console.log('Trying high accuracy location...');
+                const position = await requestLocation(true);
+                return position;
+            } catch (highAccuracyError) {
+                console.log('High accuracy failed, trying low accuracy...', highAccuracyError);
+
+                try {
+                    const position = await requestLocation(false);
+                    return position;
+                } catch (lowAccuracyError) {
+                    console.log('Low accuracy also failed', lowAccuracyError);
+                    throw lowAccuracyError;
+                }
+            }
+        };
+
+        const overallTimeout = setTimeout(() => {
+            setLocationLoading(false);
+            showLocationError({ code: 3, message: 'Overall location request timed out' });
+        }, 20000);
+
+        const showLocationError = (error) => {
+            let errorMessage = 'Failed to get location';
+
+            switch (error.code) {
+                case 1:
+                    errorMessage = 'Location permission denied';
+                    break;
+                case 2:
+                    errorMessage = 'Unable to get location. Please check if GPS is enabled.';
+                    break;
+                case 3:
+                    errorMessage = 'Location request timed out. Please try again.';
+                    break;
+                default:
+                    errorMessage = error.message || 'Unknown error';
+            }
+
+            Alert.alert(
+                'Location Error',
+                errorMessage,
+                [
+                    {
+                        text: 'Try Again',
+                        onPress: () => fetchLiveLocation()
+                    },
+                    { text: 'Cancel', style: 'cancel' }
+                ]
+            );
+        };
+
+        const executeLocationRequest = async () => {
+            const hasPermission = await requestLocationPermission();
+
+            if (!hasPermission) {
+                clearTimeout(overallTimeout);
+                setLocationLoading(false);
+                Alert.alert(
+                    'Permission Required',
+                    'Location permission is needed to get your current location.',
+                    [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                            text: 'Open Settings',
+                            onPress: () => {
+                                if (Platform.OS === 'ios') {
+                                    Linking.openURL('app-settings:');
+                                } else {
+                                    Linking.openSettings();
+                                }
+                            }
+                        }
+                    ]
+                );
+                return;
+            }
+
+            try {
+                const position = await tryWithFallback();
+                clearTimeout(overallTimeout);
+
+                const { latitude, longitude } = position.coords;
+
+                // Set live location
+                setLiveLocation({
+                    lat: latitude,
+                    lng: longitude
+                });
+
+                setLocationLoading(false);
+
+            } catch (error) {
+                clearTimeout(overallTimeout);
+                console.log('All location attempts failed:', error);
+                showLocationError(error);
+                setLocationLoading(false);
+            }
+        };
+
+        executeLocationRequest();
+    };
+
+    // Initialize graph and fetch location
     useEffect(() => {
         const g = buildGraph();
         setGraph(g);
+        
+        // Fetch live location when component mounts
+        fetchLiveLocation();
     }, []);
 
     // Handle destination from ShopsScreen
@@ -491,59 +636,62 @@ const WebViewNavigateMap = ({ route, navigation }) => {
             setDestinationCoords({ lat: latitude, lng: longitude });
             const destNode = findNearestNode(latitude, longitude);
             setDestinationNode(destNode);
-
-            // Wait for map to be ready and then calculate path
-            setTimeout(() => {
-                if (webViewRef.current && destNode) {
-                    calculateAndShowRoute(destNode, latitude, longitude);
-                }
-            }, 2000);
         }
     }, [latitude, longitude, shopName]);
 
-    // Calculate and show route
-    const calculateAndShowRoute = (endNodeId, destLat, destLng) => {
-        const result = dijkstra(graph, START_NODE.id, endNodeId);
+    // Calculate and show route when both live location and destination are available
+    useEffect(() => {
+        if (liveLocation && destinationCoords && destinationNode && graph) {
+            // Find start node (nearest node to live location)
+            const startNodeId = findNearestNode(liveLocation.lat, liveLocation.lng);
+            
+            // Calculate route
+            const result = dijkstra(graph, startNodeId, destinationNode);
 
-        if (result.path.length > 1) {
-            setShortestPath(result.path);
-            setShortestPathDistance(result.distance);
+            if (result.path.length > 1) {
+                setShortestPath(result.path);
+                setShortestPathDistance(result.distance);
 
-            const jsCode = `
-                // Clear existing markers
-                if (window.clearRouting) window.clearRouting();
-                
-                // Set start marker (Node 2)
-                if (window.setStartMarker) window.setStartMarker(${START_NODE.lat}, ${START_NODE.lng});
-                
-                // Add destination marker with shop name
-                if (window.createShopIcon) {
-                    const destMarker = L.marker([${destLat}, ${destLng}], {
-                        icon: window.createShopIcon('${shopName || 'Destination'}')
-                    }).addTo(map);
-                    destMarker.bindPopup('${shopName || 'Destination'}').openPopup();
-                }
-                
-                // Set destination marker
-                if (window.setDestinationMarker) window.setDestinationMarker(${destLat}, ${destLng});
-                
-                // Draw the shortest path
-                if (window.drawShortestPath) window.drawShortestPath(${JSON.stringify(result.path)});
-                
-                // Fit bounds to show both markers
-                const bounds = L.latLngBounds([
-                    [${START_NODE.lat}, ${START_NODE.lng}],
-                    [${destLat}, ${destLng}]
-                ]);
-                map.fitBounds(bounds, { padding: [50, 50] });
-            `;
+                // Wait for map to be ready
+                setTimeout(() => {
+                    const jsCode = `
+                        // Clear existing markers
+                        if (window.clearRouting) window.clearRouting();
+                        
+                        // Set start marker (Live Location)
+                        if (window.setStartMarker) window.setStartMarker(${liveLocation.lat}, ${liveLocation.lng});
+                        
+                        // Add destination marker with shop name
+                        if (window.createShopIcon) {
+                            const destMarker = L.marker([${destinationCoords.lat}, ${destinationCoords.lng}], {
+                                icon: window.createShopIcon('${shopName || 'Destination'}')
+                            }).addTo(map);
+                            destMarker.bindPopup('${shopName || 'Destination'}').openPopup();
+                        }
+                        
+                        // Set destination marker
+                        if (window.setDestinationMarker) window.setDestinationMarker(${destinationCoords.lat}, ${destinationCoords.lng});
+                        
+                        // Draw the shortest path
+                        if (window.drawShortestPath) window.drawShortestPath(${JSON.stringify(result.path)});
+                        
+                        // Fit bounds to show both markers
+                        const bounds = L.latLngBounds([
+                            [${liveLocation.lat}, ${liveLocation.lng}],
+                            [${destinationCoords.lat}, ${destinationCoords.lng}]
+                        ]);
+                        map.fitBounds(bounds, { padding: [50, 50] });
+                    `;
 
-            webViewRef.current?.injectJavaScript(jsCode);
-        } else {
+                    webViewRef.current?.injectJavaScript(jsCode);
+                }, 1000);
+            } else {
+                Alert.alert('Error', 'No path found between your location and destination');
+            }
         }
-    };
+    }, [liveLocation, destinationCoords, destinationNode, graph]);
 
-    // HTML content for WebView with all necessary functions
+    // HTML content for WebView (unchanged from original)
     const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -618,9 +766,8 @@ const WebViewNavigateMap = ({ route, navigation }) => {
         window.createShopIcon = (name) => {
           return L.divIcon({
             className: 'shop-marker',
-            iconSize: [36, 56],
-            iconAnchor: [18, 56],
-            popupAnchor: [0, -56],
+            html: '<div style="background: #f59e0b; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"></div>',
+            iconAnchor: [13, 13],
           });
         };
 
@@ -628,8 +775,8 @@ const WebViewNavigateMap = ({ route, navigation }) => {
         const createStartIcon = () => {
           return L.divIcon({
             className: 'start-marker',
-            html: '<div class="start-marker"></div>',
-            iconAnchor: [14, 14],
+            html: '<div style="background: #10b981; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 20px rgba(16,185,129,0.8); animation: pulse 1.5s infinite;"></div>',
+            iconAnchor: [13, 13],
           });
         };
 
@@ -637,8 +784,8 @@ const WebViewNavigateMap = ({ route, navigation }) => {
         const createDestinationIcon = () => {
           return L.divIcon({
             className: 'destination-marker',
-            html: '<div class="destination-marker"></div>',
-            iconAnchor: [14, 14],
+            html: '<div style="background: #ef4444; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 20px rgba(239,68,68,0.8); animation: pulse 1.5s infinite;"></div>',
+            iconAnchor: [13, 13],
           });
         };
 
@@ -663,7 +810,7 @@ const WebViewNavigateMap = ({ route, navigation }) => {
         window.setStartMarker = (lat, lng) => {
           if (startMarker) map.removeLayer(startMarker);
           startMarker = L.marker([lat, lng], { icon: createStartIcon() }).addTo(map);
-          startMarker.bindPopup('Start (Node 2)');
+          startMarker.bindPopup('Your Location');
         };
 
         window.setDestinationMarker = (lat, lng) => {
@@ -715,12 +862,6 @@ const WebViewNavigateMap = ({ route, navigation }) => {
             const data = JSON.parse(event.nativeEvent.data);
             if (data.type === 'mapReady') {
                 setLoading(false);
-                // Auto-calculate route if destination exists
-                if (destinationCoords && destinationNode) {
-                    setTimeout(() => {
-                        calculateAndShowRoute(destinationNode, destinationCoords.lat, destinationCoords.lng);
-                    }, 500);
-                }
             }
         } catch (error) {
             console.error('Error parsing message:', error);
@@ -732,6 +873,10 @@ const WebViewNavigateMap = ({ route, navigation }) => {
         webViewRef.current?.injectJavaScript(`
             window.toggleSatellite(${!satelliteView});
         `);
+    };
+
+    const retryLocation = () => {
+        fetchLiveLocation();
     };
 
     return (
@@ -749,10 +894,7 @@ const WebViewNavigateMap = ({ route, navigation }) => {
                     </Text>
                     {destinationCoords && (
                         <Text style={styles.headerSubtitle}>
-                            From Node 2 • {formatDistance(calculateDistance(
-                                START_NODE.lat, START_NODE.lng,
-                                destinationCoords.lat, destinationCoords.lng
-                            ))}
+                            {liveLocation ? 'From Your Location' : 'Fetching your location...'} • {formatDistance(shortestPathDistance)}
                         </Text>
                     )}
                 </View>
@@ -788,6 +930,21 @@ const WebViewNavigateMap = ({ route, navigation }) => {
                 >
                     <Icon name={satelliteView ? 'map' : 'satellite'} size={20} color="#fff" />
                 </TouchableOpacity>
+                
+                {/* Retry Location Button */}
+                {!liveLocation && (
+                    <TouchableOpacity
+                        style={[styles.controlButton, { marginLeft: 10 }]}
+                        onPress={retryLocation}
+                        disabled={locationLoading}
+                    >
+                        {locationLoading ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Icon name="my-location" size={20} color="#fff" />
+                        )}
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Info Panel */}
@@ -799,7 +956,10 @@ const WebViewNavigateMap = ({ route, navigation }) => {
                         <View style={styles.infoRow}>
                             <Icon name="my-location" size={16} color="#10b981" />
                             <Text style={styles.infoText}>
-                                Start: Node 2 ({START_NODE.lat.toFixed(6)}, {START_NODE.lng.toFixed(6)})
+                                Start: {liveLocation ? 
+                                    `${liveLocation.lat.toFixed(6)}, ${liveLocation.lng.toFixed(6)}` : 
+                                    'Fetching your location...'}
+                                {liveLocation && ` (Node ${findNearestNode(liveLocation.lat, liveLocation.lng)})`}
                             </Text>
                         </View>
 
@@ -809,6 +969,7 @@ const WebViewNavigateMap = ({ route, navigation }) => {
                                 Destination: {destinationCoords ?
                                     `${destinationCoords.lat.toFixed(6)}, ${destinationCoords.lng.toFixed(6)}` :
                                     'Loading...'}
+                                {destinationNode && ` (Node ${destinationNode})`}
                             </Text>
                         </View>
 
@@ -823,6 +984,23 @@ const WebViewNavigateMap = ({ route, navigation }) => {
                                 </Text>
                             </View>
                         )}
+
+                        {!liveLocation && (
+                            <TouchableOpacity 
+                                style={styles.retryButton}
+                                onPress={retryLocation}
+                                disabled={locationLoading}
+                            >
+                                {locationLoading ? (
+                                    <ActivityIndicator size="small" color="#3b82f6" />
+                                ) : (
+                                    <>
+                                        <Icon name="my-location" size={16} color="#3b82f6" />
+                                        <Text style={styles.retryText}>Get Your Current Location</Text>
+                                    </>
+                                )}
+                            </TouchableOpacity>
+                        )}
                     </ScrollView>
                 </View>
             )}
@@ -830,7 +1008,7 @@ const WebViewNavigateMap = ({ route, navigation }) => {
     );
 };
 
-// StyleSheet
+// StyleSheet (unchanged from original)
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -954,6 +1132,20 @@ const styles = StyleSheet.create({
     pathNodes: {
         fontSize: 10,
         marginTop: 4,
+    },
+    retryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#eff6ff',
+        padding: 10,
+        borderRadius: 6,
+        marginTop: 10,
+        gap: 8,
+    },
+    retryText: {
+        color: '#3b82f6',
+        fontWeight: '500',
     },
 });
 
