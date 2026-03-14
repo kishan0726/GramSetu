@@ -183,7 +183,7 @@ google-services.json
 Place file inside:
 
 ```
-mobile/android/app/google-services.json
+app/GramSetu/android/app/google-services.json
 ```
 
 ---
@@ -202,9 +202,6 @@ npm install
 Create `.env` file inside **backend folder**
 
 ```
-# Firebase
-FIREBASE_DATABASE_URL=https://your-project-default-rtdb.firebaseio.com
-
 # Cloudinary
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
@@ -227,6 +224,17 @@ Save file as:
 
 ```
 backend/serviceAccountKey.json
+```
+
+open : 
+
+```
+backend/firebase.js
+```
+
+Replace Database URL with Your URL : 
+```
+https://your-project-default-rtdb.firebaseio.com
 ```
 
 ---
@@ -259,7 +267,7 @@ Use this **16-character password** in `.env`.
 # 4. Mobile App Setup
 
 ```
-cd mobile
+cd app/Gramsetu
 npm install
 ```
 
@@ -270,9 +278,9 @@ npm install
 Add your cloud name in:
 
 ```
-mobile/src/screens/EditShopDetail.jsx
-mobile/src/screens/ProfileScreen.jsx
-mobile/src/screens/ShopkeeperAprovalWait.jsx
+app/GramSetu/src/screens/EditShopDetail.jsx
+app/GramSetu/src/screens/ProfileScreen.jsx
+app/GramSetu/src/screens/ShopkeeperAprovalWait.jsx
 ```
 
 ```
@@ -335,7 +343,7 @@ http://localhost:3000
 ## Start Mobile Application
 
 ```
-cd mobile
+cd app/GramSetu
 npx react-native run-android
 ```
 
