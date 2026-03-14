@@ -1,5 +1,3 @@
-/* VillageNodeMapper.css */
-
 .node-mapper-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -606,13 +604,6 @@
     font-size: 0.7rem;
   }
 }
-
-
-
-
-
-
-/* Add to VillageNodeMapper.css */
 
 /* User Location Marker Animation */
 @keyframes pulse {

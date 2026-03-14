@@ -1,173 +1,207 @@
-GramSetu - Village Connectivity Solution
-https://img.shields.io/badge/React%2520Native-0.76+-61DAFB?logo=react
-https://img.shields.io/badge/React-18+-61DAFB?logo=react
-https://img.shields.io/badge/Node.js-16+-339933?logo=node.js
-https://img.shields.io/badge/Firebase-11+-FFCA28?logo=firebase
-https://img.shields.io/badge/License-MIT-green.svg
+# GramSetu - Village Connectivity Solution
 
-GramSetu (ग्रामसेतु - "Village Bridge") is a comprehensive multi-platform application designed to connect rural communities with local services, governance, and each other. The system serves three distinct user roles: Admin (web panel), Shopkeepers (mobile app), and Villagers/Users (mobile app).
+![React Native](https://img.shields.io/badge/React%20Native-0.76+-61DAFB?logo=react)
+![React](https://img.shields.io/badge/React-18+-61DAFB?logo=react)
+![Node.js](https://img.shields.io/badge/Node.js-16+-339933?logo=node.js)
+![Firebase](https://img.shields.io/badge/Firebase-11+-FFCA28?logo=firebase)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-🌟 Features
-👨‍💼 Admin Web Panel
-Dashboard - Real-time statistics, report generation, mini village map
+**GramSetu** is a comprehensive **multi-platform application** designed to connect rural communities with local services, governance, and each other.
 
-User Management - Add/update users, expire/restore accounts
+The system serves **three distinct user roles**:
 
-Shop Management - Approve/reject shops, view shop locations
+* **Admin** – Web Admin Panel
+* **Shopkeepers** – Mobile Application
+* **Villagers / Users** – Mobile Application
 
-Announcements - Create, edit, and publish village announcements
+---
 
-Map Visualization - Complete village map with important places
+# 🌟 Features
 
-Complaint Management - Track complaints (pending → in-progress → resolved)
+## 👨‍💼 Admin Web Panel
 
-Profile Management - Update profile, change password
+* **Dashboard** – Real-time statistics, report generation, mini village map
+* **User Management** – Add/update users, expire/restore accounts
+* **Shop Management** – Approve/reject shops, view shop locations
+* **Announcements** – Create, edit, and publish village announcements
+* **Map Visualization** – Complete village map with important places
+* **Complaint Management** – Track complaints (pending → in-progress → resolved)
+* **Profile Management** – Update profile, change password
 
-🏪 Shopkeeper Mobile App
-Registration - Register shop and wait for admin approval
+---
 
-Authentication - Login, forgot password with email verification
+## 🏪 Shopkeeper Mobile App
 
-Shop Management - Edit shop details, upload documents
+* **Registration** – Register shop and wait for admin approval
+* **Authentication** – Login, forgot password with email verification
+* **Shop Management** – Edit shop details, upload documents
+* **Inventory Management** – Add items with prices and manage stock
+* **Location Sharing** – Provide live shop location for navigation
+* **Multi-language Support** – English and Gujarati
 
-Inventory - Add items with prices, manage stock levels
+---
 
-Location - Provide live shop location for navigation
+## 👤 User Mobile App
 
-Multi-language - English and Gujarati support
+* **Authentication** – Register/Login with email verification
+* **Announcements** – View village announcements
+* **Complaint System** – Register complaints with live location and track status
+* **Shop Directory** – Browse shops and check product availability
+* **Navigation System** – Interactive village map with path finding using **Dijkstra’s algorithm**
+* **Community Chat** – Connect with other users
+* **Public Services Information**
+* **Multi-language Support** – English and Gujarati
 
-👤 User Mobile App
-Authentication - Register/Login with email verification
+---
 
-Announcements - View village announcements
+### System Flow
 
-Complaint System - Register complaints with live location, track status
+* Web Application communicates with **Backend** for all services.
+* Mobile Application connects **directly to Firebase** for database access.
+* Mobile Application connects to **Backend only for Email Services**.
+* Images are stored using **Cloudinary**.
 
-Shop Directory - Browse shops, search items, check prices & availability
+---
 
-Navigation - Interactive village map with path finding (Dijkstra's algorithm)
+# 🛠️ Technology Stack
 
-Community - Chat with other users, public service information
+## Frontend (Web)
 
-Multi-language - English and Gujarati support
+* React.js 18+
+* React Router
+* Axios
+* Chart.js
 
-🏗️ Architecture
-text
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Web App       │────▶│    Backend      │────▶│   Firebase      │
-│   (React.js)    │◀────│   (Node.js)     │◀────│   Realtime DB   │
-└─────────────────┘     └────────┬────────┘     └─────────────────┘
-                                 │                        ▲
-                                 │                        │
-                                 ▼                        │
-┌─────────────────┐     ┌─────────────────┐     ┌─────────┴─────────┐
-│ Mobile App      │────▶│   Email Service │     │   Cloudinary      │
-│ (React Native)  │◀────│   (Gmail SMTP)  │     │   Image Storage   │
-└─────────────────┘     └─────────────────┘     └───────────────────┘
-Web Application communicates with Backend for all services
+## Mobile Application
 
-Mobile Application uses Firebase Realtime Database directly
+* React Native 0.76+
+* React Navigation
+* React Native Vector Icons
+* React Native WebView
+* React Native Geolocation
+* AsyncStorage
+* React Native Permissions
 
-Mobile App connects to Backend only for email services (forgot password)
+## Backend
 
-Images stored in Cloudinary
+* Node.js 16+
+* Express.js
+* Nodemailer
+* Cloudinary SDK
+* Firebase Admin SDK
 
-🛠️ Technology Stack
-Frontend (Web)
-React.js 18+
+## Database & Storage
 
-React Router
+* Firebase Realtime Database
+* Cloudinary
 
-Axios
+## Email Service
 
-Chart.js for analytics
+* Gmail SMTP (Nodemailer)
 
-Mobile Application
-React Native 0.76+
+---
 
-React Navigation 6.x
+# 📋 Prerequisites
 
-React Native Vector Icons
+Install the following before running the project:
 
-React Native WebView
+* Node.js (v16+)
+* npm (v8+)
+* Android Studio
+* Java JDK (v17)
+* Firebase Account
+* Cloudinary Account
+* Google Account (for email service)
 
-React Native Geolocation
+---
 
-AsyncStorage
+# 🚀 Getting Started
 
-React Native Permissions
+## 1. Clone the Repository
 
-Backend
-Node.js 16+
-
-Express.js 4.x
-
-Nodemailer
-
-Cloudinary SDK
-
-Firebase Admin SDK
-
-Database & Storage
-Firebase Realtime Database
-
-Cloudinary (Image Storage)
-
-Email Service
-Gmail SMTP with Nodemailer
-
-📋 Prerequisites
-Node.js (v16 or higher)
-
-npm (v8 or higher)
-
-Android Studio (with SDK)
-
-Java JDK (v11 or higher)
-
-Firebase Account
-
-Cloudinary Account
-
-Google Account (for email service)
-
-🚀 Getting Started
-1. Clone the Repository
-bash
+```bash
 git clone https://github.com/yourusername/gramsetu.git
 cd gramsetu
-2. Firebase Setup
-Create Firebase Project
-Go to Firebase Console
+```
 
-Click Create Project and follow the steps
+---
 
-Enable Realtime Database
+# 2. Firebase Setup
 
-Set database rules to test mode:
+### Create Firebase Project
 
-json
+1. Go to Firebase Console
+   https://console.firebase.google.com
+
+2. Click **Create Project**
+
+3. Follow setup steps.
+
+---
+
+### Enable Realtime Database
+
+Go to:
+
+```
+Build → Realtime Database
+```
+
+Click **Create Database**
+
+Select **Test Mode**
+
+---
+
+### Update Database Rules
+
+```
 {
   "rules": {
     ".read": "true",
     ".write": "true"
   }
 }
-Download Configuration
-Go to Project Settings → Your Apps
+```
 
-Download google-services.json
+---
 
-Place it in: mobile/android/app/google-services.json
+### Download Firebase Configuration
 
-3. Backend Setup
-bash
+Go to:
+
+```
+Project Settings → Your Apps
+```
+
+Download:
+
+```
+google-services.json
+```
+
+Place file inside:
+
+```
+mobile/android/app/google-services.json
+```
+
+---
+
+# 3. Backend Setup
+
+```
 cd backend
 npm install
-Configure Environment Variables
-Create .env file in the backend folder:
+```
 
-env
+---
+
+## Configure Environment Variables
+
+Create `.env` file inside **backend folder**
+
+```
 # Firebase
 FIREBASE_DATABASE_URL=https://your-project-default-rtdb.firebaseio.com
 
@@ -179,179 +213,327 @@ CLOUDINARY_API_SECRET=your_api_secret
 # Email (Gmail)
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_app_password
-Get Firebase Admin Credentials
-In Firebase Console, go to Project Settings → Service Accounts
+```
 
-Click Generate New Private Key
+---
 
-Download and save as serviceAccountKey.json in the backend folder
+### Firebase Admin Credentials
 
-Get Cloudinary Credentials
-Login to Cloudinary
+1. Go to Firebase Console
+2. Project Settings → Service Accounts
+3. Click **Generate New Private Key**
 
-Go to Dashboard
+Save file as:
 
-Copy Cloud Name, API Key, and API Secret
+```
+backend/serviceAccountKey.json
+```
 
-Setup Gmail App Password
-Enable 2-Step Verification on your Google Account
+---
 
-Go to Security → App Passwords
+### Cloudinary Credentials
 
-Generate password for Mail app on Other device
+Login to Cloudinary dashboard and copy:
 
-Use this 16-character password in .env (not your Gmail password)
+* Cloud Name
+* API Key
+* API Secret
 
-4. Mobile App Setup
-bash
+---
+
+### Gmail Email Setup
+
+1. Enable **2-Step Verification** in Google account
+2. Go to **Security → App Passwords**
+3. Generate password for:
+
+```
+App: Mail
+Device: Other
+```
+
+Use this **16-character password** in `.env`.
+
+---
+
+# 4. Mobile App Setup
+
+```
 cd mobile
 npm install
-Configure Cloudinary
-Add your Cloudinary cloud name in these files:
+```
 
+---
+
+### Configure Cloudinary
+
+Add your cloud name in:
+
+```
 mobile/src/screens/EditShopDetail.jsx
-
 mobile/src/screens/ProfileScreen.jsx
-
 mobile/src/screens/ShopkeeperAprovalWait.jsx
+```
 
-javascript
+```
 const CLOUDINARY_CLOUD_NAME = 'your_cloud_name';
-Clean Android Build
-bash
+```
+
+---
+
+### Clean Android Build
+
+```
 cd android
 gradlew clean
 cd ..
-5. Web App Setup
-bash
+```
+
+---
+
+# 5. Web App Setup
+
+```
 cd web
 npm install
-6. Running the Project
-Start Backend Server
-bash
+```
+
+---
+
+# ▶ Running the Project
+
+## Start Backend Server
+
+```
 cd backend
 node server.js
-# Server runs on http://localhost:5000 (default)
-Start Web Application
-bash
+```
+
+Backend runs on:
+
+```
+http://localhost:5000
+```
+
+---
+
+## Start Web Application
+
+```
 cd web
 npm start
-# Web app runs on http://localhost:3000
-Start Mobile Application
-bash
+```
+
+Runs on:
+
+```
+http://localhost:3000
+```
+
+---
+
+## Start Mobile Application
+
+```
 cd mobile
 npx react-native run-android
-# For iOS: npx react-native run-ios
-📁 Project Structure
-text
-gramsetu/
-├── backend/                 # Node.js backend
-│   ├── server.js
+```
+
+For iOS:
+
+```
+npx react-native run-ios
+```
+
+---
+
+# 📁 Project Structure
+
+```
+gramsetu
+│
+├── backend
+│   ├── cloudinary.js
+│   ├── emailService.js
 │   ├── firebase.js
-│   ├── routes/
-│   ├── controllers/
+│   ├── server.js
 │   └── .env
-├── web/                     # React.js web admin panel
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   └── App.js
-│   └── package.json
-├── mobile/                   # React Native mobile app
-│   ├── src/
-│   │   ├── screens/         # All screen components
-│   │   ├── components/      # Reusable components
-│   │   ├── context/         # Language context
-│   │   ├── config/          # Firebase config
+│
+├── web
+│   ├── src
+│   │   ├── assets
+│   │   ├── components
+│   │   |   ├── AdminReportGenerator.jsx
+│   │   |   ├── Home.jsx
+│   │   |   ├── Map.jsx
+│   │   |   ├── Navbar.jsx
+│   │   |   ├── NavigateMap.jsx
+│   │   |   └── Sidebar.jsx
+│   │   ├── pages
+│   │   |   ├── AdminProfile.jsx
+│   │   |   ├── Announcement.jsx
+│   │   |   ├── Complaint.jsx
+│   │   |   ├── Dashboard.jsx
+│   │   |   ├── ForgotPassword.jsx
+│   │   |   ├── Login.jsx
+│   │   |   ├── Shops.jsx
+│   │   |   ├── User.jsx
+│   │   |   └── UserDetail.jsx
+│   │   ├── stylesheets
+│   │   |   ├── AdminProfile.css
+│   │   |   ├── Announcement.css
+│   │   |   ├── Complaint.css
+│   │   |   ├── Dashboard.css
+│   │   |   ├── ForgotPassword.css
+│   │   |   ├── Home.css
+│   │   |   ├── Login.css
+│   │   |   ├── Map.css
+│   │   |   ├── Navbar.css
+│   │   |   ├── NavigateMap.css
+│   │   |   ├── Shops.css
+│   │   |   ├── Sidebar.css
+│   │   |   ├── User.css
+│   │   |   └── UserDetail.css
 │   │   └── App.jsx
-│   ├── android/
 │   └── package.json
+│
+├── app/Gramsetu
+│   ├── src
+│   │   ├── assets
+│   │   ├── components
+│   │   |   └── LanguageSwitcher.jsx
+│   │   ├── config
+│   │   |   └── firebase.js
+│   │   ├── context
+│   │   |   └── LanguageContext.jsx
+│   │   ├── screens
+│   │   |   ├── AddChatUserScreen.jsx
+│   │   |   ├── AddShopItem.jsx
+│   │   |   ├── AnnouncementsScreen.jsx
+│   │   |   ├── ChatListScreen.jsx
+│   │   |   ├── ChatRequestsScreen.jsx
+│   │   |   ├── ChatScreen.jsx
+│   │   |   ├── ChatSetupScreen.jsx
+│   │   |   ├── CommunityScreen.jsx
+│   │   |   ├── ComplaintsScreen.jsx
+│   │   |   ├── DashboardScreen.jsx
+│   │   |   ├── EditShopDetails.jsx
+│   │   |   ├── ForgotPassword.jsx
+│   │   |   ├── ForgotPasswordUser.jsx
+│   │   |   ├── ManageStock.jsx
+│   │   |   ├── MapScreen.jsx
+│   │   |   ├── NavigateScreen.jsx
+│   │   |   ├── ProfileScreen.jsx
+│   │   |   ├── PublicServiceScreen.jsx
+│   │   |   ├── ShopInventory.jsx
+│   │   |   ├── ShopkeeperApprovalWait.jsx
+│   │   |   ├── ShopkeeperDashboard.jsx
+│   │   |   ├── ShopkeeperLogin.jsx
+│   │   |   ├── ShopkeeperProfile.jsx
+│   │   |   ├── ShopkeeperSignup.jsx
+│   │   |   ├── ShopkeeperScreen.jsx
+│   │   |   ├── UserLogin.jsx
+│   │   |   └── WelcomeScreen.jsx
+│   │   └── App.tsx
+│   ├── android
+│   └── package.json
+│
 └── README.md
-🔑 Key Features in Detail
-Admin Dashboard
-Real-time statistics (total users, shops, complaints)
+```
 
-Interactive charts and graphs
+---
 
-Report generation (PDF/Excel)
+# 🔑 Key Features
 
-Mini map overview with important locations
+## Admin Dashboard
 
-Quick navigation to all sections
+* Real-time statistics
+* Interactive charts
+* Report generation
+* Village map overview
 
-Complaint Management
-Users can register complaints with:
+---
 
-Title and description
+## Complaint Management
 
-Category (water, electricity, road, etc.)
+Users can register complaints including:
 
-Priority (urgent, high, medium, low)
+* Title & Description
+* Category
+* Priority
+* Live Location (GPS)
+* Images
+* Status Tracking
 
-Live location (GPS)
+---
 
-Images
+## Shop Directory
 
-Real-time status tracking
+* Browse shops by category
+* Search products across shops
+* Live shop locations
+* Shortest path navigation using **Dijkstra algorithm**
 
-Map view of all complaint locations
+---
 
-Shop Directory & Navigation
-Browse shops by category
+## Multi-language Support
 
-Search for specific items across all shops
+* English
+* Gujarati (ગુજરાતી)
 
-View item prices and availability
+All UI elements support both languages.
 
-Live shop locations on map
+---
 
-Shortest path finding using Dijkstra's algorithm
+# 🤝 Contributing
 
-Distance calculation (meters/km)
+1. Fork the repository
+2. Create feature branch
 
-Multi-language Support
-English (default)
+```
+git checkout -b feature/AmazingFeature
+```
 
-Gujarati (ગુજરાતી)
+3. Commit changes
 
-All UI elements, labels, and notifications translated
+```
+git commit -m "Add Amazing Feature"
+```
 
-Seamless language switching
+4. Push branch
 
-Offline Capabilities
-Maps work without internet (OpenStreetMap tiles)
+```
+git push origin feature/AmazingFeature
+```
 
-Complaint registration with offline queue
+5. Open Pull Request
 
-Cached shop data
+---
 
-🤝 Contributing
-Fork the repository
+# 📝 License
 
-Create your feature branch (git checkout -b feature/AmazingFeature)
+This project is licensed under the **MIT License**.
 
-Commit your changes (git commit -m 'Add some AmazingFeature')
+---
 
-Push to the branch (git push origin feature/AmazingFeature)
+# 📧 Contact
 
-Open a Pull Request
+Project Link:
 
-📝 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+```
+https://github.com/kishan0726/GramSetu
+```
 
-📧 Contact
-Project Link: https://github.com/yourusername/gramsetu
+---
 
-🙏 Acknowledgments
-OpenStreetMap for free map tiles
+# 🙏 Acknowledgments
 
-Leaflet for mapping library
+* OpenStreetMap
+* Leaflet
+* Firebase
+* Cloudinary
+* All contributors
 
-Firebase for realtime database
+---
 
-Cloudinary for image storage
-
-All contributors and users
-
-GramSetu - Connecting Villages to the Digital World 🌾📱
+# 🌾 GramSetu – Connecting Villages to the Digital World 📱
