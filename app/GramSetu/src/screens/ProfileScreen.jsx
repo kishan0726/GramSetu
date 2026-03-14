@@ -24,7 +24,7 @@ import { db } from '../config/firebase';
 const { width } = Dimensions.get('window');
 
 // Cloudinary configuration
-const CLOUDINARY_CLOUD_NAME = 'dmjwrm8sp';
+const CLOUDINARY_CLOUD_NAME = 'YOUR_CLOUDINARY_CLOUD_NAME';
 const CLOUDINARY_UPLOAD_PRESET = 'Documents';
 
 const ProfileScreen = ({ navigation }) => {
