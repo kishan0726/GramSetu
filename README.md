@@ -120,7 +120,7 @@ Install the following before running the project:
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/gramsetu.git
+git clone https://github.com/kishan0726/GramSetu
 cd gramsetu
 ```
 
@@ -485,37 +485,6 @@ All UI elements support both languages.
 
 ---
 
-# 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch
-
-```
-git checkout -b feature/AmazingFeature
-```
-
-3. Commit changes
-
-```
-git commit -m "Add Amazing Feature"
-```
-
-4. Push branch
-
-```
-git push origin feature/AmazingFeature
-```
-
-5. Open Pull Request
-
----
-
-# 📝 License
-
-This project is licensed under the **MIT License**.
-
----
-
 # 📧 Contact
 
 Project Link:
@@ -536,4 +505,4 @@ https://github.com/kishan0726/GramSetu
 
 ---
 
-# 🌾 GramSetu – Connecting Villages to the Digital World 📱
+# GramSetu – Connecting Villages to the Digital World 📱
