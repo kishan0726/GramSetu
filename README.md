@@ -170,7 +170,7 @@ Select **Test Mode**
 
 Go to:
 ```
-   Build → Realtime Database
+Build → Realtime Database
 ```
 
 Click on three dot:
