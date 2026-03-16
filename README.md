@@ -20,6 +20,7 @@ The system serves **three distinct user roles**:
 
 ## 👨‍💼 Admin Web Panel
 
+* **Authentication** – Login, forgot password with email verification
 * **Dashboard** – Real-time statistics, report generation, mini village map
 * **User Management** – Add/update users, expire/restore accounts
 * **Shop Management** – Approve/reject shops, view shop locations
@@ -43,7 +44,7 @@ The system serves **three distinct user roles**:
 
 ## 👤 User Mobile App
 
-* **Authentication** – Register/Login with email verification
+* **Authentication** – Login, forgot password with email verification
 * **Announcements** – View village announcements
 * **Complaint System** – Register complaints with live location and track status
 * **Shop Directory** – Browse shops and check product availability
