@@ -306,6 +306,13 @@ cd web
 npm install
 ```
 
+Admin Id, Password for login :
+
+```
+Admin Id: admin
+Admin Password : admin123
+```
+
 ---
 
 # ▶ Running the Project
