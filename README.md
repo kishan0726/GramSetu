@@ -166,6 +166,20 @@ Select **Test Mode**
 
 ---
 
+### Import Database
+
+Go to:
+```
+   Build → Realtime Database
+```
+
+Click on three dot:
+```
+Import Json → Select JSON fiie
+```
+
+---
+
 ### Download Firebase Configuration
 
 Go to:
